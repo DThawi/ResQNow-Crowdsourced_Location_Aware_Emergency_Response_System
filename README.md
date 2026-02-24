@@ -238,3 +238,205 @@ The system improves disaster response coordination while ensuring accountability
 
 ---
 
+System Architecture
+
+High-Level Explanation
+
+The system follows a three-tier architecture:
+
+1. Presentation Layer (Frontend) –
+This is the user interface where users interact with the system (web or mobile app).
+It displays data and sends user requests to the backend.
+
+
+2. Application Layer (Backend) –
+This layer handles business logic, processes user requests, performs validations, and communicates with the database.
+
+
+3. Data Layer (Database) –
+This stores all system data such as user information, transactions, records, etc.
+
+
+
+This layered architecture improves:
+
+Maintainability
+
+Scalability
+
+Security
+
+Performance
+
+
+
+---
+
+Client–Server Model
+
+The system operates using a Client–Server architecture:
+
+The Client (browser/mobile app) sends requests (e.g., login, submit form, fetch data).
+
+The Server receives the request, processes it, and sends a response back.
+
+
+Example flow:
+
+1. User logs in
+
+
+2. Client sends login request to server
+
+
+3. Server verifies credentials from database
+
+
+4. Server sends success/failure response
+
+
+
+This model ensures:
+
+Centralized data management
+
+Better security
+
+Multiple users can access simultaneously
+
+
+
+---
+
+Cloud Hosting
+
+The system is deployed on a cloud platform (e.g., AWS, Azure, Google Cloud).
+
+Benefits of cloud hosting:
+
+Scalable resources (can handle more users easily)
+
+High availability
+
+Backup & disaster recovery
+
+Secure data storage
+
+Reduced infrastructure cost
+
+
+Cloud hosting allows the system to run 24/7 without maintaining physical servers.
+
+
+---
+
+Database Overview
+
+The system uses a relational database (e.g., MySQL/PostgreSQL).
+
+The database:
+
+Stores structured data in tables
+
+Uses primary keys and foreign keys
+
+Maintains relationships between entities
+
+
+Main tables may include:
+
+Users
+
+Orders / Transactions
+
+Products / Services
+
+Logs
+
+
+The database ensures:
+
+Data integrity
+
+Consistency
+
+Efficient querying
+
+
+
+---
+
+System Design Artifacts
+
+System design artifacts visually represent how the system works.
+
+
+---
+
+ER Diagram (Entity Relationship Diagram)
+
+Refer to: /docs/diagrams/ER_Diagram.png
+
+The ER diagram shows:
+
+Entities (e.g., User, Order, Product)
+
+Attributes of each entity
+
+Relationships between entities
+
+Primary & Foreign Keys
+
+
+Purpose:
+
+Helps design the database structure
+
+Ensures proper relationships
+
+Avoids redundancy
+
+
+
+---
+
+UML Diagrams
+
+📁 Refer to: /docs/diagrams/UML_Diagrams/
+
+Common UML diagrams included:
+
+Use Case Diagram
+
+Shows:
+
+System users (actors)
+
+What actions they can perform
+
+
+Purpose:
+
+Understand system functionality from user perspective
+
+
+
+---
+
+Class Diagram
+
+Shows:
+
+Classes
+
+Attributes
+
+Methods
+
+Relationships between classes
+
+
+Purpose:
+
+Represents object-oriented structure
+
