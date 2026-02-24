@@ -155,4 +155,30 @@ The system automatically:
 
  Transforms citizens from passive observers into active participants in disaster management.
 
- ResQNow combines technology, community intelligence, and real-time coordination to build a safer, smarter society.
+ ResQNow combines technology, community intelligence, and real-time coordination to build a safer, smarter society.   
+
+ # ResQNow – Crowdsourced Disaster Response & Emergency Coordination Platform
+
+##  Project Overview
+
+ResQNow is a crowdsourced disaster management and emergency coordination platform designed to enhance real-time incident reporting, verification, and response management in Sri Lanka.  
+
+The system enables citizens to report disasters, authorities to verify incidents, and responders to coordinate actions efficiently. ResQNow focuses on improving response speed, transparency, trust, and preparedness during critical situations such as floods, landslides, road accidents, and extreme weather events.
+
+---
+
+##  Problem Statement
+
+Sri Lanka frequently experiences natural disasters and emergency situations, particularly during monsoon seasons. Existing systems primarily focus on reporting incidents but lack:
+
+- Structured verification mechanisms
+- Real-time response transparency
+- Resource capacity awareness
+- Data-driven risk analysis
+- Accountability in emergency handling
+
+Additionally, misinformation and duplicate reporting reduce the effectiveness of crowdsourced disaster platforms.
+
+ResQNow aims to address these limitations through a structured, trust-aware, and analytics-driven approach.
+
+---
