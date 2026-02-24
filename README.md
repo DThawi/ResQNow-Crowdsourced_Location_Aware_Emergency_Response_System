@@ -182,3 +182,59 @@ Additionally, misinformation and duplicate reporting reduce the effectiveness of
 ResQNow aims to address these limitations through a structured, trust-aware, and analytics-driven approach.
 
 ---
+## Proposed Solution
+
+ResQNow introduces a centralized yet intelligent disaster response platform that integrates:
+
+- Citizen-based real-time reporting
+- Role-based access control (Citizen, Responder, Admin)
+- Smart verification mechanisms
+- Response lifecycle tracking
+- Predictive Risk Hotspot visualization
+- Data-driven dashboards for authorities
+
+The system improves disaster response coordination while ensuring accountability and credibility.
+
+---
+
+## Key Features
+
+### 1. Real-Time Incident Reporting
+- Citizens can report disasters with location, images, and category.
+- GPS-based automatic location capture.
+- Status tracking for each report.
+
+### 2. Trust-Based Verification Mechanism
+- Reputation score for reporters.
+- Report validation based on credibility and confirmations.
+- Reduction of misinformation and false alarms.
+
+### 3. Responder Accountability & Timeline Tracking
+- Full incident lifecycle tracking:
+  - Reported
+  - Verified
+  - Dispatched
+  - On-site
+  - Resolved
+- Timestamped status updates.
+- Response time analytics.
+
+### 4. Predictive Risk Hotspot Layer
+- Visual heatmap based on historical incident density.
+- Time-based risk pattern analysis.
+- Supports preparedness and decision-making.
+- Not disaster prediction — but incident likelihood visualization.
+
+### 5. Role-Based Access Control (RBAC)
+- Citizen Portal
+- Responder Dashboard
+- Administrative Control Panel
+
+### 6. Data Analytics Dashboard
+- Incident frequency by region
+- Average response time
+- Authority performance metrics
+- Risk trend visualization
+
+---
+
