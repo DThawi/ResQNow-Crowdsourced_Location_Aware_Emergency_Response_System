@@ -1,161 +1,4 @@
-🚨 ResQNow – Smart Emergency Response System 
-
-🌍 A Community-Driven, Real-Time Emergency Coordination Platform 
-
-📌 1️⃣ Introduction
-
-Emergencies such as 🌪 natural disasters and 🚗 road accidents occur unexpectedly and require immediate response from relevant authorities. However, crucial information regarding these incidents is often scattered, delayed, or unreliable.
-
-Traditional reporting methods like 📞 phone calls or 📱 social media posts can lead to:
-
-❌ Miscommunication
-
-❌ Duplicate reports
-
-❌ Delayed verification
-
-❌ Inefficient responder coordination
-
-Most existing emergency reporting systems rely heavily on manual verification processes, which increases response time. Additionally, they lack mechanisms to evaluate the credibility of public reports, treating all submissions equally without assessing trustworthiness.
-
-There is currently no integrated, trust-aware platform that combines:
-
-✔ Public reporting 
-
-✔ Community validation 
-
-✔ Automated responder alerting 
-
-✔ Real-time visualization
-
-🚀 Enter ResQNow
-
-ResQNow is a comprehensive digital emergency response platform designed to solve these challenges.
-
-It introduces:
-
-🔹 A crowdsourced verification mechanism 
-
-🔹 An automated dispatch system 
-
-🔹 Real-time data visualization
-
-Together, these features enhance the speed, accuracy, and coordination of emergency response efforts.
-
-📲 How It Works
-
-Citizens can report incidents in real time by submitting:
-
-🏷 Incident Type
-
-📍 Location
-
-📝 Description
-
-🖼 Optional Images
-
-All reports are stored in a centralized database and displayed on a live interactive map.
-
-👮 Emergency responders and authorities monitor, verify, and act upon incidents through dedicated dashboards — ensuring faster and more effective emergency management.
-
-🌊 Scalable for Multiple Emergency Types
-
-ResQNow supports various emergency scenarios, including:
-
-🚗 Road Accidents
-
-🔥 Fires
-
-🌊 Floods
-
-⛰ Landslides
-
-⚠ Other Disaster Events 
-
-
-🎯 2️⃣ Project Objectives
-
-The primary goal of ResQNow is to improve the speed, accuracy, and coordination of emergency response activities through a crowdsourced digital ecosystem.
-
-🔑 Key Objectives
-
-🔹 Provide intuitive 📱 mobile applications for Citizens and Responders 
-
-🔹 Develop a 💻 web dashboard for Admins 
-
-🔹 Enable real-time incident reporting with detailed information 
-
-🔹 Implement a centralized incident management system 
-
-🔹 Establish an automated proximity-based alert & dispatch mechanism 
-
-🔹 Integrate a crowdsourced verification system to reduce false reports 
-
-🔹 Implement secure authentication using 🔐 JWT (JSON Web Tokens) 
-
-🔹 Provide analytics and data visualization for authorities 
-
-🔹 Allow responders to acknowledge alerts and update statuses 
-
-🔹 Ensure scalability using ☁ cloud-based infrastructure 
-
-🔹 Encourage community participation in real-time emergency data collection 
-
-
-🌟 3️⃣ Novelty of ResQNow
-
-ResQNow introduces innovative features that distinguish it from traditional emergency reporting systems. 
-
-
-1️⃣ Crowdsourced Verification Engine
-
-  Users can upvote or flag incidents, generating a Verification Score that improves credibility and reduces misinformation. 
-
-
-2️⃣ Automated Dispatch Based on Verification
-
-  Responders are notified only after an incident reaches a defined verification threshold — reducing unnecessary alerts. 
-
-
-3️⃣ Real-Time Incident Clustering & Risk Identification
-
-  Verified incidents are visually clustered on a live map to improve situational awareness and assist in faster decision-making. 
-
-
-4️⃣ Trust Badges & Credibility Tracking
-
-  Each reporter has an internal credibility score, increasing trust for reliable contributors. 
-
-
-5️⃣ Multi-Level Real-Time Map Visualization
-
-  Incident heatmaps 
-
-  Severity-based color coding
-
-  Responder movement tracking 
-
-
-6️⃣ Automated Proximity-Based Routing
-
-The system automatically:
-
- Identifies the nearest verified responders
-
- Generates routing instructions
-
- Logs all alerts for transparency 
-
-
-7️⃣ Cloud-Native Scalability
-
- Designed for high performance, capable of handling thousands of concurrent reports in real time.
-
-8️⃣ Community-Driven Emergency Ecosystem
-
- Transforms citizens from passive observers into active participants in disaster management.
-
- ResQNow combines technology, community intelligence, and real-time coordination to build a safer, smarter society.   
+  
 
  # ResQNow – Crowdsourced Disaster Response & Emergency Coordination Platform
 
@@ -439,6 +282,166 @@ Relationships between classes
 Purpose:
 
 Represents object-oriented structure
+
+
+---
+
+## Technologies Used
+
+ResQNow is developed using modern, scalable, and cloud-ready technologies to ensure real-time performance, security, and reliability.
+
+## Frontend
+
+* React Native – Mobile application development (Citizen and Responder applications)
+* React.js – Admin web dashboard
+* Leaflet / Google Maps API – Interactive maps and real-time visualization
+* Redux / Context API – State management
+
+## Backend
+
+* Node.js – Server-side runtime environment
+* Express.js – RESTful API development
+* JSON Web Tokens (JWT) – Secure authentication and authorization
+* Socket.io – Real-time communication and live updates
+
+## Database
+
+* MongoDB – NoSQL database for storing users, incidents, and logs
+* Mongoose – Object Data Modeling (ODM) library for MongoDB
+
+## Cloud and Deployment
+
+* AWS / Firebase / Render / Railway – Cloud hosting and deployment
+* Cloud Storage – Media file storage for incident images
+* Cloud Hosting Services – Scalable backend hosting
+
+## Additional Services
+
+* Geolocation API – Real-time user location tracking
+* Firebase Cloud Messaging (FCM) – Push notifications
+* Nodemailer – Email notification services (if implemented)
+
+---
+
+## Installation and Technical Setup
+
+The following steps explain how to set up and run the ResQNow system locally.
+
+## Prerequisites
+
+Ensure the following software is installed:
+
+* Node.js (version 16 or later)
+* npm or yarn
+* MongoDB (local installation or cloud instance such as MongoDB Atlas)
+* Git
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/resqnow.git
+cd resqnow
+```
+
+---
+
+## 2. Backend Setup
+
+Navigate to the backend directory and install dependencies:
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file inside the backend folder and configure the following environment variables:
+
+```
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+MAP_API_KEY=your_map_api_key
+```
+
+Start the backend server:
+
+```bash
+npm start
+```
+
+The backend server will run on:
+
+```
+http://localhost:5000
+```
+
+---
+
+## 3. Frontend Setup (Mobile Application – React Native)
+
+Navigate to the frontend directory and install dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+Start the development server:
+
+```bash
+npm start
+```
+
+To run the application on Android:
+
+```bash
+npx react-native run-android
+```
+
+To run the application on iOS:
+
+```bash
+npx react-native run-ios
+```
+
+---
+
+## 4. Admin Web Dashboard Setup
+
+Navigate to the admin directory and install dependencies:
+
+```bash
+cd admin
+npm install
+npm start
+```
+
+The admin dashboard will run on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## Environment Configuration Notes
+
+* Ensure MongoDB is running before starting the backend.
+* Start the backend server before running the frontend applications.
+* Confirm that API base URLs in the frontend and admin configurations correctly point to the backend server.
+
+---
+
+## Testing
+
+To run backend tests:
+
+```bash
+npm test
+```
+
 
 
 
