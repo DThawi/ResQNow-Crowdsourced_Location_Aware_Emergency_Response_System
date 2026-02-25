@@ -440,3 +440,106 @@ Purpose:
 
 Represents object-oriented structure
 
+
+
+---
+## Project Structure
+
+The ResQNow project follows a modular and well-organized structure to support scalability, maintainability, and collaborative development.
+
+```
+ResQNow/
+│
+├── frontend/
+├── backend/
+├── documentation/
+└── README.md
+```
+
+### /frontend
+
+* Contains the user interface of the application
+* Handles user interaction and visualization
+* Connects with backend APIs
+* Includes UI components, screens, and assets
+
+### /backend
+
+* Contains server-side application logic
+* Implements RESTful APIs
+* Manages authentication and authorization
+* Handles database operations and business logic
+
+### /documentaion
+
+* Stores system documentation
+* Includes UML diagrams and ER diagrams
+* Contains project reports and design artifacts
+
+---
+
+## Team Contributions
+
+### K.A. Wijesekara – Project Manager
+
+* Coordinated overall team activities and project execution
+* Managed project timeline and task allocation
+* Monitored development progress and ensured milestone completion
+* Prepared and reviewed project documentation
+* Ensured successful delivery of project objectives
+
+### R.A.C. Ruwanima – System Analyst
+
+* Conducted requirement gathering and feasibility analysis
+* Designed system models including DFD and ER diagrams
+* Defined system workflows and functional requirements
+* Ensured proper documentation of system processes
+* Supported system design decision-making
+
+### G.P.C. Thushani – Backend Developer
+
+* Developed backend services using Node.js and Express.js
+* Designed and implemented RESTful APIs
+* Managed database integration using MongoDB
+* Implemented server-side logic and data handling
+* Ensured backend performance and system reliability
+
+### A.T. Kalansooriya – Frontend Developer (Mobile/Web)
+
+* Designed and developed the mobile frontend using React Native
+* Integrated frontend components with backend APIs
+* Contributed to UI/UX design improvements
+* Implemented user interaction features
+* Assisted in frontend testing and optimization
+
+### A.M.G.D. Thawinsa – QA Engineer / Developer
+
+* Performed system and integration testing
+* Identified bugs and ensured software quality assurance
+* Validated application functionality and performance
+* Supported both frontend and backend development when required
+* Assisted in debugging and system refinement
+
+---
+
+## Future Enhancements
+
+* AI-based disaster damage analysis
+* Integration with government emergency response systems
+* SMS fallback notification system for low internet connectivity
+* Multi-country deployment and scalability support
+* Offline incident reporting capability
+* Real-time predictive risk and disaster analytics
+
+---
+
+## License
+
+This project is developed for academic and research purposes.
+Licensed under the MIT License.
+
+---
+
+
+    
+    
