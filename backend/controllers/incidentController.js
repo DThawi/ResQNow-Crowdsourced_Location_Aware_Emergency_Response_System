@@ -9,16 +9,14 @@ exports.createIncident = async (req, res) => {
       user_id: req.user.id,
       type,
       description,
-      location,
-      latitude,
-      longitude
+      location
     });
 
   const savedIncident = await newIncident.save();
   res.status(201).json(savedIncident);
 }
   catch(err) {
-    res.status(500).json({ message: Error creating incident", error: err.message });
+    res.status(500).json({ message: "Error creating incident", error: err.message });
   } 
 };
 
@@ -26,8 +24,8 @@ exports.createIncident = async (req, res) => {
 //get all incidents - for live map
 exports.getAllIncidents = async (req, res) => {
   try{
-    const incidents = await Incidents.find().sort({ timestamp: -1 });
-    res.status(200).json(incident);
+    const incidents = await Incident.find().sort({ timestamp: -1 });
+    res.status(200).json(incidents);
   } 
   catch(err) {
     res.status(500).json({ message: "Error fetching incidents", error: err.message });
@@ -41,7 +39,7 @@ exports.updateIncidentStatus = async (req, res) => {
     const {status} = req.body;
     const updateIncident = await Incident.findByIdAndUpdate(
       req.params.id,
-      { ststus },
+      { status },
       { new: true }
       );
     res.status(200).json(updateIncident);
