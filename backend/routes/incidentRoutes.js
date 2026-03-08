@@ -2,8 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const incidentController = require('../controllers/incidentControllerjs');
-const authMiddleware = require('../middleware/authMiddleware.js');
+const incidentController = require('../controllers/incidentController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 router.get('/', incidentController.getAllIncidents);
 router.post('/', authMiddleware, incidentController.createIncident);
