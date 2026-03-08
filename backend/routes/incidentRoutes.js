@@ -6,6 +6,7 @@ const incidentController = require('../controllers/incidentController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.get('/', incidentController.getAllIncidents);
-router.post('/', authMiddleware, incidentController.updateIncidentStatus);
+router.post('/', authMiddleware, incidentController.createIncident);
+router.put('/:id/status', authMiddleware, incidentController.updateIncidentStatus);
 
 module.exports = router;
