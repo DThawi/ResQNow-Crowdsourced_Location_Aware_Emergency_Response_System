@@ -1,8 +1,10 @@
 const Report = require("../models/Report");
+const Media = require("../models/Media");
 
-// Create a new incident report
+// Create report
 exports.createReport = async (req, res) => {
   try {
+
     const { type, description, latitude, longitude } = req.body;
 
     const newReport = new Report({
@@ -16,9 +18,22 @@ exports.createReport = async (req, res) => {
 
     await newReport.save();
 
+    let mediaData = null;
+
+    if (req.file) {
+      mediaData = new Media({
+        incident_id: newReport._id,
+        file_url: req.file.path,
+        file_type: "image"
+      });
+
+      await mediaData.save();
+    }
+
     res.status(201).json({
       message: "Report submitted successfully",
-      report: newReport
+      report: newReport,
+      media: mediaData
     });
 
   } catch (error) {
@@ -33,6 +48,7 @@ exports.createReport = async (req, res) => {
 // Get all reports
 exports.getReports = async (req, res) => {
   try {
+
     const reports = await Report.find();
 
     res.status(200).json(reports);
@@ -45,8 +61,11 @@ exports.getReports = async (req, res) => {
   }
 };
 
+
+// Get report by ID
 exports.getReportById = async (req, res) => {
   try {
+
     const report = await Report.findById(req.params.id);
 
     if (!report) {
@@ -59,8 +78,12 @@ exports.getReportById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+// Delete report
 exports.deleteReport = async (req, res) => {
   try {
+
     const report = await Report.findByIdAndDelete(req.params.id);
 
     if (!report) {

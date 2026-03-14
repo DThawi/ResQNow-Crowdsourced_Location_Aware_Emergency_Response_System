@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
 
-const { 
-  createReport, 
-  getReports, 
-  getReportById, 
-  deleteReport 
+const {
+  createReport,
+  getReports,
+  getReportById,
+  deleteReport
 } = require("../controllers/reportController");
 
-// Create report
-router.post("/", createReport);
+const upload = require("../middleware/uploadMiddleware");
+
+// Create report with image
+router.post("/", upload.single("image"), createReport);
 
 // Get all reports
 router.get("/", getReports);
