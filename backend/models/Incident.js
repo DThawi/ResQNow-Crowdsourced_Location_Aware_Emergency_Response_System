@@ -4,6 +4,9 @@ const IncidentSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   type: { type: String, required: true }, // e.g., Accident, Fire, Flood [cite: 247]
   description: { type: String, required: true },
+  image:{
+    type: String
+  },
  location: {
     type: {
       type: String, 
