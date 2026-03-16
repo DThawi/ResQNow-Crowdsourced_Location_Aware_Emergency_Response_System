@@ -7,6 +7,10 @@ exports.createIncident = async (req, res) => {
   try {
     const { type, description, longitude, latitude } = req.body;
 
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+  return res.status(400).json({ message: "Invalid GPS coordinates" });
+}
+
     const newIncident = new Incident({
       user_id: req.user.id,
       type,
