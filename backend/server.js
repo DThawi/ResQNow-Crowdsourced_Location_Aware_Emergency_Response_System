@@ -7,7 +7,7 @@ const authRoutes = require("./routes/authRoutes.js");
 
 const incidentRoutes = require('./routes/incidentRoutes.js');
 
-const reportRoutes = require("./routes/reportRoutes.js");
+
 
 const app = express();
 
@@ -21,7 +21,7 @@ app.use("/api/auth", authRoutes);
 
 app.use('/api/incidents', incidentRoutes);
 
-app.use("/api/reports", reportRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("ResQNow backend running");
