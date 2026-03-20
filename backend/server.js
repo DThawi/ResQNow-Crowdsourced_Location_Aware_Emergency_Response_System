@@ -5,6 +5,7 @@ const User = require("./models/User");
 
 // Route imports
 const authRoutes = require("./routes/authRoutes.js");
+<<<<<<< HEAD
 const incidentRoutes = require("./routes/incidentRoutes.js");
 const reportRoutes = require("./routes/reportRoutes.js");
 const uploadRoutes = require("./routes/uploadRoutes");
@@ -12,6 +13,27 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const app = express();
 
 // Root endpoint
+=======
+
+const incidentRoutes = require('./routes/incidentRoutes.js');
+
+
+
+const app = express();
+
+// Connect DB
+connectDB();
+
+app.use(express.json());
+
+// Auth routes
+app.use("/api/auth", authRoutes);
+
+app.use('/api/incidents', incidentRoutes);
+
+
+
+>>>>>>> 5fdde7215c038add9ba1f37797c797cefdb53198
 app.get("/", (req, res) => {
   res.send("ResQNow backend running");
 });
@@ -83,5 +105,9 @@ if (process.env.NODE_ENV !== "test") {
   startServer();
 }
 
+<<<<<<< HEAD
 // Export app for testing
 module.exports = app;
+=======
+module.exports = app;
+>>>>>>> 5fdde7215c038add9ba1f37797c797cefdb53198

@@ -10,7 +10,7 @@ router.get('/', incidentController.getAllIncidents);
 router.post(
   '/',
   verifyToken,
-  upload.single("image"),   
+  upload.single("image"),   // only accepts 'image'
   incidentController.createIncident
 );
 
