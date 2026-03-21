@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI); // removed deprecated options
-    console.log("MongoDB Connected ✅");
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected ✅"); // only one message
   } catch (err) {
-    console.error("MongoDB connection error ❌:", err.message);
-    process.exit(1); // Stop server if DB cannot connect
+    console.error("Database connection error ❌:", err.message);
+    process.exit(1);
   }
 };
 
