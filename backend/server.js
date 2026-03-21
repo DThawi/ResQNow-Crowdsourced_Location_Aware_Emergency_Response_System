@@ -10,8 +10,6 @@ const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 
-// Connect DB
-connectDB();
 
 app.use(express.json());
 
