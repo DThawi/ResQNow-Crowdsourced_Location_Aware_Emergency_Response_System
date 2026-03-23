@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+const { findCluster } = require("../utils/clustering");
 // Handles creating reports with GPS data and manages the lifecycle status.
 
 const Incident = require('../models/Incident');
@@ -5,12 +7,23 @@ const Incident = require('../models/Incident');
 // Create new incident report
 exports.createIncident = async (req, res) => {
   try {
+    let { type, description, longitude, latitude } = req.body;
 
-    const { type, description, longitude, latitude } = req.body;
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
 
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-  return res.status(400).json({ message: "Invalid GPS coordinates" });
-}
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ message: "Invalid GPS coordinates" });
+    }
+
+    // 🔍 Find cluster
+    const existingCluster = await findCluster(lat, lng);
+
+    let clusterId = null;
+
+    if (existingCluster) {
+      clusterId = existingCluster.cluster_id || existingCluster._id;
+    }
 
     const newIncident = new Incident({
       user_id: req.user.id,
@@ -18,22 +31,26 @@ exports.createIncident = async (req, res) => {
       description,
       location: {
         type: 'Point',
-        coordinates: [parseFloat(longitude), parseFloat(latitude)] // Location update
+        coordinates: [lng, lat]
       },
-      image: req.file ? req.file.path : null
+      image: req.file ? req.file.path : null,
+      cluster_id: new mongoose.Types.ObjectId()
     });
 
     const savedIncident = await newIncident.save();
 
+    console.log("🆕 Saved Incident:", savedIncident._id, "Cluster:", clusterId);
+
     res.status(201).json(savedIncident);
+
   } catch (err) {
+    console.error("❌ ERROR:", err);
     res.status(500).json({
       message: "Error creating incident",
       error: err.message
     });
   }
 };
-
 
 // Get all incidents (used for live map display)
 exports.getAllIncidents = async (req, res) => {
