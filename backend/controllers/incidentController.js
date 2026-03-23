@@ -17,25 +17,31 @@ exports.createIncident = async (req, res) => {
     }
 
     // 🔍 Find cluster
-    const existingCluster = await findCluster(lat, lng);
+    
+const existingCluster = await findCluster(lat, lng);
 
-    let clusterId = null;
+let clusterId;
 
-    if (existingCluster) {
-      clusterId = existingCluster.cluster_id || existingCluster._id;
-    }
+if (existingCluster) {
+  // If existing incident already has cluster_id, reuse it
+  clusterId = existingCluster.cluster_id || existingCluster._id;
+} else {
+  // 🔥 No cluster found → this becomes new cluster
+  clusterId = new mongoose.Types.ObjectId();
+}
+    
 
     const newIncident = new Incident({
-      user_id: req.user.id,
-      type,
-      description,
-      location: {
-        type: 'Point',
-        coordinates: [lng, lat]
-      },
-      image: req.file ? req.file.path : null,
-      cluster_id: new mongoose.Types.ObjectId()
-    });
+  user_id: req.user.id,
+  type,
+  description,
+  location: {
+    type: 'Point',
+    coordinates: [lng, lat]
+  },
+  image: req.file ? req.file.path : null,
+  cluster_id: clusterId
+});
 
     const savedIncident = await newIncident.save();
 
