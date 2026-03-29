@@ -5,6 +5,7 @@ const IncidentSchema = new mongoose.Schema({
   type: { type: String, required: true },
   description: { type: String, required: true },
   image: { type: String },
+  
   location: {
     type: {
       type: String,
@@ -16,11 +17,20 @@ const IncidentSchema = new mongoose.Schema({
       required: true
     }
   },
+  assignedAuthorities: [
+  { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+],
   status: { 
     type: String, 
     enum: ['Pending', 'Verified', 'Assigned', 'Resolved'],
     default: 'Pending' 
   },
+  // ✅ ADD THIS
+  assignedAuthority: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
+  
   status_history: [{
     status: { 
       type: String, 
