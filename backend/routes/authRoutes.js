@@ -1,32 +1,179 @@
-const express = require("express");
-const router = express.Router();
+const { sendEmail, sendSMS } = require("../utils/notificationService");
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-const authController = require("../controllers/authController");
-const { verifyToken } = require("../middleware/authMiddleware");
-const allowRoles = require("../middleware/roleMiddleware");
+// REGISTER 
+exports.register = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      role,
+      district,
+      longitude,
+      latitude,
+      organization,
+      contact_number
+    } = req.body;
 
-// Authentication routes
-router.post("/register", authController.register);
-router.post("/login", authController.login);
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
 
-// Protected route (token required)
-router.get("/profile", verifyToken, (req, res) => {
-  res.json({
-    message: "Protected route accessed",
-    user: req.user
-  });
-});
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ message: "Latitude and Longitude required" });
+    }
 
-// RBAC Test Routes
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ message: "Invalid GPS coordinates" });
+    }
 
-// Admin only
-router.get("/admin-dashboard", verifyToken, allowRoles("Admin"), (req, res) => {
-  res.json({ message: "Welcome Admin" });
-});
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-// Citizen only
-router.get("/citizen-dashboard", verifyToken, allowRoles("Citizen"), (req, res) => {
-  res.json({ message: "Welcome Citizen" });
-});
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-module.exports = router;
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      district,
+      location: {
+        type: "Point",
+        coordinates: [lng, lat]
+      },
+      organization,
+      contact_number
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: "User registered successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+//  LOGIN 
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!ser) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      message: "Login successful",
+      token,
+      role: user.role
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+//  FORGOT PASSWORD (SEND OTP)
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+
+    const user = await User.findOne({
+      $or: [{ email }, { contact_number: phone }]
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // store OTP temporarily
+    user.resetOTP = otp;
+    user.otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
+    await user.save();
+
+    // send email or SMS (SIMULATION)
+    if (email) {
+      await sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`);
+    }
+
+    if (phone) {
+      await sendSMS(user.contact_number, `Your OTP is: ${otp}`);
+    }
+
+    res.json({ message: "OTP sent successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// VERIFY OTP 
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user || user.resetOTP !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (user.otpExpire < Date.now()) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    res.json({ message: "OTP verified" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// RESET PASSWORD 
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.resetOTP = null;
+    user.otpExpire = null;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
