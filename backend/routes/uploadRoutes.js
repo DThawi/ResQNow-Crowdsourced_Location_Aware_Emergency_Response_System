@@ -1,17 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/upload");
+const { upload, uploadToCloudinary } = require("../middleware/upload"); // adjust path
 
-// POST /api/upload
-router.post("/", upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded" });
+router.post(
+  "/upload",
+  upload.single("image"),
+  uploadToCloudinary,
+  (req, res) => {
+    res.json({
+      message: "Upload successful ✅",
+      imageUrl: req.file.cloudinaryUrl,
+    });
   }
-
-  res.status(200).json({
-    message: "File uploaded successfully",
-    fileName: req.file.originalname
-  });
-});
+);
 
 module.exports = router;
