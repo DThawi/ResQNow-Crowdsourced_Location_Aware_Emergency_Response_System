@@ -5,7 +5,20 @@ const jwt = require("jsonwebtoken");
 // REGISTER USER
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, contact_number } = req.body;
+    const { name, email, password, role, district,longitude, latitude, organization, contact_number } = req.body;
+
+    
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ message: "Latitude and Longitude required" });
+    }
+
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ message: "Invalid GPS coordinates" });
+    }
 
     // check if user already exists
     const existingUser = await User.findOne({ email });
@@ -22,8 +35,16 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      district,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(longitude), parseFloat(latitude)]
+      },
+      organization,
       contact_number
     });
+
+    console.log("BODY:", req.body);
 
     await newUser.save();
 
