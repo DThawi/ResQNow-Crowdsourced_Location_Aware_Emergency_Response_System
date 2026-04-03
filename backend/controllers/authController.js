@@ -3,7 +3,8 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-//  REGISTER 
+
+// REGISTER USER
 exports.register = async (req, res) => {
   try {
     const {
@@ -47,12 +48,26 @@ exports.register = async (req, res) => {
         coordinates: [lng, lat]
       },
       organization,
-      contact_number
+      contact_number,
+      isVerified: role === "Authority" ? false : true // Authorities need approval
     });
 
     await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    // Notify Admin when responder registers
+    if (role === "Authority") {
+      await sendEmail(
+        "admin@resqnow.com",
+        "New Responder Registration",
+        `A new responder has registered.\n\nEmail: ${email}\nOrganization: ${organization}`
+      );
+    }
+
+    res.status(201).json({
+      message: role === "Authority"
+        ? "Responder registered. Waiting for admin approval."
+        : "User registered successfully"
+    });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -60,7 +75,7 @@ exports.register = async (req, res) => {
 };
 
 
-//  LOGIN 
+// LOGIN USER
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -69,6 +84,13 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ message: "User not found" });
+    }
+
+    // Block unverified responders
+    if (user.role === "Authority" && !user.isVerified) {
+      return res.status(403).json({
+        message: "Your account is not verified by admin yet"
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -95,7 +117,7 @@ exports.login = async (req, res) => {
 };
 
 
-//  FORGOT PASSWORD (SEND OTP) 
+// FORGOT PASSWORD (OTP)
 exports.forgotPassword = async (req, res) => {
   try {
     const { email, phone } = req.body;
@@ -108,15 +130,12 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // store OTP temporarily
     user.resetOTP = otp;
-    user.otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
+    user.otpExpire = Date.now() + 5 * 60 * 1000;
     await user.save();
 
-    // send email or SMS (SIMULATION)
     if (email) {
       await sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`);
     }
@@ -132,8 +151,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-
-//  VERIFY OTP 
+// VERIFY OTP
 exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -155,8 +173,7 @@ exports.verifyOTP = async (req, res) => {
   }
 };
 
-
-//  RESET PASSWORD 
+// RESET PASSWORD
 exports.resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;

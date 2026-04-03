@@ -39,13 +39,19 @@ const UserSchema = new mongoose.Schema({
     }
   },
 
+
   contact_number: { type: String, required: true },
 
   registered_date: { type: Date, default: Date.now },
 
 
   resetOTP: { type: String },
-  otpExpire: { type: Date }
+  otpExpire: { type: Date },
+
+  isVerified: {
+  type: Boolean,
+  default: false
+}
 
 });
 

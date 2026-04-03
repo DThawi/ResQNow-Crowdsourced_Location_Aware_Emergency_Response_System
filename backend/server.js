@@ -7,6 +7,7 @@ const User = require("./models/User");
 const authRoutes = require("./routes/authRoutes.js");
 const incidentRoutes = require("./routes/incidentRoutes.js");
 const uploadRoutes = require("./routes/uploadRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -28,7 +30,7 @@ app.get("/test-db", async (req, res) => {
     const allUsers = await User.find();
     res.json(allUsers);
   } catch (err) {
-    console.error("Database error ❌:", err.message);
+    console.error("Database error :", err.message);
     res.status(500).send("Error reading from database");
   }
 });
@@ -40,10 +42,10 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} ✅`);
+      console.log(`Server running on port ${PORT} `);
     });
   } catch (err) {
-    console.error("Failed to start server ❌:", err.message);
+    console.error("Failed to start server :", err.message);
     process.exit(1);
   }
 };
