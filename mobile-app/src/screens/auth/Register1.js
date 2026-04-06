@@ -5,6 +5,9 @@ const Register1 = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register Step 1</Text>
+
+      
+
     </View>
   );
 };
