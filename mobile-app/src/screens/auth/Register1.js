@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import Header from '../../components/layout/header';
+import { LinearGradient } from 'expo-linear-gradient'; // ← Add 
 
 export default function Register1({ navigation }) {
   const [selectedRole, setSelectedRole] = useState(null);
@@ -15,21 +16,13 @@ export default function Register1({ navigation }) {
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
-      <LinearGradient
-        colors={['#070000', '#830F11']}
-        className="flex-row items-center pt-12 pb-4 px-5"
-      >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text className="text-white text-2xl mr-3">←</Text>
-        </TouchableOpacity>
-        <Text className="text-white text-xl font-bold">Create Account</Text>
-      </LinearGradient>
+      <Header title="Create Account" onClose={() => navigation.navigate('Login')} />
 
       <ScrollView contentContainerStyle={{ alignItems: 'center', padding: 24 }}>
         <Text className="text-2xl font-bold text-black mb-1">Select Your Role</Text>
         <Text className="text-sm text-gray-400 mb-6">Choose how you want to use ResQNow</Text>
 
-        <TouchableOpacity className="w-full mb-4" onPress={() => setSelectedRole('Citizen')}>
+        <TouchableOpacity className="w-full mb-6" onPress={() => setSelectedRole('Citizen')}>
           <LinearGradient
             colors={['#261007', '#6D1307']}
             className={`rounded-2xl p-6 items-center ${selectedRole === 'Citizen' ? 'border-2 border-white' : ''}`}
@@ -40,7 +33,7 @@ export default function Register1({ navigation }) {
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity className="w-full mb-4" onPress={() => setSelectedRole('Responder')}>
+        <TouchableOpacity className="w-full mb-6" onPress={() => setSelectedRole('Responder')}>
           <LinearGradient
             colors={['#022334', '#001F33']}
             className={`rounded-2xl p-6 items-center ${selectedRole === 'Responder' ? 'border-2 border-white' : ''}`}
@@ -51,7 +44,7 @@ export default function Register1({ navigation }) {
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity className="w-full mb-4" onPress={() => setSelectedRole('Admin')}>
+        <TouchableOpacity className="w-full mb-6" onPress={() => setSelectedRole('Admin')}>
           <LinearGradient
             colors={['#5E1616', '#A81313']}
             className={`rounded-2xl p-6 items-center ${selectedRole === 'Admin' ? 'border-2 border-white' : ''}`}

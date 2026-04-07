@@ -6,8 +6,11 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import API from '../../services/api';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -29,7 +32,7 @@ export default function LoginScreen({ navigation }) {
 
         <Image
           source={require('../../../assets/logo.png')}
-          className="w-48 h-48 rounded-full -mb-6"
+          style={{ width: width * 0.35, height: width * 0.35, borderRadius: width * 0.175 }}
         />
 
         <Text className="text-2xl font-bold text-black mb-1">Welcome Back</Text>

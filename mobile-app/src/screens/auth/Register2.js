@@ -6,8 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import API from '../../services/api';
+import Header from '../../components/layout/header';
+import { LinearGradient } from 'expo-linear-gradient'; // ← Add 
 
 export default function Register2({ navigation, route }) {
   const { role } = route.params || {};
@@ -46,15 +47,7 @@ export default function Register2({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
-      <LinearGradient
-        colors={['#070000', '#830F11']}
-        className="flex-row items-center pt-12 pb-4 px-5"
-      >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text className="text-white text-2xl mr-3">←</Text>
-        </TouchableOpacity>
-        <Text className="text-white text-xl font-bold">Create Account</Text>
-      </LinearGradient>
+      <Header title="Create Account" onClose={() => navigation.navigate('Register1')} />
 
       <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center' }}>
 

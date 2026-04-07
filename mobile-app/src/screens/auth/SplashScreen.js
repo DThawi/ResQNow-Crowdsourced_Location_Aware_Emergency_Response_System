@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SplashScreen({ navigation }) {
+  const { width } = useWindowDimensions();
+
+  const logoSize = width < 400 ? 160 : width < 768 ? 200 : 140;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -18,7 +21,7 @@ export default function SplashScreen({ navigation }) {
     >
       <Image
         source={require('../../../assets/logo.png')}
-        className="w-80 h-80 rounded-full -mb-10"
+        style={{ width: logoSize, height: logoSize, borderRadius: logoSize / 2, marginBottom: -10 }}
       />
 
       <Text className="text-white text-3xl font-bold mb-2">ResQNow</Text>
