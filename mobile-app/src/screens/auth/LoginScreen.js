@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView,
 } from 'react-native';
 import API from '../../services/api';
@@ -25,186 +24,73 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-white">
+      <View className="flex-1 items-center px-6 pt-16 pb-10">
 
-      <Image
-        source={require('../../../assets/logo.png')}
-        style={styles.logo}
-      />
+        <Image
+          source={require('../../../assets/logo.png')}
+          className="w-48 h-48 rounded-full -mb-6"
+        />
 
-      <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to continue to ResQNow</Text>
+        <Text className="text-2xl font-bold text-black mb-1">Welcome Back</Text>
+        <Text className="text-base text-gray-400 mb-8">Sign in to continue to ResQNow</Text>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Email Address</Text>
-        <View style={styles.inputWrapper}>
-          <Text style={styles.icon}>✉️</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+        <View className="w-full mb-2">
+          <Text className="text-sm font-bold text-black mb-1 mt-2">Email Address</Text>
+          <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white h-12">
+            <Text className="mr-2 text-base">✉️</Text>
+            <TextInput
+              className="flex-1 text-sm text-black"
+              placeholder="Enter your email"
+              placeholderTextColor="#999"
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <Text className="text-sm font-bold text-black mb-1 mt-3">Password</Text>
+          <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white h-12">
+            <Text className="mr-2 text-base">🔒</Text>
+            <TextInput
+              className="flex-1 text-sm text-black"
+              placeholder="Enter your password"
+              placeholderTextColor="#999"
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
         </View>
 
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.inputWrapper}>
-          <Text style={styles.icon}>🔒</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            placeholderTextColor="#999"
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
-      </View>
+        <View className="flex-row justify-between items-center w-full my-4">
+          <TouchableOpacity
+            className="flex-row items-center"
+            onPress={() => setRememberMe(!rememberMe)}
+          >
+            <View className={`w-4 h-4 border-2 mr-2 ${rememberMe ? 'bg-[#D62828] border-[#D62828]' : 'bg-white border-gray-400'}`} />
+            <Text className="text-sm text-gray-500">Remember me</Text>
+          </TouchableOpacity>
 
-      <View style={styles.row}>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword1')}>
+            <Text className="text-sm text-[#D62828] font-bold">Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
-          style={styles.checkboxContainer}
-          onPress={() => setRememberMe(!rememberMe)}
+          className="bg-[#D62828] w-full h-12 rounded-xl justify-center items-center mb-5"
+          onPress={handleLogin}
         >
-          <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
-          <Text style={styles.rememberText}>Remember me</Text>
+          <Text className="text-white text-base font-bold">Sign In</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword1')}>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
-        </TouchableOpacity>
+        <View className="flex-row items-center">
+          <Text className="text-sm text-gray-400">Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Register1')}>
+            <Text className="text-sm text-[#D62828] font-bold">Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
-
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Sign In</Text>
-      </TouchableOpacity>
-
-      <View style={styles.signupRow}>
-        <Text style={styles.signupText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register1')}>
-          <Text style={styles.signupLink}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
-
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  logo: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    marginBottom: -30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#888888',
-    marginBottom: 30,
-  },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 10,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 6,
-    marginTop: 10,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.6,
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
-    height: 51,
-  },
-  icon: {
-    marginRight: 8,
-    fontSize: 16,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: '#000000',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 16,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 16,
-    height: 16,
-    borderWidth: 1.5,
-    borderColor: '#999',
-    marginRight: 6,
-    backgroundColor: '#fff',
-  },
-  checkboxChecked: {
-    backgroundColor: '#D62828',
-    borderColor: '#D62828',
-  },
-  rememberText: {
-    fontSize: 13,
-    color: '#888',
-  },
-  forgotText: {
-    fontSize: 13,
-    color: '#D62828',
-    fontWeight: 'bold',
-  },
-  button: {
-    backgroundColor: '#D62828',
-    width: '100%',
-    height: 48,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signupRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  signupText: {
-    fontSize: 14,
-    color: '#888888',
-  },
-  signupLink: {
-    fontSize: 14,
-    color: '#D62828',
-    fontWeight: 'bold',
-  },
-});
