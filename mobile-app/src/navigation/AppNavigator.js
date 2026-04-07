@@ -7,6 +7,7 @@ import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/Register1"; // Assuming Register1 is the first step of registration
 import PrivacyPolicy from "../CommonScreens/PrivacyPolicy";
 import HomeScreen from "../screens/auth/HomeScreen";
+import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -22,6 +23,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Map"  component={LiveMapScreen} options={{ headerShown: false }} />
       
         
 
