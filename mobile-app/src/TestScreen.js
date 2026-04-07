@@ -21,6 +21,20 @@ const TestScreen = ({ navigation }) => {
        title="Go to PrivacyPolicy" 
       onPress={() => navigation.navigate("PrivacyPolicy")} 
         />
+        <Button
+       title="Terms & Conditions" 
+      onPress={() => navigation.navigate("TermsConditions")} 
+        />
+
+         <Button
+       title="Help & Support" 
+      onPress={() => navigation.navigate("HelpSupport")} 
+        />
+
+       <Button
+       title="Profile Screen" 
+      onPress={() => navigation.navigate("ProfileScreen")} 
+        />
 
       <Button
         title="Go Back"
