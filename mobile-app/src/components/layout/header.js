@@ -6,7 +6,7 @@ const GradientHeader = ({ title, onClose }) => (
     colors={["#D62828", "#003049"]}
     start={{ x: 0, y: 0 }}
     end={{ x: 1, y: 0 }}
-    className="flex-row justify-between items-center px-4 py-4">
+    className="flex-row justify-between items-center px-4 pt-10 pb-4">
     <Text className="text-white text-lg font-bold">{title}</Text>
 
     <TouchableOpacity onPress={onClose}>
