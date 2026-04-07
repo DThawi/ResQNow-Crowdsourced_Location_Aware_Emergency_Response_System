@@ -25,11 +25,11 @@ export default function AppNavigator() {
        
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{headerShown:false}}/>
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="TermsConditions" component={TermsConditions} />
-        <Stack.Screen name="HelpSupport" component={HelpSupport} />
-        <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+        <Stack.Screen name="TermsConditions" component={TermsConditions} options={{headerShown:false}}/>
+        <Stack.Screen name="HelpSupport" component={HelpSupport} options={{headerShown:false}}/>
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{headerShown:false}} />
         <Stack.Screen name="TestScreen" component={TestScreen}/>
       
         

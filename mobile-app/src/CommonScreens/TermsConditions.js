@@ -9,10 +9,7 @@ const TermsConditions = ({ navigation }) => {
     <View className="flex-1 bg-gray-100">
 
       {/* Header */}
-      <GradientHeader 
-        title="Terms & Conditions" 
-        onClose={() => navigation.goBack()} 
-      />
+      // <GradientHeader title="Terms & Conditions" type="close" />
 
       {/* Content */}
       <ScrollView className="p-4">

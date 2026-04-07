@@ -10,10 +10,8 @@ const PrivacyPolicy = ({ navigation }) => {
     <View className="flex-1 bg-gray-100">
 
       {/* Header */}
-      <GradientHeader 
-        title="Privacy Policy" 
-        onClose={() => navigation.goBack()} 
-      />
+      <GradientHeader title="Privacy Policy" type="close" />
+      
       
 
       {/* Content */}

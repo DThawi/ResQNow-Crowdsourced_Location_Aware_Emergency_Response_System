@@ -41,10 +41,7 @@ const HelpSupport = () => {
     <View className="flex-1 bg-gray-100">
       
       {/* Header */}
-      <GradientHeader 
-        title="Help & Support" 
-        onClose={() => navigation.goBack()} 
-      />
+      // <GradientHeader title="Help & Support" type="close" />
 
       <ScrollView className="p-4">
 
