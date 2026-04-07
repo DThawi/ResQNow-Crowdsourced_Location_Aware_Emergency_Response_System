@@ -23,19 +23,31 @@ const PrivacyPolicy = ({ navigation }) => {
           1. Information We Collect
         </Text>
 
-       <BulletItem>
-          <Text className="font-bold">Personal Information:</Text> Name, email, phone number, profile photo
+       <BulletItem
+        containerClass="flex-row items-start mb-2 ml-5"
+        bulletClass="mr-2 text-red-600 text-lg"
+        textClass="flex-1 text-base text-gray-800">
+           <Text className="font-bold">Personal Information:</Text> Name, email, phone number, profile photo
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Location Data:</Text> Real-time GPS coordinates during active emergency response operations
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Professional Information:</Text> Organization details, credentials, certifications, and specialization
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Usage Analytics(Optional):</Text> App interaction patterns to improve service quality
         </BulletItem>
 
@@ -43,19 +55,31 @@ const PrivacyPolicy = ({ navigation }) => {
           2. How We Use Your Data
         </Text>
 
-       <BulletItem>
+       <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Emergency Coordination:</Text> To dispatch and coordinate emergency responders efficiently
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Real-Time Communication:</Text> To send critical incident alerts and updates
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Performance Improvement:</Text> To analyze system performance and enhance response times
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Verification:</Text> To authenticate responder credentials and maintain platform security
         </BulletItem>
 
@@ -63,19 +87,31 @@ const PrivacyPolicy = ({ navigation }) => {
           3. Data Protection & Security
         </Text>
 
-       <BulletItem>
+       <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Encryption:</Text> All data is encrypted both in transit (TLS/SSL) and at rest (AES-256)
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Access Control:</Text> Restricted access limited to authorized personnel only
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Data Retention:</Text> Personal data retained only as long as necessary for emergency operations
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Regular Audits:</Text> Security protocols reviewed and updated regularly
         </BulletItem>
 
@@ -83,19 +119,31 @@ const PrivacyPolicy = ({ navigation }) => {
           4. Your Rights
         </Text>
 
-       <BulletItem>
+       <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Access Your Data:</Text> Request a copy of all personal information we hold
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Data Correction:</Text> Update or correct inaccurate information
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800" >
           <Text className="font-bold">Data Deletion:</Text> Request permanent deletion of your account and associated data
         </BulletItem>
 
-        <BulletItem>
+        <BulletItem
+          containerClass="flex-row items-start mb-2 ml-5"
+          bulletClass="mr-2 text-red-600 text-lg"
+          textClass="flex-1 text-base text-gray-800">
           <Text className="font-bold">Opt-Out:</Text> Disable optional analytics and non-critical data collection
         </BulletItem>
 
