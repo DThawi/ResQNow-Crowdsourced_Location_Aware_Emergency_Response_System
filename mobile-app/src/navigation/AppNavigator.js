@@ -17,6 +17,7 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator>
 
+
        
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -25,6 +26,7 @@ export default function AppNavigator() {
         
       
         
+
       </Stack.Navigator>
     </NavigationContainer>
   );
