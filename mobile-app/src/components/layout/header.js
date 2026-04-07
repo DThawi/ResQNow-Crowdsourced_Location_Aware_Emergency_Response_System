@@ -1,18 +1,25 @@
 import React from "react";
-import { View, Text, TouchableOpacity} from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-const GradientHeader = ({ title, onClose }) => (
-  <LinearGradient
-    colors={["#D62828", "#003049"]}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 0 }}
-    className="flex-row justify-between items-center px-4 py-4">
-    <Text className="text-white text-lg font-bold">{title}</Text>
+import { useNavigation } from "@react-navigation/native";
 
-    <TouchableOpacity onPress={onClose}>
-      <Text className="text-white text-lg">✕</Text>
-    </TouchableOpacity>
-  </LinearGradient>
-);
+const GradientHeader = ({ title }) => {
+  const navigation = useNavigation();
+
+  return (
+    <LinearGradient
+      colors={["#D62828", "#003049"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      className="flex-row justify-between items-center px-4 py-4"
+    >
+      <Text className="text-white text-lg font-bold">{title}</Text>
+
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Text className="text-white">✕</Text>
+      </TouchableOpacity>
+    </LinearGradient>
+  );
+};
 
 export default GradientHeader;
