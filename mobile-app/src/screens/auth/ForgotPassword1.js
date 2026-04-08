@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
-import ForgotPasswordModal from '../../components/modals/forgotPasswordModal';
+// components/ForgotPasswordPopup.js
 
-export default function ForgotPassword1({ navigation }) {
-  const [visible, setVisible] = useState(true);
+import React, { useState } from "react";
+import { View, TouchableOpacity, Text } from "react-native";
+import ForgotPasswordModal from "../../components/modals/forgotPasswordModal";
 
-  const handleClose = () => {
-    setVisible(false);
-    navigation.navigate('Login');
-  };
+export default function ForgotPasswordPopup() {
+  const [visible, setVisible] = useState(false);
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <ForgotPasswordModal visible={visible} onClose={handleClose} />
+    <View>
+
+      {/* Trigger Button (you can remove this if needed) */}
+      <TouchableOpacity onPress={() => setVisible(true)}>
+        <Text className="text-red-700 text-sm">
+          Forgot Password?
+        </Text>
+      </TouchableOpacity>
+
+      {/* Modal */}
+      <ForgotPasswordModal
+        visible={visible}
+        onClose={() => setVisible(false)}
+      />
+
     </View>
   );
 }
