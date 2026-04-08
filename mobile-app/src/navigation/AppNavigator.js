@@ -13,13 +13,14 @@ import ForgotPassword1 from "../screens/auth/ForgotPassword1";
 import LogoutPopup from "../screens/auth/LogoutPopup";
 import PrivacyPolicy from "../CommonScreens/PrivacyPolicy";
 import HomeScreen from "../screens/auth/HomeScreen";
+import ReportIncident from "../screens/Citizen/ReportIncident";
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="ReportIncident" screenOptions={{ headerShown: false }}>
         {/* <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />
@@ -30,7 +31,8 @@ export default function AppNavigator() {
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
         <Stack.Screen name="LogoutPopup" component={LogoutPopup} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} /> */}
-        <Stack.Screen name="Home" component={HomeScreen} />
+        {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
+        <Stack.Screen name="ReportIncident" component={ReportIncident} />
 
 
 
