@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function SplashScreen({ navigation }) {
   const { width } = useWindowDimensions();
 
-  const logoSize = width < 400 ? 160 : width < 768 ? 200 : 140;
+  const logoSize = width < 400 ? 260 : width < 768 ? 200 : 140;
 
   useEffect(() => {
     const timer = setTimeout(() => {

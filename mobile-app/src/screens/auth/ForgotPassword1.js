@@ -1,21 +1,12 @@
-// components/ForgotPasswordPopup.js
-
 import React, { useState } from "react";
-import { View, TouchableOpacity, Text } from "react-native";
-import ForgotPasswordModal from "../../components/modals/forgotPasswordModal";
+import { View, Text, TouchableOpacity } from "react-native";
+import ForgotPasswordModal from '../../components/modals/forgotPasswordModal';
 
-export default function ForgotPasswordPopup() {
-  const [visible, setVisible] = useState(false);
+const ForgotPassword1 = () => {
+  const [visible, setVisible] = useState(true); // auto open
 
   return (
-    <View>
-
-      {/* Trigger Button (you can remove this if needed) */}
-      <TouchableOpacity onPress={() => setVisible(true)}>
-        <Text className="text-red-700 text-sm">
-          Forgot Password?
-        </Text>
-      </TouchableOpacity>
+    <View className="flex-1 justify-center items-center">
 
       {/* Modal */}
       <ForgotPasswordModal
@@ -25,4 +16,6 @@ export default function ForgotPasswordPopup() {
 
     </View>
   );
-}
+};
+
+export default ForgotPassword1;

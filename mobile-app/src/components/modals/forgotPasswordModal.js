@@ -21,6 +21,7 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
 
   useEffect(() => {
     let timer;

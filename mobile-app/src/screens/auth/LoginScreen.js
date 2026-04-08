@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import API from '../../services/api';
+import ForgotPasswordModal from '../../components/modals/forgotPasswordModal';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +17,8 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const logoSize = Math.min(width * 0.5, 200); // max 200px
 
   const handleLogin = async () => {
     try {
@@ -31,15 +34,20 @@ export default function LoginScreen({ navigation }) {
       <View className="flex-1 items-center px-6 pt-16 pb-10">
 
         <Image
-          source={require('../../../assets/logo.png')}
-          style={{ width: width * 0.35, height: width * 0.35, borderRadius: width * 0.175 }}
+         source={require('../../../assets/logo.png')}
+         style={{
+          width: logoSize,
+          height: logoSize,
+          borderRadius: logoSize / 2,
+          marginBottom: -20, 
+         }}
         />
 
-        <Text className="text-2xl font-bold text-black mb-1">Welcome Back</Text>
+        <Text className="text-2xl font-bold text-black mb-2">Welcome Back</Text>
         <Text className="text-base text-gray-400 mb-8">Sign in to continue to ResQNow</Text>
 
         <View className="w-full mb-2">
-          <Text className="text-sm font-bold text-black mb-1 mt-2">Email Address</Text>
+          <Text className="text-sm font-bold text-black mb-1 mt-6">Email Address</Text>
           <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white h-12">
             <Text className="mr-2 text-base">✉️</Text>
             <TextInput
@@ -52,7 +60,7 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          <Text className="text-sm font-bold text-black mb-1 mt-3">Password</Text>
+          <Text className="text-sm font-bold text-black mb-1 mt-8">Password</Text>
           <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white h-12">
             <Text className="mr-2 text-base">🔒</Text>
             <TextInput
@@ -74,13 +82,14 @@ export default function LoginScreen({ navigation }) {
             <Text className="text-sm text-gray-500">Remember me</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword1')}>
+          {/* ✅ FIXED HERE */}
+          <TouchableOpacity onPress={() => setShowForgotModal(true)}>
             <Text className="text-sm text-[#D62828] font-bold">Forgot Password?</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          className="bg-[#D62828] w-full h-12 rounded-xl justify-center items-center mb-5"
+          className="bg-[#D62828] w-full h-12 rounded-xl justify-center items-center mb-8"
           onPress={handleLogin}
         >
           <Text className="text-white text-base font-bold">Sign In</Text>
@@ -92,6 +101,17 @@ export default function LoginScreen({ navigation }) {
             <Text className="text-sm text-[#D62828] font-bold">Sign Up</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ✅ MODAL ADDED HERE */}
+        <ForgotPasswordModal
+          visible={showForgotModal}
+          onClose={() => setShowForgotModal(false)}
+          onSuccess={() => {
+            setShowForgotModal(false);
+            // You are already in login screen
+            // so no navigation needed
+          }}
+        />
 
       </View>
     </ScrollView>
