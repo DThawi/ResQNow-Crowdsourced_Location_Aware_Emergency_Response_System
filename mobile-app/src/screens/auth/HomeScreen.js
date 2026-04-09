@@ -1,19 +1,79 @@
-import { View, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import IncidentCard from '../../components/cards/incidentCards';
+import API from '../../services/api';
+import HomeHeader from '../../components/HomeHeader';
 
 const HomeScreen = () => {
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const response = await API.get('/incidents');
+        setIncidents(response.data);
+      } catch (error) {
+        console.error("Error fetching incidents:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIncidents();
+  }, []);
+
+  // Simple helper to format time ago strings
+  const getTimeAgo = (timestamp) => {
+    if (!timestamp) return "Unknown time";
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffInMins = Math.floor((now - past) / 60000);
+
+    if (diffInMins < 60) return `${diffInMins}m ago`;
+    const diffInHours = Math.floor(diffInMins / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return `${Math.floor(diffInHours / 24)}d ago`;
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#D32F2F" />
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 p-4 bg-white">
-      <Text className="text-[20px] font-bold mb-5">Welcome to the Home Screen</Text>
-      <IncidentCard
-        type="Emergency"
-        status="Active"
-        description="A major incident reported near downtown."
-        location="Downtown Area"
-        timeAgo="10m ago"
-        verifications={3}
-        onPress={() => console.log("Card pressed")}
-      />
+    <View className="flex-1 bg-white">
+      <HomeHeader />
+      <ScrollView className="flex-1 mb-20" contentContainerStyle={{ padding: 16 }}>
+        <TouchableOpacity className="bg-[#D62828] h-[50px] rounded-[10px] flex-row justify-center items-center mb-4 mt-2">
+          <Text className="text-white font-bold text-lg">Request Emergency help</Text>
+        </TouchableOpacity>
+        <Text className="text-[20px] font-bold mb-5">Recent Incidents</Text>
+
+        {incidents.length === 0 ? (
+          <Text className="text-slate-500 text-center mt-5">No incidents found.</Text>
+        ) : (
+          incidents.map((incident) => (
+            <IncidentCard
+              key={incident._id}
+              type={incident.type || "Emergency"}
+              status={incident.status || "Pending"}
+              description={incident.description}
+              location={
+                incident.location?.coordinates
+                  ? `Lng: ${incident.location.coordinates[0].toFixed(2)}, Lat: ${incident.location.coordinates[1].toFixed(2)}`
+                  : "Location Unknown"
+              }
+              timeAgo={getTimeAgo(incident.timestamp)}
+              verifications={0}
+              onPress={() => console.log("Card pressed", incident._id)}
+            />
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 };
