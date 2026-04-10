@@ -32,9 +32,9 @@ const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
         {/* Auth flow */}
-        {/* <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />
         <Stack.Screen name="Register2" component={Register2} />
@@ -42,10 +42,10 @@ export default function AppNavigator() {
         <Stack.Screen name="SetPassword" component={SetPassword} />
         <Stack.Screen name="SuccessfulSetPassword" component={SuccessfulSetPassword} />
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
-        <Stack.Screen name="LogoutPopup" component={LogoutPopup} /> */}
+        <Stack.Screen name="LogoutPopup" component={LogoutPopup} />
 
-        <Stack.Screen name="Map"  component={LiveMapScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Alert" component={AlertScreen} options={{ headerShown: false }} /> 
+        <Stack.Screen name="Map" component={LiveMapScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Alert" component={AlertScreen} options={{ headerShown: false }} />
 
 
 

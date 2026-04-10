@@ -20,7 +20,7 @@ const HomeHeader = () => {
       className="p-8"
     >
       {/* Top Row: Logo/Title and Icons */}
-      <View className="flex-row justify-between items-center mb-6">
+      <View className="flex-row justify-between items-center mt-5 mb-6">
         <View className="flex-row items-center gap-2">
           <View className="w-10 h-10 bg-gray-300 rounded-full" />
           <Text className="text-white text-2xl font-bold">ResQNow</Text>
@@ -44,8 +44,8 @@ const HomeHeader = () => {
       {/* Action Buttons Row */}
       <View className="flex-row justify-between gap-2">
         {/* Button 1: My Reports */}
-        <TouchableOpacity 
-          className="bg-white rounded-[20px] w-[31%] py-4 items-center" 
+        <TouchableOpacity
+          className="bg-white rounded-[20px] w-[31%] py-4 items-center"
           style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
           onPress={() => navigation.navigate('MyReports')}
         >
