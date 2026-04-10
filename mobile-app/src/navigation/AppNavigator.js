@@ -1,3 +1,4 @@
+
 // src/navigation/AppNavigator.js
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
@@ -20,9 +21,10 @@ import ProfileScreen from "../ProfileScreen";
 import EditProfileScreen from "../EditProfileScreen";
 import NotificationSettings from "../NotificationSettingsScreen";
 // import HelpSupportScreen from "../HelpSupportScreen";
-import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
 import ReportIncident from "../screens/Citizen/ReportIncident";
 import MyReportsScreen from "../screens/Citizen/MyReportsScreen";
+import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
+import AlertScreen from "../screens/Citizen/AlertScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -41,7 +43,9 @@ export default function AppNavigator() {
         <Stack.Screen name="SuccessfulSetPassword" component={SuccessfulSetPassword} />
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
         <Stack.Screen name="LogoutPopup" component={LogoutPopup} /> */}
-        {/* <Stack.Screen name="Map"  component={LiveMapScreen} options={{ headerShown: false }} /> */}
+
+        <Stack.Screen name="Map"  component={LiveMapScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Alert" component={AlertScreen} options={{ headerShown: false }} /> 
 
 
 
