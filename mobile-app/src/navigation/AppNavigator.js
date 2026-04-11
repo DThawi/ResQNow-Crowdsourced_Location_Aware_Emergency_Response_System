@@ -21,6 +21,8 @@ import EditProfileScreen from "../screens/Citizen/EditProfileScreen";
 import NotificationSettings from "../screens/Citizen/NotificationSettingsScreen";
 // import HelpSupportScreen from "../HelpSupportScreen";
 import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
+import AlertScreen from "../screens/Citizen/AlertScreen";
+import ResponderAlertScreen from "../screens/Responder/ResponderAlertScreen";
 import PrivacySecuritySettings from "../screens/Citizen/PrivacySecuritySettings";
 import ReportIncident from "../screens/Citizen/ReportIncident";
 import TestScreen from "../screens/TestScreen";
@@ -46,11 +48,10 @@ export default function AppNavigator() {
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
         <Stack.Screen name="LogoutPopup" component={LogoutPopup} />
         <Stack.Screen name="Map"  component={LiveMapScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Alert" component={AlertScreen} options={{ headerShown: false }} /> 
+        <Stack.Screen name="ResponderAlert" component={ResponderAlertScreen} options={{ headerShown: false }} /> 
 
 
-
-       
-       
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{headerShown:false}}/>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="TermsConditions" component={TermsConditions} options={{headerShown:false}}/>
@@ -67,3 +68,9 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+
+
+
+
+
