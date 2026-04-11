@@ -7,15 +7,15 @@ import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 const INCIDENT_CONFIG = {
   Fire: {
     color: "#D62828",
-    icon: "fire",
+    icon: "alert-circle",
   },
   Medical: {
     color: "#FFA000",
-    icon: "medical-bag",
+    icon: "alert-circle",
   },
   Accident: {
     color: "#D62828",
-    icon: "car",
+    icon: "alert-circle",
   },
   Resolved: {
     color: "#2E7D32",
@@ -23,7 +23,7 @@ const INCIDENT_CONFIG = {
   },
   Weather: {
     color: "#FFA000",
-    icon: "weather-lightning",
+    icon: "alert-circle",
   },
 };
 

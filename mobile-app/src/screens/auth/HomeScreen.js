@@ -46,13 +46,14 @@ const HomeScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#D62828" />
+      {/* <StatusBar barStyle="light-content" backgroundColor="#D62828" /> */}
       <HomeHeader />
-      <ScrollView className="flex-1 mb-20" contentContainerStyle={{ padding: 16 }}>
-        <TouchableOpacity className="bg-[#D62828] h-[50px] rounded-[10px] flex-row justify-center items-center mb-4 mt-2">
-          <Text className="text-white font-bold text-lg">Request Emergency help</Text>
-        </TouchableOpacity>
-        <Text className="text-[20px] font-bold mb-5">Recent Incidents</Text>
+      <TouchableOpacity className="bg-[#D62828] h-[50px] rounded-[10px] flex-row justify-center items-center m-5">
+        <Text className="text-white font-bold text-lg">Request Emergency help</Text>
+      </TouchableOpacity>
+      <Text className="text-[20px] font-bold my-2 ml-5">Recent Incidents</Text>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
+
 
         {incidents.length === 0 ? (
           <Text className="text-slate-500 text-center mt-5">No incidents found.</Text>
