@@ -3,12 +3,15 @@ import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity, StatusBar 
 import IncidentCard from '../../components/cards/incidentCards';
 import API from '../../services/api';
 import HomeHeader from '../../components/HomeHeader';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
     const fetchIncidents = async () => {
       try {
         const response = await API.get('/incidents');
@@ -48,7 +51,8 @@ const HomeScreen = () => {
     <View className="flex-1 bg-white">
       {/* <StatusBar barStyle="light-content" backgroundColor="#D62828" /> */}
       <HomeHeader />
-      <TouchableOpacity className="bg-[#D62828] h-[50px] rounded-[10px] flex-row justify-center items-center m-5">
+      <TouchableOpacity className="bg-[#D62828] h-[50px] rounded-[10px] flex-row justify-center items-center m-5"
+        onPress={() => navigation.navigate('ReportIncident')}>
         <Text className="text-white font-bold text-lg">Request Emergency help</Text>
       </TouchableOpacity>
       <Text className="text-[20px] font-bold my-2 ml-5">Recent Incidents</Text>
