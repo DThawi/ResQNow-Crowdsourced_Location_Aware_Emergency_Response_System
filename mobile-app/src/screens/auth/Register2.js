@@ -8,22 +8,23 @@ import {
 } from 'react-native';
 import API from '../../services/api';
 import Header from '../../components/layout/header';
-import { LinearGradient } from 'expo-linear-gradient'; // ← Add 
 
 export default function Register2({ navigation, route }) {
   const { role } = route.params || {};
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [contact_number, setContactNumber] = useState('');
   const [nic, setNic] = useState('');
   const [address, setAddress] = useState('');
+  const [district, setDistrict] = useState('');
+  const [organization, setOrganization] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleRegister = async () => {
-    if (!fullName || !email || !phone || !nic || !address || !password || !confirmPassword) {
+    if (!name || !email || !contact_number || !nic || !address || !password || !confirmPassword || !district) {
       alert('Please fill in all fields');
       return;
     }
@@ -37,11 +38,19 @@ export default function Register2({ navigation, route }) {
     }
     try {
       await API.post('/auth/register', {
-        fullName, email, phone, nic, address, password, role
+        name,
+        email,
+        password,
+        role,
+        district,
+        contact_number,
+        organization,
+        latitude: 0,
+        longitude: 0,
       });
       navigation.navigate('VerifyIdentity');
     } catch (err) {
-      alert('Registration failed');
+      alert(err.response?.data?.message || 'Registration failed');
     }
   };
 
@@ -68,7 +77,7 @@ export default function Register2({ navigation, route }) {
             className="flex-1 text-sm text-black"
             placeholder="Enter your full name"
             placeholderTextColor="#999"
-            onChangeText={setFullName}
+            onChangeText={setName}
           />
         </View>
 
@@ -98,7 +107,7 @@ export default function Register2({ navigation, route }) {
             className="flex-1 text-sm text-black"
             placeholder="Enter your phone number"
             placeholderTextColor="#999"
-            onChangeText={setPhone}
+            onChangeText={setContactNumber}
             keyboardType="phone-pad"
           />
         </View>
@@ -114,6 +123,34 @@ export default function Register2({ navigation, route }) {
             placeholder="Enter your NIC or Passport Number"
             placeholderTextColor="#999"
             onChangeText={setNic}
+          />
+        </View>
+
+        {/* District */}
+        <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
+          District <Text className="text-[#D62828]">*</Text>
+        </Text>
+        <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full h-12 mb-1">
+          <Text className="mr-2">🗺️</Text>
+          <TextInput
+            className="flex-1 text-sm text-black"
+            placeholder="Enter your district"
+            placeholderTextColor="#999"
+            onChangeText={setDistrict}
+          />
+        </View>
+
+        {/* Organization (optional for non-responders) */}
+        <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
+          Organization <Text className="text-gray-400">(optional)</Text>
+        </Text>
+        <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full h-12 mb-1">
+          <Text className="mr-2">🏢</Text>
+          <TextInput
+            className="flex-1 text-sm text-black"
+            placeholder="Enter your organization"
+            placeholderTextColor="#999"
+            onChangeText={setOrganization}
           />
         </View>
 

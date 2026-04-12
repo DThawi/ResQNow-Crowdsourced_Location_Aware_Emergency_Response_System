@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Feather, AntDesign, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import BaseModal from './baseModal';
-import { styled } from 'nativewind';
+import API from '../../services/api';
 
-// Reusable Step component
 const StepCircle = ({ number, active }) => (
   <View className={`w-6 h-6 rounded-full items-center justify-center ${active ? 'bg-red-700' : 'bg-gray-200'}`}>
     <Text className={`text-xs font-bold ${active ? 'text-white' : 'text-gray-400'}`}>{number}</Text>
@@ -17,11 +16,13 @@ const StepLine = ({ active }) => (
 
 const ForgotPasswordModal = ({ visible, onClose }) => {
   const [step, setStep] = useState(1);
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let timer;
@@ -33,9 +34,56 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
 
   const resetAndClose = () => {
     setStep(1);
+    setEmail('');
+    setOtp('');
     setNewPassword('');
     setConfirmPassword('');
     onClose();
+  };
+
+  const handleSendCode = async () => {
+    if (!email) {
+      alert('Please enter your email or phone number');
+      return;
+    }
+    setLoading(true);
+    try {
+      await API.post('/auth/forgot-password', { email });
+      setStep(2);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to send reset code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      alert('Please enter the verification code');
+      return;
+    }
+    setLoading(true);
+    try {
+      await API.post('/auth/verify-otp', { email, otp });
+      setStep(3);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!canSubmitPassword) return;
+    setLoading(true);
+    try {
+      await API.post('/auth/reset-password', { email, newPassword });
+      setStep(4);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const has8Chars = newPassword.length >= 8;
@@ -82,13 +130,19 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
               placeholderTextColor="#AAA"
               keyboardType="email-address"
               autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
             />
           </View>
           <Text className="text-xs text-gray-500 mt-2 mb-5 leading-4">
             Enter the email or phone number you used to sign up. We'll send you a verification code.
           </Text>
-          <TouchableOpacity className="bg-red-700 h-12 rounded-xl items-center justify-center w-full" onPress={() => setStep(2)}>
-            <Text className="text-white font-bold text-base">Send Reset Code</Text>
+          <TouchableOpacity
+            className={`h-12 rounded-xl items-center justify-center w-full ${loading ? 'bg-red-400' : 'bg-red-700'}`}
+            onPress={handleSendCode}
+            disabled={loading}
+          >
+            <Text className="text-white font-bold text-base">{loading ? 'Sending...' : 'Send Reset Code'}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -104,19 +158,27 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
             placeholderTextColor="#AAA"
             keyboardType="number-pad"
             maxLength={6}
+            value={otp}
+            onChangeText={setOtp}
           />
           <View className="flex-row justify-between mt-2 mb-3">
             <Text className="text-xs text-gray-400">Didn't receive the code?</Text>
-            <Text className="text-xs font-medium text-red-700">Resend in 7s</Text>
+            <TouchableOpacity onPress={handleSendCode}>
+              <Text className="text-xs font-medium text-red-700">Resend</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity className="bg-red-700 h-12 rounded-xl items-center justify-center w-full" onPress={() => setStep(3)}>
-            <Text className="text-white font-bold text-base">Verify Code</Text>
+          <TouchableOpacity
+            className={`h-12 rounded-xl items-center justify-center w-full ${loading ? 'bg-red-400' : 'bg-red-700'}`}
+            onPress={handleVerifyOtp}
+            disabled={loading}
+          >
+            <Text className="text-white font-bold text-base">{loading ? 'Verifying...' : 'Verify Code'}</Text>
           </TouchableOpacity>
           <TouchableOpacity className="items-center mt-3 mb-3 py-1" onPress={() => setStep(1)}>
             <Text className="text-xs font-medium text-red-700">Change email/number</Text>
           </TouchableOpacity>
           <View className="flex-row bg-gray-100 p-3 rounded-lg mt-2">
-            <FontAwesome5 name="exclamation-circle" solid size={14} color="#999" className="mt-0.5" />
+            <FontAwesome5 name="exclamation-circle" solid size={14} color="#999" />
             <Text className="text-xs text-gray-500 ml-2 flex-1 leading-4">
               Code expires in 5 minutes. For security, this code can only be used once
             </Text>
@@ -128,8 +190,6 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
         <View className="w-full">
           {renderHeader("Set New Password", true)}
           {renderStepIndicator()}
-
-          {/* New Password */}
           <Text className="text-xs font-semibold text-gray-800 mt-2 mb-2">New Password</Text>
           <View className="flex-row items-center border border-gray-300 rounded-xl px-3 h-12">
             <Feather name="lock" size={18} color="#999" className="mr-2" />
@@ -145,8 +205,6 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
               <Feather name={showPassword ? "eye" : "eye-off"} size={18} color="#999" />
             </TouchableOpacity>
           </View>
-
-          {/* Confirm Password */}
           <Text className="text-xs font-semibold text-gray-800 mt-2 mb-2">Confirm Password</Text>
           <View className="flex-row items-center border border-gray-300 rounded-xl px-3 h-12">
             <Feather name="lock" size={18} color="#999" className="mr-2" />
@@ -162,8 +220,6 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
               <Feather name={showConfirmPassword ? "eye" : "eye-off"} size={18} color="#999" />
             </TouchableOpacity>
           </View>
-
-          {/* Requirements */}
           <View className="bg-gray-100 p-4 rounded-xl mt-4 mb-4">
             <Text className="text-xs font-semibold text-gray-800 mb-2">Password requirements:</Text>
             <View className="flex-row items-center mb-1">
@@ -178,13 +234,12 @@ const ForgotPasswordModal = ({ visible, onClose }) => {
               <Text className="text-red-700 text-[11px] mt-1">Passwords do not match</Text>
             )}
           </View>
-
           <TouchableOpacity
-            className={`h-12 rounded-xl items-center justify-center w-full ${canSubmitPassword ? 'bg-red-700' : 'bg-red-700 opacity-60'}`}
-            disabled={!canSubmitPassword}
-            onPress={() => setStep(4)}
+            className={`h-12 rounded-xl items-center justify-center w-full ${canSubmitPassword && !loading ? 'bg-red-700' : 'bg-red-700 opacity-60'}`}
+            disabled={!canSubmitPassword || loading}
+            onPress={handleResetPassword}
           >
-            <Text className="text-white font-bold text-base">Reset Password</Text>
+            <Text className="text-white font-bold text-base">{loading ? 'Resetting...' : 'Reset Password'}</Text>
           </TouchableOpacity>
         </View>
       )}

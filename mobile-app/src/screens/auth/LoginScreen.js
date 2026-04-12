@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import API from '../../services/api';
 import ForgotPasswordModal from '../../components/modals/forgotPasswordModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -22,10 +23,15 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     try {
-      await API.post('/auth/login', { email, password });
+      const response = await API.post('/auth/login', { email, password });
+      const { token, role } = response.data;
+      
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('role', role);
+      
       navigation.navigate('Home');
     } catch (err) {
-      alert('Login failed');
+      alert(err.response?.data?.message || 'Login failed');
     }
   };
 
