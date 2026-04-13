@@ -41,7 +41,7 @@ if (existingCluster) {
     type: 'Point',
     coordinates: [parseFloat(longitude), parseFloat(latitude)]
   },
-  image: req.file ? req.file.path : null,
+  image: req.file ? req.file.cloudinaryUrl : null,
   cluster_id: clusterId
 });
 

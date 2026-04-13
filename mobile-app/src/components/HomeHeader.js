@@ -32,7 +32,7 @@ const HomeHeader = () => {
               <Text className="text-[10px] font-bold text-slate-900">3</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ProfileScreen')}>
             <Feather name="user" size={24} color="white" />
           </TouchableOpacity>
         </View>

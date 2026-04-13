@@ -27,7 +27,7 @@ const upload = multer({
 const uploadToCloudinary = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return next();
     }
 
     const result = await cloudinary.uploader.upload(req.file.path, {

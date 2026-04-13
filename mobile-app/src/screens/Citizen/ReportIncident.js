@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import GradientHeader from '../../components/layout/header';
+import API from '../../services/api';
 
 const INCIDENT_TYPES = [
   { id: 'Fire', label: 'Fire', icon: 'flame-outline' },
@@ -20,6 +22,37 @@ export default function ReportIncident() {
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState('High');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      const token = await AsyncStorage.getItem('token');
+      
+      const formData = new FormData();
+      formData.append('type', incidentType);
+      formData.append('description', description || 'No description provided');
+      formData.append('longitude', '79.8612'); 
+      formData.append('latitude', '6.9271');
+
+      console.log('Sending formData...', formData);
+
+      const response = await API.post('/incidents', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      
+      Alert.alert('Success', 'Report submitted successfully!');
+      navigation.goBack();
+    } catch (error) {
+      console.error("API Error details:", error.response?.data);
+      Alert.alert('Error', error.response?.data?.message || 'Error submitting report');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-white">
@@ -133,8 +166,12 @@ export default function ReportIncident() {
         </View>
 
         {/* Submit */}
-        <TouchableOpacity className="bg-[#D62828] rounded-xl py-4 items-center justify-center mb-3">
-          <Text className="text-white text-base font-bold">Submit Report</Text>
+        <TouchableOpacity 
+          className={`bg-[#D62828] rounded-xl py-4 items-center justify-center mb-3 ${isSubmitting ? 'opacity-70' : ''}`}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          <Text className="text-white text-base font-bold">{isSubmitting ? 'Submitting...' : 'Submit Report'}</Text>
         </TouchableOpacity>
         <Text className="text-[#8D99AE] text-xs text-center mb-10">
           Your report will be verified by the community

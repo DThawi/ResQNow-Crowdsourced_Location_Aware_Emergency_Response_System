@@ -49,7 +49,7 @@ const HomeScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* <StatusBar barStyle="light-content" backgroundColor="#D62828" /> */}
+
       <HomeHeader />
       <TouchableOpacity className="bg-[#D62828] h-[50px] rounded-[10px] flex-row justify-center items-center m-5"
         onPress={() => navigation.navigate('ReportIncident')}>
