@@ -67,7 +67,6 @@ const MyReportsScreen = ({ navigation }) => {
 
   return (
     <View className="flex-1 bg-[#F7F7F7]">
-      <StatusBar barStyle="light-content" backgroundColor="#D62828" />
 
       {/* Dynamic Header */}
       <LinearGradient

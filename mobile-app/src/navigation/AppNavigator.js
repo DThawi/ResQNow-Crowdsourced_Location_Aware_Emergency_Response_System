@@ -56,11 +56,11 @@ export default function AppNavigator() {
         <Stack.Screen name="SuccessfulSetPassword" component={SuccessfulSetPassword} />
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
         <Stack.Screen name="LogoutPopup" component={LogoutPopup} />
-        <Stack.Screen name="Map"  component={LiveMapScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Alert" component={AlertScreen} options={{ headerShown: false }} /> 
-        <Stack.Screen name="ResponderAlert" component={ResponderAlertScreen} options={{ headerShown: false }} /> 
+        <Stack.Screen name="Map" component={LiveMapScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AlertScreen" component={AlertScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ResponderAlert" component={ResponderAlertScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DangerZones" component={DangerZones} options={{ headerShown: false }} />
-        
+
 
 
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{ headerShown: false }} />
@@ -72,11 +72,10 @@ export default function AppNavigator() {
         <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
         <Stack.Screen name="PrivacySecuritySettings" component={PrivacySecuritySettings} options={{ headerShown: false }} />
         <Stack.Screen name="SettingsScreen" component={SettingsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} options={{headerShown:false}} />
-        <Stack.Screen name="ResponderEditProfileScreen" component={ResponderEditProfileScreen} options={{headerShown:false}} />
-        <Stack.Screen name="CredentialsCertificationsScreen" component={CredentialsCertificationsScreen} options={{headerShown:false}} />
-        <Stack.Screen name="UploadVerificationDocuments" component={UploadVerificationDocuments} options={{headerShown:false}} />
-        <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{headerShown:false}} />
+        <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ResponderEditProfileScreen" component={ResponderEditProfileScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CredentialsCertificationsScreen" component={CredentialsCertificationsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="UploadVerificationDocuments" component={UploadVerificationDocuments} options={{ headerShown: false }} />
 
 
         <Stack.Screen name="MyReports" component={MyReportsScreen} options={{ headerShown: false }} />

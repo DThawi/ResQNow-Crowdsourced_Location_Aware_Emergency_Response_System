@@ -26,7 +26,7 @@ const HomeHeader = () => {
           <Text className="text-white text-2xl font-bold">ResQNow</Text>
         </View>
         <View className="flex-row items-center gap-5 pr-2">
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AlertScreen')}>
             <Ionicons name="notifications-outline" size={26} color="white" />
             <View className="absolute -top-1.5 -right-2 bg-amber-500 rounded-full px-[5px] py-[1px] items-center justify-center">
               <Text className="text-[10px] font-bold text-slate-900">3</Text>
@@ -64,7 +64,9 @@ const HomeHeader = () => {
         </TouchableOpacity>
 
         {/* Button 3: Alerts */}
-        <TouchableOpacity className="bg-white rounded-[20px] w-[31%] py-4 items-center" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+        <TouchableOpacity className="bg-white rounded-[20px] w-[31%] py-4 items-center" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
+          onPress={() => navigation.navigate('AlertScreen')}
+        >
           <View className="w-[42px] h-[42px] rounded-full bg-[#F59E0B] items-center justify-center mb-2.5">
             <Ionicons name="pulse" size={22} color="white" />
           </View>
