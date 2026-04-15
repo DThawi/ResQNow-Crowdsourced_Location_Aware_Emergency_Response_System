@@ -37,15 +37,7 @@ const ConfirmationBox = () => (
   </View>
 );
 
-const NoteBox = () => (
-  <View className="bg-yellow-100 rounded-xl p-4">
-    <Text className="text-gray-700 text-sm">
-      <Text className="font-semibold">Note: </Text>
-      Deleting your account will notify your organization. Contact your
-      supervisor if you're leaving your position.
-    </Text>
-  </View>
-);
+
 
 const ActionButtons = () => (
   <View className="mt-4">
@@ -92,11 +84,6 @@ const DeleteAccountScreen = () => {
         {/* Confirmation */}
         <View className="mt-5">
           <ConfirmationBox />
-        </View>
-
-        {/* Note */}
-        <View className="mt-4">
-          <NoteBox />
         </View>
 
         {/* Buttons */}
