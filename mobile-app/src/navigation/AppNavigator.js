@@ -31,7 +31,7 @@ import DeactivateAccountScreen from "../screens/Responder/DeactivateAccountScree
 import DeleteAccountScreen from "../screens/Responder/DeleteAccountScreen";
 import PrivacyPolicy_Citizen from "../screens/Citizen/PrivacyPolicy";
 import TermsConditions_Citizen from "../screens/Citizen/TermsConditions";
-// import HelpSupportScreen from "../HelpSupportScreen";
+import HelpSupport_Citizen from "../screens/Citizen/HelpSupport";
 import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
 import AlertScreen from "../screens/Citizen/AlertScreen";
 import ResponderAlertScreen from "../screens/Responder/ResponderAlertScreen";
@@ -87,13 +87,14 @@ export default function AppNavigator() {
         <Stack.Screen name="DeleteAccountScreen" component={DeleteAccountScreen} options={{headerShown:false}} />
         <Stack.Screen name="PrivacyPolicy_Citizen" component={PrivacyPolicy_Citizen} options={{ headerShown: false }} />
         <Stack.Screen name="TermsConditions_Citizen" component={TermsConditions_Citizen} options={{ headerShown: false }} />
+        <Stack.Screen name="HelpSupport_Citizen" component={HelpSupport_Citizen} options={{headerShown:false}} />
 
 
         <Stack.Screen name="MyReports" component={MyReportsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ReportIncident" component={ReportIncident} options={{ headerShown: false }} />
         <Stack.Screen name="IncidentDetails" component={IncidentDetailsScreen} options={{ headerShown: false }} />
 
-        {/* <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} options={{headerShown:false}} /> */}
+        
 
 
       </Stack.Navigator>
