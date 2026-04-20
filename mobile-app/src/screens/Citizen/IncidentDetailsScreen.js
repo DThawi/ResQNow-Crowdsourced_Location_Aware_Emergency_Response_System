@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import IncidentFeedbackModal from '../../components/modals/incidentFeedbackModal';
 
 const IncidentDetailsScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const [isModalVisible, setModalVisible] = useState(false);
   
   // Safe extraction of incident data passed via navigation parameters
   const incident = route.params?.incident || {};
@@ -142,7 +144,10 @@ const IncidentDetailsScreen = () => {
 
       {/* Sticky Bottom Actions */}
       <View className="absolute bottom-0 left-0 right-0 bg-[#F7F7F7] px-5 pt-4 pb-8" style={{ borderTopWidth: 1, borderColor: '#EEEEEE' }}>
-        <TouchableOpacity className="bg-[#2ECC71] h-[52px] rounded-xl flex-row items-center justify-center mb-3">
+        <TouchableOpacity 
+          className="bg-[#2ECC71] h-[52px] rounded-xl flex-row items-center justify-center mb-3"
+          onPress={() => setModalVisible(true)}
+        >
           <Ionicons name="checkmark-circle-outline" size={22} color="white" style={{ marginRight: 8 }} />
           <Text className="text-white font-bold text-base">Verify This Incident</Text>
         </TouchableOpacity>
@@ -159,6 +164,12 @@ const IncidentDetailsScreen = () => {
           <Text className="text-[#2B2D42] font-bold text-base">Close</Text>
         </TouchableOpacity>
       </View>
+
+      <IncidentFeedbackModal 
+        visible={isModalVisible} 
+        onClose={() => setModalVisible(false)} 
+        actionType="verify" 
+      />
     </View>
   );
 };
