@@ -8,6 +8,7 @@ const IncidentDetailsScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isInaccuracyModalVisible, setInaccuracyModalVisible] = useState(false);
   
   // Safe extraction of incident data passed via navigation parameters
   const incident = route.params?.incident || {};
@@ -152,7 +153,10 @@ const IncidentDetailsScreen = () => {
           <Text className="text-white font-bold text-base">Verify This Incident</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border mb-3 border-[#D62828]">
+        <TouchableOpacity 
+          className="bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border mb-3 border-[#D62828]"
+          onPress={() => setInaccuracyModalVisible(true)}
+        >
           <Feather name="alert-triangle" size={18} color="#D62828" style={{ marginRight: 8 }} />
           <Text className="text-[#D62828] font-bold text-base">Report Inaccuracy</Text>
         </TouchableOpacity>
@@ -169,6 +173,12 @@ const IncidentDetailsScreen = () => {
         visible={isModalVisible} 
         onClose={() => setModalVisible(false)} 
         actionType="verify" 
+      />
+
+      <IncidentFeedbackModal 
+        visible={isInaccuracyModalVisible} 
+        onClose={() => setInaccuracyModalVisible(false)} 
+        actionType="report" 
       />
     </View>
   );
