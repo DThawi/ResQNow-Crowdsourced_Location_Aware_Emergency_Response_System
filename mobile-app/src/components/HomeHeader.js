@@ -56,7 +56,8 @@ const HomeHeader = () => {
         </TouchableOpacity>
 
         {/* Button 2: Live Map */}
-        <TouchableOpacity className="bg-white rounded-[20px] w-[31%] py-4 items-center" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+        <TouchableOpacity className="bg-white rounded-[20px] w-[31%] py-4 items-center" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
+          onPress={() => navigation.navigate('Map')}>
           <View className="w-[42px] h-[42px] rounded-full bg-[#0B2C42] items-center justify-center mb-2.5">
             <Feather name="map" size={20} color="white" />
           </View>
