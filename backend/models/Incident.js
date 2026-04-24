@@ -5,7 +5,7 @@ const IncidentSchema = new mongoose.Schema({
   type: { type: String, required: true },
   description: { type: String, required: true },
   image: { type: String },
-  
+
   location: {
     type: {
       type: String,
@@ -18,22 +18,22 @@ const IncidentSchema = new mongoose.Schema({
     }
   },
   assignedAuthorities: [
-  { type: mongoose.Schema.Types.ObjectId, ref: "User" }
-],
-  status: { 
-    type: String, 
+    { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  ],
+  status: {
+    type: String,
     enum: ['Pending', 'Verified', 'Assigned', 'Resolved'],
-    default: 'Pending' 
+    default: 'Pending'
   },
-  // ✅ ADD THIS
+
   assignedAuthority: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
-  
+
   status_history: [{
-    status: { 
-      type: String, 
+    status: {
+      type: String,
       enum: ['Pending', 'Verified', 'Assigned', 'Resolved']
     },
     timestamp: { type: Date, default: Date.now },
@@ -41,11 +41,11 @@ const IncidentSchema = new mongoose.Schema({
   }],
   timestamp: { type: Date, default: Date.now },
 
-  cluster_id: { 
-  type: mongoose.Schema.Types.ObjectId, 
-  ref: 'Incident', 
-  default: null 
-},
+  cluster_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Incident',
+    default: null
+  },
 });
 
 IncidentSchema.index({ location: '2dsphere' });

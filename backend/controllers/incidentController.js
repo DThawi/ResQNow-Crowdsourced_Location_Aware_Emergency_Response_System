@@ -95,43 +95,35 @@ exports.updateIncidentStatus = async (req, res) => {
 
     // DEFAULT: just update status
     let newStatus = status;
-    let assignedAuthority = null;
 
     // IF VERIFIED → FIND AUTHORITY
     if (status === "Verified") {
-  const incident = await Incident.findById(req.params.id);
+      // Find all authorities (organizations + responders) in that district
+      const authorities = await User.find({
+        role: "Authority",
+        location: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: incident.location.coordinates
+            },
+            $maxDistance: 10000 // 10km radius (adjust if needed)
+          }
+        }
+      }).limit(3);
 
-  // Find all authorities (organizations + responders) in that district
-  const authorities = await User.find({
-  role: "Authority",
-  location: {
-    $near: {
-      $geometry: {
-        type: "Point",
-        coordinates: incident.location.coordinates
-      },
-      $maxDistance: 10000 // 10km radius (adjust if needed)
+      console.log("FOUND AUTHORITIES:", authorities);
+
+      if (authorities.length > 0) {
+        incident.assignedAuthorities = authorities.map(a => a._id);
+        newStatus = "Assigned";
+      }
+      console.log("INCIDENT LOCATION:", incident.location.coordinates);
+      console.log("AUTHORITIES FOUND:", authorities.length);
     }
-  }
-}).limit(3);
-
-    console.log("FOUND AUTHORITIES:", authorities);
-
-  if (authorities.length > 0) {
-    incident.assignedAuthorities = authorities.map(a => a._id);
-    incident.status = "Assigned";
-  }
-    console.log("INCIDENT LOCATION:", incident.location.coordinates);
-    console.log("AUTHORITIES FOUND:", authorities.length);
-  await incident.save();
-}
 
     // UPDATE INCIDENT
     incident.status = newStatus;
-
-    if (assignedAuthority) {
-      incident.assignedAuthority = assignedAuthority;
-    }
 
     incident.status_history.push({
       status: newStatus,
