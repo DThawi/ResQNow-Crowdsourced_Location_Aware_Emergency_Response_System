@@ -32,12 +32,15 @@ import DeleteAccountScreen from "../screens/Responder/DeleteAccountScreen";
 import PrivacyPolicy_Citizen from "../screens/Citizen/PrivacyPolicy";
 import TermsConditions_Citizen from "../screens/Citizen/TermsConditions";
 import HelpSupport_Citizen from "../screens/Citizen/HelpSupport";
+import OrganizationDetails_EditScreen from "../screens/Responder/OrganizationDetails_EditScreen";
+import ResponderAboutScreen from "../screens/Responder/ResponderAboutScreen";
+import CitizenAboutScreen from "../screens/Citizen/CitizenAboutScreen";
 import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
 import AlertScreen from "../screens/Citizen/AlertScreen";
 import ResponderAlertScreen from "../screens/Responder/ResponderAlertScreen";
 import DangerZones from "../screens/Citizen/DangerZones";
 import ReportIncident from "../screens/Citizen/ReportIncident";
-// import TestScreen from "../screens/TestScreen";
+import TestScreen from "../screens/TestScreen";
 
 import MyReportsScreen from "../screens/Citizen/MyReportsScreen";
 import IncidentDetailsScreen from "../screens/Citizen/IncidentDetailsScreen";
@@ -47,11 +50,11 @@ const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+      {/* <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}> */}
 
-        {/* <Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}> */}
+        <Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}>
         {/* Auth flow */}
-        {/* <Stack.Screen name="TestScreen" component={TestScreen} options={{headerShown:false}} /> */}
+        <Stack.Screen name="TestScreen" component={TestScreen} options={{headerShown:false}} />
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />
@@ -88,7 +91,9 @@ export default function AppNavigator() {
         <Stack.Screen name="PrivacyPolicy_Citizen" component={PrivacyPolicy_Citizen} options={{ headerShown: false }} />
         <Stack.Screen name="TermsConditions_Citizen" component={TermsConditions_Citizen} options={{ headerShown: false }} />
         <Stack.Screen name="HelpSupport_Citizen" component={HelpSupport_Citizen} options={{headerShown:false}} />
-
+        <Stack.Screen name="OrganizationDetails_EditScreen" component={OrganizationDetails_EditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ResponderAboutScreen" component={ResponderAboutScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CitizenAboutScreen" component={CitizenAboutScreen} options={{ headerShown: false }} />
 
         <Stack.Screen name="MyReports" component={MyReportsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ReportIncident" component={ReportIncident} options={{ headerShown: false }} />

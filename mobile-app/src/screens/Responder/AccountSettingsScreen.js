@@ -117,7 +117,7 @@ const AccountSettingsScreen = () => {
             icon="business-outline"
             title="Organization Details"
             subtitle="Police Department"
-            onPress={() => navigation.navigate("OrganizationDetails")}
+            onPress={() => navigation.navigate("OrganizationDetails_EditScreen")}
           />
 
           <SettingItem

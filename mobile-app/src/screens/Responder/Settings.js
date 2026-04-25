@@ -53,6 +53,7 @@ const SettingsScreen = () => {
 
   return (
     <View className="flex-1 bg-gray-100">
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       {/* Header */}
       <GradientHeader title="Settings" type="back" />
 
@@ -150,20 +151,25 @@ const SettingsScreen = () => {
             icon="person-outline"
             title="Account Settings"
             subtitle="Manage profile, password & verification"
+            onPress={() => navigation.navigate("AccountSettingsScreen")}
           />
+
+          {/* Not yet implemented */}
 
           <SettingItem
             icon="notifications-outline"
             title="Notification Preferences"
             subtitle="Control alerts & push notifications"
             iconColor="#f59e0b"
+              onPress={() => navigation.navigate("NotificationSettingsScreen")}
           />
-
+          {/* Not yet implemented */}
           <SettingItem
             icon="settings-outline"
             title="App Settings"
             subtitle="Language, theme & data"
             iconColor="red"
+              onPress={() => navigation.navigate("AppSettingsScreen")}
           />
         </View>
 
@@ -173,18 +179,21 @@ const SettingsScreen = () => {
             icon="shield-outline"
             title="Privacy & Policy"
             iconColor="green"
+            onPress={() => navigation.navigate("PrivacyPolicy")}
           />
 
           <SettingItem2
             icon="document-text-outline"
             title="Terms & Conditions"
             iconColor="gray"
+            onPress={() => navigation.navigate("TermsConditions")}
           />
 
           <SettingItem2
             icon="help-circle-outline"
             title="Help & Support"
             iconColor="black"
+            onPress={() => navigation.navigate("HelpSupport")}
           />
         </View>
 
