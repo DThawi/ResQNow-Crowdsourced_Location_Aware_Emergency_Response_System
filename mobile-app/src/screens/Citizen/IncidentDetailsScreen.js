@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API from '../../services/api';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import IncidentFeedbackModal from '../../components/modals/incidentFeedbackModal';
@@ -9,26 +11,52 @@ const IncidentDetailsScreen = () => {
   const route = useRoute();
   const [isModalVisible, setModalVisible] = useState(false);
   const [isInaccuracyModalVisible, setInaccuracyModalVisible] = useState(false);
-  
-  // Safe extraction of incident data passed via navigation parameters
+
+  // extraction of incident data 
   const incident = route.params?.incident || {};
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFeedback = async (type) => {
+    try {
+      if (!incident._id) return;
+      setIsSubmitting(true);
+      const token = await AsyncStorage.getItem('token');
+
+      await API.post(`/incidents/${incident._id}/feedback`, {
+        feedback_type: type
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (type === 'verify') {
+        setModalVisible(true);
+      } else {
+        setInaccuracyModalVisible(true);
+      }
+    } catch (error) {
+      console.error("Feedback error:", error.response?.data || error.message);
+      Alert.alert("Error", error.response?.data?.message || "Failed to submit feedback.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Formatting strings based on the incident data
   const title = incident.type ? `${incident.type} Emergency` : "Emergency";
-  
+
   // Display coordinate mapping with mock city string as fallback
-  const locationString = incident.location?.coordinates 
+  const locationString = incident.location?.coordinates
     ? `Lng: ${incident.location.coordinates[0].toFixed(2)}, Lat: ${incident.location.coordinates[1].toFixed(2)} (City Hall, 5th Avenue, Building 42)`
     : "City Hall, 5th Avenue, Building 42";
-    
+
   const reporterName = incident.user_id?.name || incident.user_id || "John Perera";
-  
+
   const description = incident.description || "Large fire reported at commercial building. Heavy smoke visible from multiple blocks away. Multiple units responding. Building has been evacuated. Traffic being diverted from the area.";
 
   const getTimeStr = (timestamp) => {
     if (!timestamp) return "5 minutes ago (2:45 PM)";
     const date = new Date(timestamp);
-    return `5 minutes ago (${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})`;
+    return `5 minutes ago (${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
   };
 
   return (
@@ -38,12 +66,12 @@ const IncidentDetailsScreen = () => {
         {/* Top Image Section */}
         <View className="relative w-full h-[300px]">
           {/* Using unsplash tools image as a mocked header */}
-          <Image 
-            source={{ uri: incident.image || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f' }} 
+          <Image
+            source={{ uri: incident.image || 'https://images.unsplash.com/photo-1542282088-fe8426682b8f' }}
             className="w-full h-full"
             resizeMode="cover"
           />
-          
+
           {/* Top Overlays */}
           <View className="absolute top-12 left-0 right-0 px-5 flex-row justify-between items-start">
             <View className="bg-[#F59E0B] px-3.5 py-1.5 rounded-full">
@@ -63,7 +91,7 @@ const IncidentDetailsScreen = () => {
         {/* Info Card Section */}
         <View className="bg-white -mt-8 rounded-t-3xl pt-8 px-6 pb-6">
           <Text className="text-[#2B2D42] text-2xl font-bold mb-6">{title}</Text>
-          
+
           <View className="flex-col gap-5">
             {/* Location */}
             <View className="flex-row items-center gap-4">
@@ -110,19 +138,19 @@ const IncidentDetailsScreen = () => {
 
         {/* Community Verification Box */}
         <View className="bg-[#F7F7F7] px-5 py-6">
-          <View className="bg-white rounded-3xl p-5" style={{ elevation: 2, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: {height: 2}, shadowRadius: 10 }}>
+          <View className="bg-white rounded-3xl p-5" style={{ elevation: 2, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { height: 2 }, shadowRadius: 10 }}>
             <View className="flex-row justify-between items-center mb-5">
               <Text className="text-[#2B2D42] text-[17px] font-bold">Community Verification</Text>
               <View className="bg-[#E8F8F5] px-2.5 py-1 rounded-md">
                 <Text className="text-[#2ECC71] text-xs font-bold">12 Verified</Text>
               </View>
             </View>
-            
+
             <View className="flex-col gap-3">
               {[
-                {id: 'U1', name: 'User 1', time: '4 min ago'},
-                {id: 'U2', name: 'User 2', time: '5 min ago'},
-                {id: 'U3', name: 'User 3', time: '6 min ago'}
+                { id: 'U1', name: 'User 1', time: '4 min ago' },
+                { id: 'U2', name: 'User 2', time: '5 min ago' },
+                { id: 'U3', name: 'User 3', time: '6 min ago' }
               ].map(u => (
                 <View key={u.id} className="flex-row items-center justify-between bg-[#F7F7F7] py-2 px-3 rounded-2xl border border-[#F0F0F0]">
                   <View className="flex-row items-center gap-3">
@@ -145,23 +173,25 @@ const IncidentDetailsScreen = () => {
 
       {/* Sticky Bottom Actions */}
       <View className="absolute bottom-0 left-0 right-0 bg-[#F7F7F7] px-5 pt-4 pb-8" style={{ borderTopWidth: 1, borderColor: '#EEEEEE' }}>
-        <TouchableOpacity 
-          className="bg-[#2ECC71] h-[52px] rounded-xl flex-row items-center justify-center mb-3"
-          onPress={() => setModalVisible(true)}
+        <TouchableOpacity
+          className={`bg-[#2ECC71] h-[52px] rounded-xl flex-row items-center justify-center mb-3 ${isSubmitting ? 'opacity-70' : ''}`}
+          onPress={() => handleFeedback('verify')}
+          disabled={isSubmitting}
         >
           <Ionicons name="checkmark-circle-outline" size={22} color="white" style={{ marginRight: 8 }} />
-          <Text className="text-white font-bold text-base">Verify This Incident</Text>
+          <Text className="text-white font-bold text-base">{isSubmitting ? 'Submitting...' : 'Verify This Incident'}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          className="bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border mb-3 border-[#D62828]"
-          onPress={() => setInaccuracyModalVisible(true)}
+        <TouchableOpacity
+          className={`bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border mb-3 border-[#D62828] ${isSubmitting ? 'opacity-70' : ''}`}
+          onPress={() => handleFeedback('inaccurate')}
+          disabled={isSubmitting}
         >
           <Feather name="alert-triangle" size={18} color="#D62828" style={{ marginRight: 8 }} />
           <Text className="text-[#D62828] font-bold text-base">Report Inaccuracy</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           className="bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border border-[#2B2D42]"
           onPress={() => navigation.goBack()}
         >
@@ -169,16 +199,16 @@ const IncidentDetailsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <IncidentFeedbackModal 
-        visible={isModalVisible} 
-        onClose={() => setModalVisible(false)} 
-        actionType="verify" 
+      <IncidentFeedbackModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        actionType="verify"
       />
 
-      <IncidentFeedbackModal 
-        visible={isInaccuracyModalVisible} 
-        onClose={() => setInaccuracyModalVisible(false)} 
-        actionType="report" 
+      <IncidentFeedbackModal
+        visible={isInaccuracyModalVisible}
+        onClose={() => setInaccuracyModalVisible(false)}
+        actionType="report"
       />
     </View>
   );
