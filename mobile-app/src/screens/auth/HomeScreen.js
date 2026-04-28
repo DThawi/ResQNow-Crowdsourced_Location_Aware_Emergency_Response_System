@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity, StatusBar } from 'react-native';
+import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import IncidentCard from '../../components/cards/incidentCards';
 import API from '../../services/api';
 import HomeHeader from '../../components/HomeHeader';
@@ -75,6 +75,7 @@ const HomeScreen = () => {
               }
               timeAgo={getTimeAgo(incident.timestamp)}
               verifications={incident.verified_by ? incident.verified_by.length : 0}
+              reports={incident.reported_inaccurate_by ? incident.reported_inaccurate_by.length : 0}
               onPress={() => navigation.navigate("IncidentDetails", { incident })}
             />
           ))

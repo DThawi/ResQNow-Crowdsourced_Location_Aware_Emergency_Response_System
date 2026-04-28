@@ -2,19 +2,20 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons, Feather, Ionicons } from '@expo/vector-icons';
 
-const IncidentCard = ({ 
-  type = "Emergency", 
-  status = "New Report", 
-  description, 
-  location, 
-  timeAgo, 
-  verifications = 0, 
-  onPress 
+const IncidentCard = ({
+  type = "Emergency",
+  status = "New Report",
+  description,
+  location,
+  timeAgo,
+  verifications = 0,
+  reports = 0,
+  onPress
 }) => {
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       className="bg-white rounded-[20px] p-5 mb-4 border border-slate-100"
-      onPress={onPress} 
+      onPress={onPress}
       activeOpacity={0.7}
       style={{
         shadowColor: '#000',
@@ -53,10 +54,17 @@ const IncidentCard = ({
       </View>
 
       {/* 4. Footer: Verification Counter */}
-      <View className="flex-row items-center gap-2 pt-[15px] border-t border-slate-100">
-        <Ionicons name="people-outline" size={20} color="#10B981" />
-        <Text className="text-[15px] text-slate-800 font-medium">{verifications} verifications</Text>
+      <View className="flex-row justify-between gap-2 pt-[15px] border-t border-slate-100">
+        <View className='flex-row items-center'>
+          <Ionicons name="people-outline" size={20} color="#10B981" />
+          <Text className="text-[15px] text-slate-800 font-medium">{verifications} verifications</Text>
+        </View>
+        <View className="flex-row items-center ">
+          <Ionicons name="close-outline" size={20} color="#FF0000" />
+          <Text className="text-[15px] text-slate-800 font-medium">{reports} reports</Text>
+        </View>
       </View>
+
     </TouchableOpacity>
   );
 };
