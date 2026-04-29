@@ -39,6 +39,7 @@ import LiveMapScreen from "../screens/Citizen/LiveMapScreen";
 import AlertScreen from "../screens/Citizen/AlertScreen";
 import ResponderAlertScreen from "../screens/Responder/ResponderAlertScreen";
 import DangerZones from "../screens/Citizen/DangerZones";
+import DangerZoneDetails from "../screens/Citizen/DangerZoneDetails";
 import ReportIncident from "../screens/Citizen/ReportIncident";
 
 
@@ -68,6 +69,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AlertScreen" component={AlertScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderAlert" component={ResponderAlertScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DangerZones" component={DangerZones} options={{ headerShown: false }} />
+        <Stack.Screen name="DangerZoneDetails" component={DangerZoneDetails} options={{ headerShown: false }} />
 
 
 
