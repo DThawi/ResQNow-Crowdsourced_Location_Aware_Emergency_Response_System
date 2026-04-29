@@ -2,8 +2,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 
-/* Incident Config */
-
+/* Incident Config - Ensure these match your database types exactly */
 const INCIDENT_CONFIG = {
   Fire: {
     color: "#D62828",
@@ -28,8 +27,8 @@ const INCIDENT_CONFIG = {
 };
 
 const AlertCard = ({ alert }) => {
-  const config =
-    INCIDENT_CONFIG[alert.type] || INCIDENT_CONFIG.Fire;
+  // Use Fire config as fallback if type doesn't match
+  const config = INCIDENT_CONFIG[alert.type] || INCIDENT_CONFIG.Fire;
 
   return (
     <View
@@ -45,10 +44,8 @@ const AlertCard = ({ alert }) => {
       }}
     >
       <View className="px-4 py-4">
-
         {/* Header */}
         <View className="flex-row items-center gap-2 mb-2">
-
           <MaterialCommunityIcons
             name={config.icon}
             size={22}
@@ -62,6 +59,7 @@ const AlertCard = ({ alert }) => {
             {alert.title}
           </Text>
 
+          {/* Dynamic Red Dot: Only shows if alert.unread is true */}
           {alert.unread && (
             <View className="w-2.5 h-2.5 rounded-full bg-red-600" />
           )}
@@ -77,7 +75,6 @@ const AlertCard = ({ alert }) => {
 
         {/* Footer */}
         <View className="flex-row gap-4">
-
           <View className="flex-row items-center gap-1">
             <Feather name="map-pin" size={14} color="#64748B" />
             <Text className="text-[12px] text-slate-500">
@@ -91,7 +88,6 @@ const AlertCard = ({ alert }) => {
               {alert.time}
             </Text>
           </View>
-
         </View>
       </View>
     </View>
