@@ -60,8 +60,8 @@ const IncidentCard = ({
           <Text className="text-[15px] text-slate-800 font-medium">{verifications} verifications</Text>
         </View>
         <View className="flex-row items-center ">
-          <Ionicons name="close-outline" size={20} color="#FF0000" />
-          <Text className="text-[15px] text-slate-800 font-medium">{reports} reports</Text>
+          <Ionicons name="alert-circle" size={20} color="#D10000" />
+          <Text className="text-[15px] text-slate-800 font-medium">{reports} rejections</Text>
         </View>
       </View>
 
