@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons"; // Expo icon library
 import { Ionicons } from "@expo/vector-icons";
 import GradientHeader from "../../components/layout/header";
+import * as Location from "expo-location";
 
 
 import MapView, { Marker } from "react-native-maps";
@@ -30,28 +31,72 @@ export default function LiveMapScreen({ navigation }) {
   const [incidents, setIncidents] = useState([]);
   const [filter, setFilter] = useState("All");
 
+  const [region, setRegion] = useState({
+  latitude: 7.8731,
+  longitude: 80.7718,
+  latitudeDelta: 2,
+  longitudeDelta: 2,
+});
+
+const [mapType, setMapType] = useState("standard");
+
   useEffect(() => {
-    fetchIncidents();
-  }, []);
+  fetchIncidents();
+
+  const interval = setInterval(fetchIncidents, 5000); // every 5 seconds
+
+  return () => clearInterval(interval);
+}, []);
 
   const fetchIncidents = async () => {
-    try {
-      const res = await API.get("/incidents");
-      setIncidents(res.data || []);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  try {
+    const res = await API.get("/incidents");
+
+    console.log("API DATA:", res.data); 
+
+    setIncidents(res.data || []);
+  } catch (err) {
+    console.log("ERROR FETCHING INCIDENTS:", err.message);
+  }
+};
 
   const filtered =
-    filter === "All"
-      ? incidents
-      : incidents.filter((i) => i.status === filter);
+  filter === "All"
+    ? incidents
+    : incidents.filter(
+        (i) => i.status?.toLowerCase() === filter.toLowerCase()
+      );
 
   const getCounts = (key) => {
-    if (key === "All") return incidents.length;
-    return incidents.filter((i) => i.status === key).length;
-  };
+  if (key === "All") return incidents.length;
+
+  return incidents.filter(
+    (i) => i.status?.toLowerCase() === key.toLowerCase()
+  ).length;
+};
+
+const goToMyLocation = async () => {
+  let { status } = await Location.requestForegroundPermissionsAsync();
+
+  if (status !== "granted") {
+    alert("Location permission denied");
+    return;
+  }
+
+  let location = await Location.getCurrentPositionAsync({});
+
+  setRegion({
+    latitude: location.coords.latitude,
+    longitude: location.coords.longitude,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
+};
+
+const toggleMapType = () => {
+  setMapType((prev) => (prev === "standard" ? "satellite" : "standard"));
+};
+
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -102,26 +147,25 @@ export default function LiveMapScreen({ navigation }) {
 
       {/* MAP */}
       <View className="flex-1 relative">
+        
         <MapView
-          style={{ flex: 1 }}
-          initialRegion={{
-            latitude: 7.8731,
-            longitude: 80.7718,
-            latitudeDelta: 2,
-            longitudeDelta: 2,
-          }}
+              style={{ flex: 1 }}
+              region={region}
+              mapType={mapType}
         >
           {filtered.map((incident) => {
-            const coords = incident.location?.coordinates;
-            if (!coords) return null;
+            if (!incident.location || !incident.location.coordinates) return null;
+
+            const [lng, lat] = incident.location.coordinates;
+
+            if (!lat || !lng) return null;
 
             return (
-              <Marker
-                key={incident._id}
+           <Marker
                 coordinate={{
-                  latitude: coords[1],
-                  longitude: coords[0],
-                }}
+                  latitude: lat,
+                  longitude: lng,
+              }}
                 pinColor={PIN_COLORS[incident.status] || "#DC2626"}
                 onPress={() =>
                   navigation.navigate("IncidentDetails", { incident })
@@ -133,11 +177,17 @@ export default function LiveMapScreen({ navigation }) {
 
         {/* MAP CONTROLS */}
         <View className="absolute right-3 top-3 gap-2">
-          <TouchableOpacity className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md">
+          <TouchableOpacity 
+          onPress={toggleMapType}
+          className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md"
+          >
             <MaterialIcons name="layers" size={24} color="#111827" />
           </TouchableOpacity>
 
-          <TouchableOpacity className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md">
+          <TouchableOpacity 
+          onPress={goToMyLocation}
+          className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md"
+          >
             <MaterialIcons name="my-location" size={24} color="#111827" />
           </TouchableOpacity>
         </View>
@@ -199,6 +249,8 @@ export default function LiveMapScreen({ navigation }) {
             </Text>
           </View>
         </View>
+
+        
       </View>
     </View>
   );
