@@ -136,36 +136,57 @@ const IncidentDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Community Verification Box */}
+        {/* Community Feedback Box */}
         <View className="bg-[#F7F7F7] px-5 py-6">
           <View className="bg-white rounded-3xl p-5" style={{ elevation: 2, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { height: 2 }, shadowRadius: 10 }}>
             <View className="flex-row justify-between items-center mb-5">
-              <Text className="text-[#2B2D42] text-[17px] font-bold">Community Verification</Text>
-              <View className="bg-[#E8F8F5] px-2.5 py-1 rounded-md">
-                <Text className="text-[#2ECC71] text-xs font-bold">12 Verified</Text>
+              <Text className="text-[#2B2D42] text-[17px] font-bold">Community Feedback</Text>
+              <View className="flex-row gap-2">
+                <View className="bg-[#E8F8F5] px-2.5 py-1 rounded-md">
+                  <Text className="text-[#2ECC71] text-xs font-bold">{incident.verified_by?.length || 0} Verified</Text>
+                </View>
+                <View className="bg-[#FDE8E8] px-2.5 py-1 rounded-md">
+                  <Text className="text-[#E74C3C] text-xs font-bold">{incident.reported_inaccurate_by?.length || 0} Rejected</Text>
+                </View>
               </View>
             </View>
 
-            <View className="flex-col gap-3">
-              {[
-                { id: 'U1', name: 'User 1', time: '4 min ago' },
-                { id: 'U2', name: 'User 2', time: '5 min ago' },
-                { id: 'U3', name: 'User 3', time: '6 min ago' }
-              ].map(u => (
-                <View key={u.id} className="flex-row items-center justify-between bg-[#F7F7F7] py-2 px-3 rounded-2xl border border-[#F0F0F0]">
-                  <View className="flex-row items-center gap-3">
-                    <View className="w-10 h-10 rounded-full bg-[#D62828] items-center justify-center">
-                      <Text className="text-white font-bold">{u.id}</Text>
-                    </View>
-                    <View>
-                      <Text className="font-bold text-[#2B2D42] text-[13px]">{u.name}</Text>
-                      <Text className="text-[#8D99AE] mt-0.5 text-[11px]">{u.time}</Text>
-                    </View>
-                  </View>
-                  <Ionicons name="checkmark-circle-outline" size={24} color="#2ECC71" />
+            {(() => {
+              const verifications = (incident.verified_by || []).map(id => ({ id, type: 'verify' }));
+              const inaccuracies = (incident.reported_inaccurate_by || []).map(id => ({ id, type: 'inaccurate' }));
+              const allFeedbacks = [...verifications, ...inaccuracies];
+
+              if (allFeedbacks.length === 0) {
+                return <Text className="text-[#8D99AE] text-center text-sm py-2">No feedbacks yet.</Text>;
+              }
+
+              return (
+                <View className="flex-col gap-3">
+                  {allFeedbacks.map((f, index) => {
+                    const uid = String(f.id);
+                    const isVerify = f.type === 'verify';
+                    return (
+                      <View key={uid + index} className="flex-row items-center justify-between bg-[#F7F7F7] py-2 px-3 rounded-2xl border border-[#F0F0F0]">
+                        <View className="flex-row items-center gap-3">
+                          <View className={`w-10 h-10 rounded-full ${isVerify ? 'bg-[#2ECC71]' : 'bg-[#E74C3C]'} items-center justify-center`}>
+                            <Text className="text-white font-bold">{uid.slice(-2).toUpperCase()}</Text>
+                          </View>
+                          <View>
+                            <Text className="font-bold text-[#2B2D42] text-[13px]">Citizen {uid.slice(-4)}</Text>
+                            <Text className="text-[#8D99AE] mt-0.5 text-[11px]">{isVerify ? 'Verified' : 'Reported Inaccurate'}</Text>
+                          </View>
+                        </View>
+                        <Ionicons 
+                          name={isVerify ? "checkmark-circle-outline" : "close-circle-outline"} 
+                          size={24} 
+                          color={isVerify ? "#2ECC71" : "#E74C3C"} 
+                        />
+                      </View>
+                    );
+                  })}
                 </View>
-              ))}
-            </View>
+              );
+            })()}
           </View>
         </View>
 
