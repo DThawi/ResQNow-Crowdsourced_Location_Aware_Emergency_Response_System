@@ -41,7 +41,8 @@ import ResponderAlertScreen from "../screens/Responder/ResponderAlertScreen";
 import DangerZones from "../screens/Citizen/DangerZones";
 import DangerZoneDetails from "../screens/Citizen/DangerZoneDetails";
 import ReportIncident from "../screens/Citizen/ReportIncident";
-
+import TestScreen from "../screens/TestScreen";
+import ResponderLiveMapScreen from "../screens/Responder/ResponderLiveMapScreen";
 
 
 import MyReportsScreen from "../screens/Citizen/MyReportsScreen";
@@ -53,11 +54,11 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}> 
+      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
 
      
         {/* Auth flow */}
-        {/*<Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} /> */}
+        {/*<Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} />*/}
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />
@@ -72,6 +73,7 @@ export default function AppNavigator() {
         <Stack.Screen name="ResponderAlert" component={ResponderAlertScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DangerZones" component={DangerZones} options={{ headerShown: false }} />
         <Stack.Screen name="DangerZoneDetails" component={DangerZoneDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="ResponderMap" component={ResponderLiveMapScreen} options={{ headerShown: false }} />
 
 
 
