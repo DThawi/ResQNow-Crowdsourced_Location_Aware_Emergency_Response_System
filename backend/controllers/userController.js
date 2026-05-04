@@ -21,6 +21,7 @@ exports.getProfileStats = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Error fetching profile stats", error: err.message });
     }
+};
 
     const User = require('../models/User');
 
@@ -53,5 +54,4 @@ exports.updateProfile = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Update failed" });
     }
-};
 };

@@ -10,5 +10,7 @@ router.post('/login', authController.login);
 
 // NEW ROUTE: This fixes the 404
 router.get('/profile-stats', verifyToken, userController.getProfileStats);
+router.get('/profile', verifyToken, userController.getProfile);
+router.put('/profile-update', verifyToken, userController.updateProfile);
 
 module.exports = router;
