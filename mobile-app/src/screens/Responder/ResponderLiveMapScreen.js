@@ -17,12 +17,15 @@ const FILTERS = [
   { key: "All", label: "All" },
   { key: "Pending", label: "New" },
   { key: "Verified", label: "Verified" },
+  { key: "Assigned", label: "Assigned" },
   { key: "Resolved", label: "Resolved" },
+
 ];
 
 const PIN_COLORS = {
   Pending: "#DC2626",
   Verified: "#F59E0B",
+   Assigned: "#3B82F6",
   Resolved: "#1F2937",
 };
 
@@ -162,6 +165,7 @@ const toggleMapType = () => {
 
             return (
            <Marker
+                key={incident._id}
                 coordinate={{
                   latitude: lat,
                   longitude: lng,
@@ -235,6 +239,20 @@ const toggleMapType = () => {
               Active
             </Text>
           </View>
+        </View>
+
+
+        {/* Assigned */}
+        <View className="flex-row items-center gap-2">
+           <View className="w-3.5 h-3.5 rounded-full bg-blue-500" />
+           <View>
+            <Text className="text-sm font-semibold text-gray-800">
+            Assigned
+            </Text>
+            <Text className="text-xs text-gray-500">
+            Responders 
+            </Text>
+           </View>
         </View>
 
         {/* Resolved */}
