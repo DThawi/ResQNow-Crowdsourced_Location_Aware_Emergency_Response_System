@@ -95,12 +95,27 @@ const MyReportsScreen = ({ navigation }) => {
           ListEmptyComponent={
             <Text className="text-center text-[#8D99AE] mt-10">You haven't reported any incidents yet.</Text>
           }
-          renderItem={({ item }) => (
-            <ReportCard 
-                item={item} 
-                onPress={() => navigation.navigate("IncidentDetails", { incident: item })} 
-            />
-          )}
+          renderItem={({ item }) => {
+            const formattedItem = {
+              ...item,
+              title: `${item.type} Emergency`,
+              status: item.status,
+              location: item.location?.coordinates ? `Lng: ${item.location.coordinates[0].toFixed(2)}, Lat: ${item.location.coordinates[1].toFixed(2)}` : 'Unknown',
+              date: new Date(item.timestamp).toLocaleDateString(),
+              statusColor: item.status === 'Pending' ? '#F6AA1C' : item.status === 'Resolved' ? '#2B2D42' : '#2ECC71',
+              typeBgHex: item.type === 'Fire' ? '#D62828' : item.type === 'Medical' ? '#2ECC71' : '#F6AA1C',
+              typeIcon: item.type === 'Fire' ? 'fire' : item.type === 'Medical' ? 'medical-bag' : 'alert',
+              views: 0,
+              likes: item.verified_by?.length || 0
+            };
+            
+            return (
+              <ReportCard 
+                  item={formattedItem} 
+                  onPress={() => navigation.navigate("IncidentDetails", { incident: item })} 
+              />
+            );
+          }}
         />
       )}
     </View>
