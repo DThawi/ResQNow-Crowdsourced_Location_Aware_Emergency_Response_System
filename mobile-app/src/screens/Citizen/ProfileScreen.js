@@ -15,6 +15,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from "../../services/api";
 import GradientHeader from "../../components/layout/header";
 
+// Import your new modals
+import BadgeListModal from "../../components/modals/badgeListModal";
+import BadgeDetailModal from "../../components/modals/badgeDetailModal";
+
 const ProfileScreen = () => {
   const navigation = useNavigation();
 
@@ -26,6 +30,11 @@ const ProfileScreen = () => {
     heroBadge: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // --- Modal States ---
+  const [isBadgeListVisible, setIsBadgeListVisible] = useState(false);
+  const [isBadgeDetailVisible, setIsBadgeDetailVisible] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState(null);
 
   // useFocusEffect ensures data refreshes every time when open this screen
   useFocusEffect(
@@ -61,6 +70,12 @@ const ProfileScreen = () => {
   const handleLogout = async () => {
     await AsyncStorage.clear();
     navigation.replace("Login");
+  };
+
+  // --- Modal Handlers ---
+  const handleBadgePress = (badge) => {
+    setSelectedBadge(badge);
+    setIsBadgeDetailVisible(true);
   };
 
   if (loading) {
@@ -128,8 +143,9 @@ const ProfileScreen = () => {
           <PerformanceCard
             label="Hero"
             icon="medal-outline"
-            value={stats.heroBadge || 0}
             valueColor="#2ECC71"
+            onPress={() => setIsBadgeListVisible(true)}
+            // Removed the 'value' prop entirely to clear the '0'
           />
         </View>
 
@@ -186,6 +202,27 @@ const ProfileScreen = () => {
           />
         </TouchableOpacity>
       </ScrollView>
+
+      {/* --- Added Modals --- */}
+      <BadgeListModal 
+        visible={isBadgeListVisible} 
+        onClose={() => setIsBadgeListVisible(false)} 
+        onBadgePress={handleBadgePress} 
+      />
+
+      {selectedBadge && (
+        <BadgeDetailModal
+          visible={isBadgeDetailVisible}
+          onClose={() => setIsBadgeDetailVisible(false)}
+          badgeName={selectedBadge.name}
+          description={selectedBadge.description}
+          requirement={selectedBadge.requirement}
+          progress={selectedBadge.progress}
+          total={selectedBadge.total}
+          iconName={selectedBadge.icon}
+        />
+      )}
+
     </View>
   );
 };
@@ -220,8 +257,14 @@ const PerformanceCard = ({
   value,
   icon,
   valueColor = "#333",
+  onPress
 }) => (
-  <View className="flex-1 bg-white mx-1 rounded-2xl py-4 items-center justify-center shadow">
+  <TouchableOpacity 
+    className="flex-1 bg-white mx-1 rounded-2xl py-4 items-center justify-center shadow"
+    onPress={onPress}
+    disabled={!onPress}
+    activeOpacity={0.7}
+  >
     {icon && (
       <Ionicons
         name={icon}
@@ -231,17 +274,20 @@ const PerformanceCard = ({
       />
     )}
 
-    <Text
-      className="text-lg font-bold"
-      style={{ color: valueColor }}
-    >
-      {value}
-    </Text>
+    {/* Conditionally render value only if it exists so it doesn't show an empty gap */}
+    {value !== undefined && value !== null && value !== "" && (
+      <Text
+        className="text-lg font-bold"
+        style={{ color: valueColor }}
+      >
+        {value}
+      </Text>
+    )}
 
     <Text className="text-gray-500 text-sm uppercase" style={{ fontSize: 9 }}>
       {label}
     </Text>
-  </View>
+  </TouchableOpacity>
 );
 
 export default ProfileScreen;
