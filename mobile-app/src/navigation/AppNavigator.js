@@ -42,7 +42,7 @@ import DangerZones from "../screens/Citizen/DangerZones";
 import DangerZoneDetails from "../screens/Citizen/DangerZoneDetails";
 import ReportIncident from "../screens/Citizen/ReportIncident";
 import ResponderLiveMapScreen from "../screens/Responder/ResponderLiveMapScreen";
-
+//import TestScreen from "../screens/TestScreen";
 
 
 import MyReportsScreen from "../screens/Citizen/MyReportsScreen";
@@ -53,12 +53,13 @@ const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      
+      {/* <Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}> */}
+
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
       
      
         {/* Auth flow */}
-        {/*<Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} />*/}
+        {/* <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} /> */}
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />

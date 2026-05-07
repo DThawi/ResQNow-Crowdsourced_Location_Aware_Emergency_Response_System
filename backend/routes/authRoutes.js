@@ -17,6 +17,8 @@ router.get("/profile", verifyToken, (req, res) => {
   });
 });
 
+
+
 // RBAC Test Routes
 
 // Admin only
@@ -29,8 +31,11 @@ router.get("/citizen-dashboard", verifyToken, allowRoles("Citizen"), (req, res) 
   res.json({ message: "Welcome Citizen" });
 });
 
+
 module.exports = router;
 
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/verify-otp", authController.verifyOTP);
 router.post("/reset-password", authController.resetPassword);
+
+
