@@ -12,7 +12,8 @@ const BadgeDetailModal = ({
   const percentage = Math.min((progress / safeTotal) * 100, 100);
 
   return (
-    <BaseModal visible={visible} onClose={onClose} showCloseIcon={false} cardStyle={{ padding: 0 }}>
+    // Added borderRadius: 16 and overflow: 'hidden' to round all 4 corners
+    <BaseModal visible={visible} onClose={onClose} showCloseIcon={false} cardStyle={{ padding: 0, borderRadius: 16, overflow: 'hidden' }}>
       {/* HEADER */}
       <View style={[styles.header, isUnlocked ? styles.headerUnlocked : styles.headerLocked]}>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -99,9 +100,7 @@ const BadgeDetailModal = ({
           </>
         )}
 
-        <TouchableOpacity style={styles.actionBtnOutline} onPress={onClose}>
-          <Text style={styles.actionBtnTextOutline}>Cancel</Text>
-        </TouchableOpacity>
+        {/* Kept ONLY the Close Button */}
         <TouchableOpacity style={styles.actionBtnOutline} onPress={onClose}>
           <Text style={styles.actionBtnTextOutline}>Close</Text>
         </TouchableOpacity>

@@ -14,7 +14,8 @@ const BadgeListModal = ({ visible, onClose, onBadgePress }) => {
   const earnedCount = badges.filter(b => b.progress >= b.total).length;
 
   return (
-    <BaseModal visible={visible} onClose={onClose} showCloseIcon={false} cardStyle={{ padding: 0, width: '90%', maxHeight: '80%', backgroundColor: '#F8FAFC' }}>
+    // Added borderRadius: 16 and overflow: 'hidden' to round all 4 corners
+    <BaseModal visible={visible} onClose={onClose} showCloseIcon={false} cardStyle={{ padding: 0, width: '90%', maxHeight: '80%', backgroundColor: '#F8FAFC', borderRadius: 16, overflow: 'hidden' }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <AntDesign name="close" size={20} color="white" />
@@ -58,12 +59,14 @@ const BadgeListModal = ({ visible, onClose, onBadgePress }) => {
 };
 
 const styles = StyleSheet.create({
-  header: { backgroundColor: '#2D3748', paddingTop: 20, paddingBottom: 15, paddingHorizontal: 20, borderTopWidth: 6, borderTopColor: '#D32F2F', width: '100%' },
+  // Removed borderTopWidth & borderTopColor
+  header: { backgroundColor: '#2D3748', paddingTop: 20, paddingBottom: 15, paddingHorizontal: 20, width: '100%' },
   closeButton: { position: 'absolute', top: 15, right: 15, zIndex: 10 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   headerSubtitle: { color: '#A0AEC0', fontSize: 12, marginTop: 2 },
   body: { padding: 20, width: '100%' },
-  categoryHeader: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', padding: 12, borderRadius: 8, marginBottom: 20, borderBottomWidth: 2, borderBottomColor: '#2ECC71' },
+  // Removed borderBottomWidth & borderBottomColor
+  categoryHeader: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', padding: 12, borderRadius: 8, marginBottom: 20 },
   categoryIconBg: { backgroundColor: '#E8F5E9', padding: 8, borderRadius: 8 },
   categoryTitle: { fontSize: 14, fontWeight: 'bold', color: '#2D3748' },
   categorySub: { fontSize: 10, color: '#A0AEC0' },
