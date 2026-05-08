@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { FlatList, Text, View, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 // --- THESE TWO LINES WERE MISSING ---
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,39 +14,57 @@ const HomeScreen = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchIncidents = async (isRefresh = false) => {
+  const fetchIncidents = async (pageNumber = 1, isRefresh = false) => {
     try {
-      if (!isRefresh) setLoading(true);
+      if (pageNumber === 1 && !isRefresh) setLoading(true);
+      if (pageNumber > 1) setLoadingMore(true);
+
+      const limit = 10;
       const [response, storedViewed] = await Promise.all([
-        API.get('/incidents'),
+        API.get(`/incidents?page=${pageNumber}&limit=${limit}`),
         AsyncStorage.getItem('viewedIncidentIds')
       ]);
       
       const incidentsData = response.data;
       const viewedIds = storedViewed ? JSON.parse(storedViewed) : [];
       
-      // Calculate how many incidents haven't been "viewed" yet
-      const unread = incidentsData.filter(i => !viewedIds.includes(i._id)).length;
-      
-      setIncidents(incidentsData);
-      setUnreadCount(unread);
+      setHasMore(incidentsData.length === limit);
+
+      setIncidents(prevIncidents => {
+        const newData = pageNumber === 1 ? incidentsData : [...prevIncidents, ...incidentsData];
+        // Calculate unread based on the currently loaded data
+        const unread = newData.filter(i => !viewedIds.includes(i._id)).length;
+        setUnreadCount(unread);
+        return newData;
+      });
+      setPage(pageNumber);
     } catch (error) {
       console.error("Error fetching incidents:", error);
     } finally {
       if (!isRefresh) setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchIncidents(true);
+    await fetchIncidents(1, true);
     setRefreshing(false);
   }, []);
 
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchIncidents(page + 1);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      fetchIncidents();
+      fetchIncidents(1);
     }, [])
   );
 
@@ -80,24 +98,15 @@ const HomeScreen = () => {
       
       <Text className="text-[20px] font-bold my-2 ml-5">Recent Incidents</Text>
       
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ padding: 16 }}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-            tintColor="#D62828" 
-            colors={["#D62828"]} 
-          />
-        }
-      >
-        {incidents.length === 0 ? (
-          <Text className="text-slate-500 text-center mt-5">No incidents found.</Text>
-        ) : (
-          incidents.map((incident) => (
+      {incidents.length === 0 && !loading ? (
+        <Text className="text-slate-500 text-center mt-5">No incidents found.</Text>
+      ) : (
+        <FlatList
+          data={incidents}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={{ padding: 16 }}
+          renderItem={({ item: incident }) => (
             <IncidentCard
-              key={incident._id}
               type={incident.type}
               status={incident.status}
               description={incident.description}
@@ -107,9 +116,24 @@ const HomeScreen = () => {
               reports={incident.reported_inaccurate_by ? incident.reported_inaccurate_by.length : 0}
               onPress={() => navigation.navigate("IncidentDetails", { incident })}
             />
-          ))
-        )}
-      </ScrollView>
+          )}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor="#D62828" 
+              colors={["#D62828"]} 
+            />
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator size="small" color="#D62828" style={{ marginVertical: 16 }} />
+            ) : null
+          }
+        />
+      )}
     </View>
   );
 };
