@@ -163,7 +163,7 @@ export default function DangerZones({ navigation }) {
           <DangerZoneCard
             zone={item}
             onPress={() =>
-              navigation.navigate("DangerZoneAlertDetails", {
+              navigation.navigate("DangerZoneDetails", {
                 zone: item,
               })
             }
