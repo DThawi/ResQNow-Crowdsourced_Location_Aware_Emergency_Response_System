@@ -1,9 +1,5 @@
 import React, { useState, useCallback } from 'react';
-<<<<<<< HEAD
 import { FlatList, Text, View, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
-=======
-import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
->>>>>>> 42e4367 (Rename frontend folder to admin-web)
 // --- THESE TWO LINES WERE MISSING ---
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
