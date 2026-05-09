@@ -57,15 +57,9 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
 
-
-
-      {/* <Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}> */}
-      {/* Auth flow */}
-      {/* <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} /> */}
-
+      {/*<Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}>*/}
 
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}> 
-
 
         {/* Auth flow */}
         {/* <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} /> */}
