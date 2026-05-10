@@ -8,14 +8,14 @@ export default function IncidentDetailsScreen() {
   const [notes, setNotes] = useState('');
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
     >
       <View className="flex-1 bg-[#F7F7F7]">
         <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
         <GradientHeader title="Incident Details" type="back" />
-        
+
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           {/* Top Banner */}
           <View className="m-4 rounded-xl overflow-hidden shadow-sm">
@@ -30,10 +30,10 @@ export default function IncidentDetailsScreen() {
                 <Text className="text-[#003049] text-[11px] font-medium mb-1">Distance</Text>
                 <Text className="text-[#003049] text-[15px] font-bold">0.8 mi</Text>
               </View>
-              
+
               {/* Center Icon */}
               <Text style={{ fontSize: 50 }}>🚗</Text>
-              
+
               {/* ETA Card */}
               <View className="bg-white rounded-2xl px-3 py-3 items-center justify-center shadow-md min-w-[70px]">
                 <Text className="text-[#003049] text-[11px] font-medium mb-1">ETA</Text>
@@ -61,7 +61,7 @@ export default function IncidentDetailsScreen() {
                 <Text className="text-[#E67E22] text-xs font-semibold">Verified</Text>
               </View>
             </View>
-            
+
             <Text className="text-[#8D99AE] text-[15px] mb-5 leading-6">
               Multi-vehicle collision on highway, traffic blocked
             </Text>
@@ -75,12 +75,12 @@ export default function IncidentDetailsScreen() {
                   <Text className="text-[#8D99AE] text-[14px]">Sri Lanka, SL</Text>
                 </View>
               </View>
-              
+
               <View className="flex-row items-center mb-3.5">
                 <Feather name="clock" size={18} color="#8D99AE" />
                 <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported Dec 9, 3:15 PM</Text>
               </View>
-              
+
               <View className="flex-row items-center mb-4">
                 <Feather name="user" size={18} color="#8D99AE" />
                 <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported by Sahan Madawela</Text>
@@ -90,7 +90,7 @@ export default function IncidentDetailsScreen() {
                 <Feather name="check-circle" size={18} color="#2ECC71" />
                 <Text className="text-[#2ECC71] text-[14px] font-semibold ml-3.5">15 community verifications</Text>
               </View>
-              
+
               <View className="flex-row items-center">
                 <Feather name="alert-circle" size={18} color="#F6AA1C" />
                 <Text className="text-[#F6AA1C] text-[14px] font-semibold ml-3.5">0 flagged</Text>
@@ -103,7 +103,7 @@ export default function IncidentDetailsScreen() {
             <TouchableOpacity className="bg-[#D62828] py-3.5 rounded-xl items-center mb-3 shadow-md">
               <Text className="text-white font-bold text-[15px]">Accept Assignment</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity className="bg-white py-3.5 rounded-xl items-center border border-[#D62828] shadow-sm">
               <Text className="text-[#D62828] font-bold text-[15px]">Decline</Text>
             </TouchableOpacity>
@@ -131,7 +131,7 @@ export default function IncidentDetailsScreen() {
           {/* Contact Information */}
           <View className="mx-4 bg-white rounded-2xl p-5 shadow-sm mb-4">
             <Text className="text-[#2B2D42] text-[16px] font-bold mb-5">Contact Information</Text>
-            
+
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-[#8D99AE] text-[15px] font-medium">Reporter</Text>
               <TouchableOpacity className="flex-row items-center border border-[#D62828] px-4 py-2 rounded-xl">
@@ -139,7 +139,7 @@ export default function IncidentDetailsScreen() {
                 <Text className="text-[#D62828] font-bold ml-2 text-[13px]">Call</Text>
               </TouchableOpacity>
             </View>
-            
+
             <View className="flex-row justify-between items-center">
               <Text className="text-[#8D99AE] text-[15px] font-medium">Dispatch</Text>
               <TouchableOpacity className="flex-row items-center border border-[#D62828] px-4 py-2 rounded-xl">
