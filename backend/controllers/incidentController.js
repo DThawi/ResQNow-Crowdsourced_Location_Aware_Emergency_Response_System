@@ -189,3 +189,157 @@ exports.addIncidentFeedback = async (req, res) => {
     });
   }
 };
+
+// Get incidents assigned to this responder
+exports.getAssignedIncidents = async (req, res) => {
+  try {
+    const incidents = await Incident.find({
+      assignedAuthorities: req.user.id
+    }).sort({ timestamp: -1 });
+
+    res.status(200).json(incidents);
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching assigned incidents",
+      error: err.message
+    });
+  }
+};
+
+// Responder updates response status
+exports.updateResponseStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['Assigned', 'Resolved'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    if (!incident.assignedAuthorities.includes(req.user.id)) {
+      return res.status(403).json({ message: "Not authorized to update this incident" });
+    }
+
+    incident.status = status;
+    incident.status_history.push({
+      status,
+      changed_by: req.user.id
+    });
+
+    await incident.save();
+
+    res.status(200).json({ message: "Response status updated", incident });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Error updating response status",
+      error: err.message
+    });
+  }
+};
+
+// Track response progress - get incident history
+exports.getResponseProgress = async (req, res) => {
+  try {
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    res.status(200).json({
+      status: incident.status,
+      status_history: incident.status_history,
+      assignedAuthorities: incident.assignedAuthorities
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching progress",
+      error: err.message
+    });
+  }
+};
+
+// Get incidents assigned to this responder
+exports.getAssignedIncidents = async (req, res) => {
+  try {
+    const incidents = await Incident.find({
+      assignedAuthorities: req.user.id
+    }).sort({ timestamp: -1 });
+
+    res.status(200).json(incidents);
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching assigned incidents",
+      error: err.message
+    });
+  }
+};
+
+// Responder updates response status
+exports.updateResponseStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['Assigned', 'Resolved'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    if (!incident.assignedAuthorities.includes(req.user.id)) {
+      return res.status(403).json({ message: "Not authorized to update this incident" });
+    }
+
+    incident.status = status;
+    incident.status_history.push({
+      status,
+      changed_by: req.user.id
+    });
+
+    await incident.save();
+
+    res.status(200).json({ message: "Response status updated", incident });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Error updating response status",
+      error: err.message
+    });
+  }
+};
+
+// Track response progress
+exports.getResponseProgress = async (req, res) => {
+  try {
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    res.status(200).json({
+      status: incident.status,
+      status_history: incident.status_history,
+      assignedAuthorities: incident.assignedAuthorities
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching progress",
+      error: err.message
+    });
+  }
+};
