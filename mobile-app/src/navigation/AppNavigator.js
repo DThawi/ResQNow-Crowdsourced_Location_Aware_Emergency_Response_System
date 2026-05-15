@@ -52,6 +52,8 @@ import MyReportsScreen from "../screens/Citizen/MyReportsScreen";
 import IncidentDetailsScreen from "../screens/Citizen/IncidentDetailsScreen";
 import ResponderIncidentDetailsScreen from "../screens/Responder/IncidentDetailsScreen";
 import ResponderIncidentDetailsScreen2 from "../screens/Responder/IncidentDetailsScreen2";
+import ResponderIncidentDetailsScreen3 from "../screens/Responder/IncidentDetailsScreen3";
+import ResponderIncidentDetailsScreen4 from "../screens/Responder/IncidentDetailsScreen4";
 
 const Stack = createNativeStackNavigator();
 
@@ -61,7 +63,7 @@ export default function AppNavigator() {
 
       {/*<Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}>*/}
 
-      <Stack.Navigator initialRouteName="ResponderIncidentDetails2" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="ResponderIncidentDetails4" screenOptions={{ headerShown: false }}>
 
         {/* Auth flow */}
         {/* <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} /> */}
@@ -114,7 +116,8 @@ export default function AppNavigator() {
 
         <Stack.Screen name="ResponderIncidentDetails" component={ResponderIncidentDetailsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderIncidentDetails2" component={ResponderIncidentDetailsScreen2} options={{ headerShown: false }} />
-
+        <Stack.Screen name="ResponderIncidentDetails3" component={ResponderIncidentDetailsScreen3} options={{ headerShown: false }} />
+        <Stack.Screen name="ResponderIncidentDetails4" component={ResponderIncidentDetailsScreen4} options={{ headerShown: false }} />
 
 
       </Stack.Navigator>
