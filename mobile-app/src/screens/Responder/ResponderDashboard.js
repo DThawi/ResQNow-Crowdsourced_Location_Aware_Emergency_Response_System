@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import GradientHeader from '../../components/layout/header';
 import { Ionicons } from '@expo/vector-icons';
-import ResponderDashboardAlert from '../../components/ResponderDashboardAlert';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
  
@@ -138,12 +137,21 @@ export default function ResponderDashboard({ navigation }) {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {/* New Incident Alert */}
-          <ResponderDashboardAlert
-            incident={newIncident}
-            onViewDetails={() => navigation.navigate('IncidentDetails1', { incident: newIncident })}
-            onDismiss={() => setNewIncident(null)}
-          />
+          {/* Dynamic Top Banner (Bypasses missing standalone component) */}
+          {newIncident && (
+            <View className="mx-4 mt-4 bg-red-50 border border-red-100 rounded-2xl p-4 flex-row justify-between items-center shadow-sm">
+              <View className="flex-1 pr-2">
+                <Text className="text-red-700 font-bold text-sm mb-0.5">🚨 Critical Active Task</Text>
+                <Text className="text-gray-700 text-xs numberOfLines={1}">{newIncident.description || 'New Incident Assignment'}</Text>
+              </View>
+              <TouchableOpacity 
+                className="bg-[#D62828] px-3 py-1.5 rounded-lg"
+                onPress={() => navigation.navigate('ResponderIncidentDetails', { incident: newIncident })}
+              >
+                <Text className="text-white text-xs font-bold">View</Text>
+              </TouchableOpacity>
+            </View>
+          )}
  
           {/* Profile Card */}
           <View className="mx-4 mt-4 bg-[#1A2B3C] rounded-2xl p-4 flex-row items-center justify-between">
@@ -189,6 +197,7 @@ export default function ResponderDashboard({ navigation }) {
                 style={{ width: '47%' }}
                 onPress={() => {
                   if (action.label === 'Alerts') navigation?.navigate('AlertsNotifications');
+                  if (action.label === 'Navigate') navigation?.navigate('ResponderMap');
                 }}
               >
                 <Text className="text-2xl mb-1">{action.icon}</Text>
@@ -213,9 +222,9 @@ export default function ResponderDashboard({ navigation }) {
             ) : (
               incidents.map((item) => (
                 <IncidentCard
-                  key={item._id}
+                  key={item._id || item.id}
                   item={item}
-                  onPress={() => navigation.navigate('IncidentDetails1', { incident: item })}
+                  onPress={() => navigation.navigate('ResponderIncidentDetails', { incident: item })}
                 />
               ))
             )}
