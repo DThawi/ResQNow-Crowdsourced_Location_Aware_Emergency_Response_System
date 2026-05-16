@@ -29,7 +29,11 @@ export default function LoginScreen({ navigation }) {
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('role', role);
       
-      navigation.navigate('Home');
+      if (role === 'Authority') {
+        navigation.navigate('ResponderDashboard');
+      } else {
+        navigation.navigate('Home');
+      }
     } catch (err) {
       alert(err.response?.data?.message || 'Login failed');
     }

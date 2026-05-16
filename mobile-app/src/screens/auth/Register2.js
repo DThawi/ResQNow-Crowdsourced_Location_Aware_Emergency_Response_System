@@ -9,6 +9,27 @@ import {
 import API from '../../services/api';
 import Header from '../../components/layout/header';
 
+const InputField = ({ label, icon, placeholder, onChangeText, keyboardType, secureTextEntry, multiline, required = true }) => (
+  <>
+    <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
+      {label} {required && <Text className="text-[#D62828]">*</Text>}
+    </Text>
+    <View className={`flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full mb-1 ${multiline ? 'h-20 items-start pt-3' : 'h-12'}`}>
+      <Text className="mr-2">{icon}</Text>
+      <TextInput
+        className="flex-1 text-sm text-black"
+        placeholder={placeholder}
+        placeholderTextColor="#999"
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        multiline={multiline}
+        autoCapitalize="none"
+      />
+    </View>
+  </>
+);
+
 export default function Register2({ navigation, route }) {
   const { role } = route.params || {};
   const [name, setName] = useState('');
@@ -75,7 +96,7 @@ export default function Register2({ navigation, route }) {
         name,
         email: role === 'Admin' ? adminEmail : email,
         password,
-        role,
+        role: role === 'Responder' ? 'Authority' : role,
         district,
         contact_number,
         organization,
@@ -89,26 +110,7 @@ export default function Register2({ navigation, route }) {
     }
   };
 
-  const InputField = ({ label, icon, placeholder, onChangeText, keyboardType, secureTextEntry, multiline, required = true }) => (
-    <>
-      <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
-        {label} {required && <Text className="text-[#D62828]">*</Text>}
-      </Text>
-      <View className={`flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full mb-1 ${multiline ? 'h-20 items-start pt-3' : 'h-12'}`}>
-        <Text className="mr-2">{icon}</Text>
-        <TextInput
-          className="flex-1 text-sm text-black"
-          placeholder={placeholder}
-          placeholderTextColor="#999"
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          multiline={multiline}
-          autoCapitalize="none"
-        />
-      </View>
-    </>
-  );
+
 
   const renderCitizenFields = () => (
     <>
