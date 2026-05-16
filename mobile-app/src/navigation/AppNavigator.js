@@ -1,4 +1,3 @@
-// src/navigation/AppNavigator.js
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -41,33 +40,28 @@ import ResponderAlertScreen from "../screens/Responder/ResponderAlertScreen";
 import DangerZones from "../screens/Citizen/DangerZones";
 import DangerZoneDetails from "../screens/Citizen/DangerZoneDetails";
 import ReportIncident from "../screens/Citizen/ReportIncident";
-
-
-
 import ResponderLiveMapScreen from "../screens/Responder/ResponderLiveMapScreen";
-
-
-
 import MyReportsScreen from "../screens/Citizen/MyReportsScreen";
 import IncidentDetailsScreen from "../screens/Citizen/IncidentDetailsScreen";
+
+// Kept all responder details screens from HEAD
 import ResponderIncidentDetailsScreen from "../screens/Responder/IncidentDetailsScreen";
 import ResponderIncidentDetailsScreen2 from "../screens/Responder/IncidentDetailsScreen2";
 import ResponderIncidentDetailsScreen3 from "../screens/Responder/IncidentDetailsScreen3";
 import ResponderIncidentDetailsScreen4 from "../screens/Responder/IncidentDetailsScreen4";
+
+// Kept verified responder dashboard views from your folder list
+import ResponderDashboard from "../screens/Responder/ResponderDashboard";
+import AlertsNotifications from "../screens/Responder/AlertsNotifications";
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-
-      {/*<Stack.Navigator initialRouteName="TestScreen" screenOptions={{ headerShown: false }}>*/}
-
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-
-        {/* Auth flow */}
-        {/* <Stack.Screen name="TestScreen" component={TestScreen} options={{ headerShown: false }} /> */}
-
+        
+        {/* Auth & Utility flow */}
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />
@@ -77,6 +71,8 @@ export default function AppNavigator() {
         <Stack.Screen name="SuccessfulSetPassword" component={SuccessfulSetPassword} />
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
         <Stack.Screen name="LogoutPopup" component={LogoutPopup} />
+        
+        {/* Maps & Alerts */}
         <Stack.Screen name="Map" component={LiveMapScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AlertScreen" component={AlertScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderAlert" component={ResponderAlertScreen} options={{ headerShown: false }} />
@@ -84,16 +80,26 @@ export default function AppNavigator() {
         <Stack.Screen name="DangerZoneDetails" component={DangerZoneDetails} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderMap" component={ResponderLiveMapScreen} options={{ headerShown: false }} />
 
-
-
+        {/* General App Layout Hooks */}
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="TermsConditions" component={TermsConditions} options={{ headerShown: false }} />
         <Stack.Screen name="HelpSupport" component={HelpSupport} options={{ headerShown: false }} />
+        
+        {/* Citizen Features */}
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
         <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
         <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
         <Stack.Screen name="PrivacySecuritySettings" component={PrivacySecuritySettings} options={{ headerShown: false }} />
+        <Stack.Screen name="PrivacyPolicy_Citizen" component={PrivacyPolicy_Citizen} options={{ headerShown: false }} />
+        <Stack.Screen name="TermsConditions_Citizen" component={TermsConditions_Citizen} options={{ headerShown: false }} />
+        <Stack.Screen name="HelpSupport_Citizen" component={HelpSupport_Citizen} options={{ headerShown: false }} />
+        <Stack.Screen name="CitizenAboutScreen" component={CitizenAboutScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MyReports" component={MyReportsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ReportIncident" component={ReportIncident} options={{ headerShown: false }} />
+        <Stack.Screen name="IncidentDetails" component={IncidentDetailsScreen} options={{ headerShown: false }} />
+
+        {/* Responder Structural Setup */}
         <Stack.Screen name="SettingsScreen" component={SettingsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderEditProfileScreen" component={ResponderEditProfileScreen} options={{ headerShown: false }} />
@@ -103,22 +109,18 @@ export default function AppNavigator() {
         <Stack.Screen name="BiometricAuthentication" component={BiometricAuthentication} options={{ headerShown: false }} />
         <Stack.Screen name="DeactivateAccountScreen" component={DeactivateAccountScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DeleteAccountScreen" component={DeleteAccountScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="PrivacyPolicy_Citizen" component={PrivacyPolicy_Citizen} options={{ headerShown: false }} />
-        <Stack.Screen name="TermsConditions_Citizen" component={TermsConditions_Citizen} options={{ headerShown: false }} />
-        <Stack.Screen name="HelpSupport_Citizen" component={HelpSupport_Citizen} options={{ headerShown: false }} />
         <Stack.Screen name="OrganizationDetails_EditScreen" component={OrganizationDetails_EditScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderAboutScreen" component={ResponderAboutScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="CitizenAboutScreen" component={CitizenAboutScreen} options={{ headerShown: false }} />
 
-        <Stack.Screen name="MyReports" component={MyReportsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="ReportIncident" component={ReportIncident} options={{ headerShown: false }} />
-        <Stack.Screen name="IncidentDetails" component={IncidentDetailsScreen} options={{ headerShown: false }} />
+        {/* Responder Dashboard Modules */}
+        <Stack.Screen name="ResponderDashboard" component={ResponderDashboard} options={{ headerShown: false }} />
+        <Stack.Screen name="AlertsNotifications" component={AlertsNotifications} options={{ headerShown: false }} />
 
+        {/* Dynamic Incident Overview Modules */}
         <Stack.Screen name="ResponderIncidentDetails" component={ResponderIncidentDetailsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderIncidentDetails2" component={ResponderIncidentDetailsScreen2} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderIncidentDetails3" component={ResponderIncidentDetailsScreen3} options={{ headerShown: false }} />
         <Stack.Screen name="ResponderIncidentDetails4" component={ResponderIncidentDetailsScreen4} options={{ headerShown: false }} />
-
 
       </Stack.Navigator>
     </NavigationContainer>
