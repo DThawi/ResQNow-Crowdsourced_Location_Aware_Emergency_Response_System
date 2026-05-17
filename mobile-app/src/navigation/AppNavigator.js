@@ -60,7 +60,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-        
+
         {/* Auth & Utility flow */}
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -71,7 +71,7 @@ export default function AppNavigator() {
         <Stack.Screen name="SuccessfulSetPassword" component={SuccessfulSetPassword} />
         <Stack.Screen name="ForgotPassword1" component={ForgotPassword1} />
         <Stack.Screen name="LogoutPopup" component={LogoutPopup} />
-        
+
         {/* Maps & Alerts */}
         <Stack.Screen name="Map" component={LiveMapScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AlertScreen" component={AlertScreen} options={{ headerShown: false }} />
@@ -85,7 +85,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="TermsConditions" component={TermsConditions} options={{ headerShown: false }} />
         <Stack.Screen name="HelpSupport" component={HelpSupport} options={{ headerShown: false }} />
-        
+
         {/* Citizen Features */}
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
         <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />

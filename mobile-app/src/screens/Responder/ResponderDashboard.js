@@ -13,14 +13,21 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
  
+const StatusBadge = ({ status, colorClass }) => (
+  <View className={`px-2 py-0.5 rounded-full border ${colorClass.split(' ')[0]} ${colorClass.split(' ').find(c => c.startsWith('border-')) || ''}`}>
+    <Text className={`text-[10px] font-medium ${colorClass.split(' ')[1]}`}>{status}</Text>
+  </View>
+);
+
 const getStatusColor = (status) => {
-  if (status === 'Assigned') return 'bg-yellow-100 text-yellow-600';
-  if (status === 'Resolved') return 'bg-green-100 text-green-600';
-  if (status === 'Pending') return 'bg-red-100 text-red-600';
-  if (status === 'Verified') return 'bg-blue-100 text-blue-600';
-  return 'bg-gray-100 text-gray-600';
+  if (status === 'Assigned') return 'bg-white text-gray-700 border-gray-400';
+  if (status === 'Resolved') return 'bg-white text-green-500 border-green-300';
+  if (status === 'In Progress') return 'bg-white text-blue-400 border-blue-200';
+  if (status === 'Pending') return 'bg-red-100 text-red-600 border-red-200';
+  if (status === 'Verified') return 'bg-white text-yellow-600 border-yellow-400';
+  return 'bg-gray-100 text-gray-600 border-gray-200';
 };
- 
+
 const getTypeIcon = (type) => {
   if (type === 'Fire') return '🔥';
   if (type === 'Medical') return '🏥';
@@ -28,45 +35,63 @@ const getTypeIcon = (type) => {
   if (type === 'Accident') return '🚗';
   return '⚠️';
 };
- 
+
 const getTimeAgo = (timestamp) => {
   const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
   if (diff < 60) return `${diff}m ago`;
   if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
   return `${Math.floor(diff / 1440)}d ago`;
 };
- 
-const StatusBadge = ({ status, colorClass }) => (
-  <View className={`px-2 py-0.5 rounded-full ${colorClass.split(' ')[0]}`}>
-    <Text className={`text-xs font-semibold ${colorClass.split(' ')[1]}`}>{status}</Text>
-  </View>
-);
- 
-const IncidentCard = ({ item, onPress }) => (
-  <TouchableOpacity
-    className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-gray-100"
-    onPress={onPress}
-  >
-    <View className="flex-row items-center justify-between mb-1">
-      <View className="flex-row items-center gap-2">
-        <Text className="text-2xl">{getTypeIcon(item.type)}</Text>
-        <Text className="text-base font-bold text-black">{item.type}</Text>
+
+const IncidentCard = ({ item, onPress }) => {
+  const addressText = item.location?.address || `${item.location?.coordinates?.[1]?.toFixed(4)}, ${item.location?.coordinates?.[0]?.toFixed(4)}`;
+  const assignedOrg = item.assignedAuthorities?.[0]?.organization || 'Unassigned';
+
+  return (
+    <TouchableOpacity
+      className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-gray-100"
+      onPress={onPress}
+    >
+      <View className="flex-row items-center justify-between mb-2">
+        <View className="flex-row items-center gap-2">
+          <Text className="text-2xl">{getTypeIcon(item.type)}</Text>
+          <Text className="text-base font-bold text-[#2C3E50]">{item.type}</Text>
+        </View>
+        <StatusBadge status={item.status} colorClass={getStatusColor(item.status)} />
       </View>
-      <StatusBadge status={item.status} colorClass={getStatusColor(item.status)} />
-    </View>
-    <Text className="text-xs text-gray-500 mb-2">{item.description}</Text>
-    <View className="flex-row items-center mb-1">
-      <Text className="text-xs text-gray-400">
-        📍 {item.location?.coordinates?.[1]?.toFixed(4)}, {item.location?.coordinates?.[0]?.toFixed(4)}
-      </Text>
-      <Text className="text-xs text-gray-400 ml-3">🕐 {getTimeAgo(item.timestamp)}</Text>
-    </View>
-    <View className="flex-row items-center mt-1 gap-3">
-      <Text className="text-xs text-green-600">✅ {item.verified_by?.length || 0} verified</Text>
-      <Text className="text-xs text-yellow-500">🚩 {item.reported_inaccurate_by?.length || 0} flagged</Text>
-    </View>
-  </TouchableOpacity>
-);
+      
+      <Text className="text-xs text-gray-400 mb-3" numberOfLines={2}>{item.description}</Text>
+      
+      <View className="flex-row items-center mb-3">
+        <Ionicons name="location-outline" size={14} color="#9CA3AF" />
+        <Text className="text-xs text-gray-400 ml-1" numberOfLines={1} style={{ maxWidth: '60%' }}>
+          {addressText}
+        </Text>
+        <Ionicons name="time-outline" size={14} color="#9CA3AF" style={{ marginLeft: 8 }} />
+        <Text className="text-xs text-gray-400 ml-1">{getTimeAgo(item.timestamp)}</Text>
+      </View>
+      
+      <View className="flex-row items-center justify-between">
+        <View>
+          <View className="flex-row items-center mb-1">
+            <Ionicons name="checkmark-circle-outline" size={14} color="#10B981" />
+            <Text className="text-xs text-green-500 ml-1">{item.verified_by?.length || 0} verified</Text>
+          </View>
+          <View className="flex-row items-center">
+            <Ionicons name="warning-outline" size={14} color="#F59E0B" />
+            <Text className="text-xs text-yellow-500 ml-1">{item.reported_inaccurate_by?.length || 0} flagged</Text>
+          </View>
+        </View>
+        <View className="flex-row items-center ml-2 flex-1 justify-end">
+          <Ionicons name="person-outline" size={14} color="#4B5563" />
+          <Text className="text-xs text-gray-600 ml-1" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'right' }}>
+            Assigned to {assignedOrg}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
  
 export default function ResponderDashboard({ navigation }) {
   const [incidents, setIncidents] = useState([]);

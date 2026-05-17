@@ -91,7 +91,7 @@ exports.getAssignedIncidents = async (req, res) => {
   try {
     const incidents = await Incident.find({
       assignedAuthorities: req.user.id
-    }).sort({ timestamp: -1 });
+    }).sort({ timestamp: -1 }).populate('assignedAuthorities', 'name organization');
 
     res.status(200).json(incidents);
   } catch (err) {
