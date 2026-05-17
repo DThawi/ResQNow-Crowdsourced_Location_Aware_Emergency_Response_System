@@ -22,21 +22,49 @@ const AdminLoginScreen = () => {
 
     const [isForgotOpen, setIsForgotOpen] = useState(false);
 
+    const [errorMsg, setErrorMsg] = useState('');
     const navigate = useNavigate();
 
-
-
-    const handleLogin = (e) => {
-
+    const handleLogin = async (e) => {
         e.preventDefault();
-
         setLoading(true);
+        setErrorMsg('');
 
-        setTimeout(() => navigate('/dashboard'), 1000);
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
 
+            const data = await response.json();
+
+            if (response.ok) {
+                // Check if user is an Admin (optional but recommended for Admin portal)
+                if (data.role !== 'Admin') {
+                    setErrorMsg('Access denied. Admin role required.');
+                    setLoading(false);
+                    return;
+                }
+
+                // Store token
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userRole', data.role);
+
+                // Navigate to dashboard
+                navigate('/dashboard');
+            } else {
+                setErrorMsg(data.message || 'Login failed');
+            }
+        } catch (err) {
+            setErrorMsg('Network error. Please ensure backend is running.');
+            console.error('Login error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
-
-
 
     return (
 
@@ -66,6 +94,11 @@ const AdminLoginScreen = () => {
 
                 </div>
 
+                {errorMsg && (
+                    <div className="w-full bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-medium border border-red-200 text-center">
+                        {errorMsg}
+                    </div>
+                )}
 
 
                 <form onSubmit={handleLogin} className="w-full text-left">
