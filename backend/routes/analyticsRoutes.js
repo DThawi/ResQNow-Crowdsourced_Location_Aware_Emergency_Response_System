@@ -18,4 +18,6 @@ router.get("/monthly", verifyToken, allowRoles("Admin"), analyticsController.get
 
 router.get("/top-locations", verifyToken, allowRoles("Admin"), analyticsController.getTopLocations);
 
+router.get("/active-responders", verifyToken, allowRoles("Admin"), analyticsController.getActiveRespondersCount);
+
 module.exports = router;

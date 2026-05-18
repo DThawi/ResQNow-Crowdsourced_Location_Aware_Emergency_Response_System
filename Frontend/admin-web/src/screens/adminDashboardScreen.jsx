@@ -23,7 +23,9 @@ const AdminDashboardScreen = () => {
     { key: 'Medical', label: 'Medical', value: 24, color: '#10B981' },
   ]), []);
 
-  const [activeIncidentsCount, setActiveIncidentsCount] = useState(4); // Default fallback
+  const [activeIncidentsCount, setActiveIncidentsCount] = useState(4);
+  const [activeRespondersCount, setActiveRespondersCount] = useState(5);
+  const [recentIncidents, setRecentIncidents] = useState([]);
 
   useEffect(() => {
     const fetchActiveIncidents = async () => {
@@ -46,8 +48,45 @@ const AdminDashboardScreen = () => {
       }
     };
 
+    const fetchActiveResponders = async () => {
+      try {
+        const token = localStorage.getItem('token') || '';
+        const response = await fetch('http://localhost:5000/api/analytics/active-responders', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setActiveRespondersCount(data.count);
+        }
+      } catch (err) {
+        console.error("Failed to fetch active responders:", err);
+      }
+    };
+
+    const fetchRecentIncidents = async () => {
+      try {
+        const token = localStorage.getItem('token') || '';
+        const response = await fetch('http://localhost:5000/api/incidents?limit=5', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setRecentIncidents(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch recent incidents:", err);
+      }
+    };
+
     fetchActiveIncidents();
+    fetchActiveResponders();
+    fetchRecentIncidents();
   }, []);
+
 
   return (
     <div className="animate-[fadeIn_0.3s_ease-out]">
@@ -59,7 +98,7 @@ const AdminDashboardScreen = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-4 gap-[20px] mb-[25px]">
         <StatCard icon={<AlertCircle color="#D62828" size={24} />} bg="#FEE2E2" title="Active Incidents" value={activeIncidentsCount} trend="+12%" positive={false} />
-        <StatCard icon={<Users color="#4A5568" size={24} />} bg="#F3F4F6" title="Active Responders" value="128" trend="+8%" positive={true} />
+        <StatCard icon={<Users color="#4A5568" size={24} />} bg="#F3F4F6" title="Active Responders" value={activeRespondersCount} trend="+8%" positive={true} />
         <StatCard icon={<CheckCircle color="#10B981" size={24} />} bg="#D1FAE5" title="Resolved Today" value="42" trend="+18%" positive={true} />
         <StatCard icon={<Clock color="#F59E0B" size={24} />} bg="#FEF3C7" title="Avg. Dispatch Time" value="1.2 min" trend="-15%" positive={true} />
       </div>
@@ -140,10 +179,15 @@ const AdminDashboardScreen = () => {
               </tr>
             </thead>
             <tbody>
-              <TableRow id="#1042" title="Building Fire" status="in-progress" loc="123 Main Street" />
-              <TableRow id="#1041" title="Medical Emergency" status="assigned" loc="456 Park Avenue" />
-              <TableRow id="#1040" title="Car Accident" status="verified" loc="I-95 Exit 12" />
-              <TableRow id="#1039" title="Robbery in Progress" status="reported" loc="789 Broadway" />
+              {recentIncidents.map(incident => (
+                <TableRow 
+                  key={incident._id} 
+                  id={`#${incident._id.substring(incident._id.length - 4)}`} 
+                  title={incident.type} 
+                  status={incident.status} 
+                  loc={incident.location?.coordinates ? `Lat: ${incident.location.coordinates[1].toFixed(2)}, Lng: ${incident.location.coordinates[0].toFixed(2)}` : 'Unknown'} 
+                />
+              ))}
             </tbody>
           </table>
         </div>
@@ -226,8 +270,12 @@ const TableRow = ({ id, title, status, loc }) => {
     'assigned': { bg: '#F3E8FF', text: '#6B21A8' },
     'verified': { bg: '#FEF08A', text: '#854D0E' },
     'reported': { bg: '#F3F4F6', text: '#374151' },
+    'Pending': { bg: '#F3F4F6', text: '#374151' },
+    'Verified': { bg: '#FEF08A', text: '#854D0E' },
+    'Assigned': { bg: '#F3E8FF', text: '#6B21A8' },
+    'Resolved': { bg: '#D1FAE5', text: '#065F46' },
   };
-  const badge = statusStyles[status];
+  const badge = statusStyles[status] || { bg: '#F3F4F6', text: '#374151' };
 
   return (
     <tr className="border-b border-[#F3F4F6] hover:bg-slate-50 transition-colors">

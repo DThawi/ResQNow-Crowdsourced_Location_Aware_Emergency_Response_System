@@ -1,4 +1,5 @@
 const Incident = require("../models/Incident");
+const User = require("../models/User");
 
 // 1. Total Incidents
 exports.getTotalIncidents = async (req, res) => {
@@ -119,6 +120,16 @@ exports.getTopLocations = async (req, res) => {
     ]);
 
     res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Active Responders Count
+exports.getActiveRespondersCount = async (req, res) => {
+  try {
+    const count = await User.countDocuments({ role: "Authority", isVerified: true });
+    res.json({ count });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
