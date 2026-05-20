@@ -25,6 +25,6 @@ router.post('/', verifyToken, upload.single("image"), uploadToCloudinary, incide
 
 // --- 3. PARAMETERIZED ROUTES LAST ---
 router.post('/:id/feedback', verifyToken, incidentController.addIncidentFeedback);
-router.put('/:id/status', verifyToken, allowRoles("Admin", "Authority"), incidentController.updateIncidentStatus);
+router.put('/:id/status', incidentController.updateIncidentStatus);
 
 module.exports = router;

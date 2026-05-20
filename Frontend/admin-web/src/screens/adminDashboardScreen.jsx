@@ -1,27 +1,124 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AlertCircle, CheckCircle, Users, Clock, 
-  TrendingUp, TrendingDown, Eye, Map as MapIcon, Activity
+  TrendingUp, TrendingDown, Eye, Activity
 } from 'lucide-react';
 
-const AdminDashboardScreen = () => {
-  // --- MOCK DATA ---
-  const incidentTrends7d = useMemo(() => ([
-    { label: 'Mon', reported: 34, resolved: 21 },
-    { label: 'Tue', reported: 48, resolved: 33 },
-    { label: 'Wed', reported: 42, resolved: 29 },
-    { label: 'Thu', reported: 55, resolved: 40 },
-    { label: 'Fri', reported: 50, resolved: 38 },
-    { label: 'Sat', reported: 61, resolved: 45 },
-    { label: 'Sun', reported: 46, resolved: 34 },
-  ]), []);
+import { getAnalyticsCategories, getAnalyticsResponseTime, getIncidents } from '../services/analyticsService';
 
-  const incidentsByType = useMemo(() => ([
-    { key: 'Fire', label: 'Fire', value: 44, color: '#D62828' },
-    { key: 'Crime', label: 'Crime', value: 28, color: '#2B2D42' },
-    { key: 'Accident', label: 'Accident', value: 36, color: '#F59E0B' },
-    { key: 'Medical', label: 'Medical', value: 24, color: '#10B981' },
-  ]), []);
+const AdminDashboardScreen = () => {
+  const [incidentTrends7d, setIncidentTrends7d] = useState([]);
+  const [incidentsByType, setIncidentsByType] = useState([]);
+  const [recentIncidents, setRecentIncidents] = useState([]);
+  const [liveFeedItems, setLiveFeedItems] = useState([]);
+  const [stats, setStats] = useState({
+    activeIncidents: 0,
+    activeResponders: 0,
+    resolvedToday: 0,
+    avgDispatchTime: '0.0',
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const mapStatus = (status) => {
+      switch (status) {
+        case 'Pending': return 'reported';
+        case 'Verified': return 'verified';
+        case 'Assigned': return 'assigned';
+        case 'Resolved': return 'resolved';
+        default: return status?.toLowerCase() || 'reported';
+      }
+    };
+
+    const buildWeeklyTrend = (incidents = []) => {
+      const now = new Date();
+      const days = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(now);
+        date.setDate(now.getDate() - (6 - index));
+        return {
+          label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          reported: 0,
+          resolved: 0,
+        };
+      });
+      incidents.forEach((incident) => {
+        if (!incident.timestamp) return;
+        const date = new Date(incident.timestamp);
+        const day = days.find((item) => item.label === date.toLocaleDateString('en-US', { weekday: 'short' }));
+        if (day) {
+          day.reported += 1;
+          if (incident.status === 'Resolved') day.resolved += 1;
+        }
+      });
+      return days;
+    };
+
+    const buildTypeCounts = (categories = []) => categories.map((item, index) => ({
+      key: item._id || 'Unknown',
+      label: item._id || 'Unknown',
+      value: item.count,
+      color: ['#D62828', '#2B2D42', '#F59E0B', '#10B981'][index % 4],
+    }));
+
+    const buildFeed = (incidents = []) => incidents.slice(0, 4).map((incident, idx) => ({
+      time: new Date(incident.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      title: incident.type || 'Incident Reported',
+      desc: incident.description ? incident.description.slice(0, 60) : 'Report received from device.',
+      id: idx,
+    }));
+
+    const buildStats = (incidents = [], avgResponse = 0) => {
+      const activeIncidents = incidents.filter((incident) => incident.status !== 'Resolved').length;
+      const activeResponders = new Set(incidents.map((incident) => incident.assignedAuthority).filter(Boolean)).size;
+      const resolvedToday = incidents.filter((incident) => {
+        if (!incident.timestamp) return false;
+        const created = new Date(incident.timestamp);
+        const today = new Date();
+        return created.toDateString() === today.toDateString() && incident.status === 'Resolved';
+      }).length;
+      return {
+        activeIncidents,
+        activeResponders,
+        resolvedToday,
+        avgDispatchTime: avgResponse.toFixed(1),
+      };
+    };
+
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [categoriesRes, responseRes, incidentsRes] = await Promise.all([
+          getAnalyticsCategories(),
+          getAnalyticsResponseTime(),
+          getIncidents(1, 20),
+        ]);
+        const incidents = Array.isArray(incidentsRes)
+  ? incidentsRes
+  : incidentsRes?.incidents || [];
+        setIncidentTrends7d(buildWeeklyTrend(incidents));
+        setIncidentsByType(buildTypeCounts(categoriesRes || []));
+        setRecentIncidents(incidents.slice(0, 5).map((incident) => ({
+          id: incident._id,
+          title: incident.type || incident.description || 'Incident',
+          status: mapStatus(incident.status),
+          loc: incident.location?.coordinates ? `${incident.location.coordinates[1].toFixed(3)}, ${incident.location.coordinates[0].toFixed(3)}` : 'Unknown',
+        })));
+        setLiveFeedItems(buildFeed(incidents));
+        setStats(buildStats(incidents, responseRes?.averageResponseTime_minutes || 0));
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Unable to load dashboard data');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadDashboard();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="animate-[fadeIn_0.3s_ease-out]">
@@ -32,35 +129,10 @@ const AdminDashboardScreen = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-4 gap-[20px] mb-[25px]">
-        <StatCard icon={<AlertCircle color="#D62828" size={24} />} bg="#FEE2E2" title="Active Incidents" value="4" trend="+12%" positive={false} />
-        <StatCard icon={<Users color="#4A5568" size={24} />} bg="#F3F4F6" title="Active Responders" value="128" trend="+8%" positive={true} />
-        <StatCard icon={<CheckCircle color="#10B981" size={24} />} bg="#D1FAE5" title="Resolved Today" value="42" trend="+18%" positive={true} />
-        <StatCard icon={<Clock color="#F59E0B" size={24} />} bg="#FEF3C7" title="Avg. Dispatch Time" value="1.2 min" trend="-15%" positive={true} />
-      </div>
-
-      {/* Live Incident Map */}
-      <div className="bg-white rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-black/2 overflow-hidden mb-[25px]">
-        <div className="px-[25px] py-[15px] border-b border-[#F3F4F6] flex justify-between items-center bg-white">
-            <div className="flex items-center gap-[10px]">
-                <MapIcon size={18} color="#2B2D42" />
-                <h3 className="m-0 text-[16px] text-[#2B2D42] font-bold">Live Incident Map</h3>
-            </div>
-            <div className="flex gap-[15px]">
-                <LegendItem color="#D62828" label="Fire / Rescue" />
-                <LegendItem color="#10B981" label="Medical" />
-                <LegendItem color="#3B82F6" label="Security" />
-            </div>
-        </div>
-        
-        <div className="h-[350px] bg-[#E5E7EB] relative flex justify-center items-center bg-[radial-gradient(#D1D5DB_2px,transparent_2px)] bg-[size:25px_25px]">
-            <MapMarker top="35%" left="42%" color="#D62828" pulse />
-            <MapMarker top="60%" left="55%" color="#10B981" />
-            <MapMarker top="45%" left="65%" color="#3B82F6" pulse />
-            <MapMarker top="25%" left="75%" color="#D62828" />
-            <div className="bg-white/80 py-[10px] px-[20px] rounded-[8px] text-[#6B7280] font-bold text-[14px] backdrop-blur-sm">
-                MAP INTEGRATION PLACEHOLDER
-            </div>
-        </div>
+        <StatCard icon={<AlertCircle color="#D62828" size={24} />} bg="#FEE2E2" title="Active Incidents" value={stats.activeIncidents.toString()} trend="+12%" positive={false} />
+        <StatCard icon={<Users color="#4A5568" size={24} />} bg="#F3F4F6" title="Active Responders" value={stats.activeResponders.toString()} trend="+8%" positive={true} />
+        <StatCard icon={<CheckCircle color="#10B981" size={24} />} bg="#D1FAE5" title="Resolved Today" value={stats.resolvedToday.toString()} trend="+18%" positive={true} />
+        <StatCard icon={<Clock color="#F59E0B" size={24} />} bg="#FEF3C7" title="Avg. Dispatch Time" value={`${stats.avgDispatchTime} min`} trend="-15%" positive={true} />
       </div>
 
       {/* Incident Trend Analytics */}
@@ -114,10 +186,19 @@ const AdminDashboardScreen = () => {
                 </tr>
               </thead>
               <tbody>
-                <TableRow id="#1042" title="Building Fire" status="in-progress" loc="123 Main Street" />
-                <TableRow id="#1041" title="Medical Emergency" status="assigned" loc="456 Park Avenue" />
-                <TableRow id="#1040" title="Car Accident" status="verified" loc="I-95 Exit 12" />
-                <TableRow id="#1039" title="Robbery in Progress" status="reported" loc="789 Broadway" />
+                {recentIncidents.length > 0 ? recentIncidents.map((incident) => (
+                  <TableRow
+                    key={incident.id}
+                    id={incident.id.slice(-8)}
+                    title={incident.title}
+                    status={incident.status}
+                    loc={incident.loc}
+                  />
+                )) : (
+                  <tr>
+                    <td colSpan="5" className="p-[15px] text-center text-[#64748B]">No recent incidents available.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
         </div>
@@ -131,10 +212,11 @@ const AdminDashboardScreen = () => {
                 </div>
             </div>
             <div className="flex flex-col gap-[15px]">
-                <FeedItem time="2m ago" title="Unit 04 Dispatched" desc="Assigned to Medical Emergency at 456 Park Ave." />
-                <FeedItem time="5m ago" title="10 Verifications Reached" desc="Car Accident at I-95 verified." />
-                <FeedItem time="12m ago" title="Citizen Report" desc="New Fire reported at 123 Main Street." />
-                <FeedItem time="18m ago" title="Incident Resolved" desc="Unit 02 cleared Flooding at West End." />
+              {liveFeedItems.length > 0 ? liveFeedItems.map((item) => (
+                <FeedItem key={item.id} time={item.time} title={item.title} desc={item.desc} />
+              )) : (
+                <div className="text-[#64748B] text-[13px]">No live activity available.</div>
+              )}
             </div>
         </div>
       </div>
@@ -175,24 +257,7 @@ const StatCard = ({ icon, bg, title, value, trend, positive }) => (
   </div>
 );
 
-const LegendItem = ({ color, label }) => (
-    <div className="flex items-center gap-[6px]">
-        <div className="w-[10px] h-[10px] rounded-full" style={{ backgroundColor: color }}></div>
-        <span className="text-[12px] text-[#6B7280] font-semibold">{label}</span>
-    </div>
-);
 
-const MapMarker = ({ top, left, color, pulse }) => (
-    <div className="absolute flex justify-center items-center" style={{ top, left }}>
-        {pulse && (
-            <div 
-              className="absolute w-[30px] h-[30px] rounded-full opacity-30 animate-[pulseMarker_2s_infinite]" 
-              style={{ backgroundColor: color }}
-            ></div>
-        )}
-        <div className="w-[12px] h-[12px] rounded-full border-[2px] border-white z-[2]" style={{ backgroundColor: color }}></div>
-    </div>
-);
 
 const TableRow = ({ id, title, status, loc }) => {
   const statusStyles = {
@@ -201,7 +266,10 @@ const TableRow = ({ id, title, status, loc }) => {
     'verified': { bg: '#FEF08A', text: '#854D0E' },
     'reported': { bg: '#F3F4F6', text: '#374151' },
   };
-  const badge = statusStyles[status];
+  const badge = statusStyles[status] || {
+  bg: "#F3F4F6",
+  text: "#374151",
+};
   
   return (
     <tr className="border-b border-[#F3F4F6] hover:bg-slate-50 transition-colors">
