@@ -11,6 +11,7 @@ import AdminDangerZoneScreen from "./screens/adminDangerZoneScreen.jsx";
 import AdminAnalyticsScreen from "./screens/adminAnalyticsScreen.jsx";
 import AdminUserManagementScreen from "./screens/adminUserManagementScreen.jsx";
 import AdminSettingsScreen from "./screens/adminSettingsScreen.jsx";
+import AdminProfileScreen from "./screens/adminProfileScreen.jsx";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/analytics" element={<AdminLayout title="Analytics & Reports"><AdminAnalyticsScreen /></AdminLayout>} />
         <Route path="/users" element={<AdminLayout title="User Management"><AdminUserManagementScreen /></AdminLayout>} />
         <Route path="/settings" element={<AdminLayout title="System Settings"><AdminSettingsScreen /></AdminLayout>} />
+        <Route path="/profile" element={<AdminLayout title="Profile"><AdminProfileScreen /></AdminLayout>} />
 
         {/* Redirect base URL to login or dashboard */}
         <Route path="/" element={<Navigate to="/login" replace />} />

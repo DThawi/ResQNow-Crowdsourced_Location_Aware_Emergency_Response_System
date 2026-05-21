@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { Mail, Lock, AlertCircle, Shield } from 'lucide-react';
 
+import { login } from '../services/authService';
+
 // Import the multi-step modal
 
 import AdminForgotPasswordModal from "../components/adminForgotPasswordModal.jsx";
@@ -18,6 +20,8 @@ const AdminLoginScreen = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [error, setError] = useState('');
+
     // State to control the Forgot Password Modal
 
     const [isForgotOpen, setIsForgotOpen] = useState(false);
@@ -26,14 +30,20 @@ const AdminLoginScreen = () => {
 
 
 
-    const handleLogin = (e) => {
-
+    const handleLogin = async (e) => {
         e.preventDefault();
-
         setLoading(true);
+        setError('');
 
-        setTimeout(() => navigate('/dashboard'), 1000);
-
+        try {
+            const response = await login(email, password);
+            localStorage.setItem('token', response.token);
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || 'Login failed');
+        } finally {
+            setLoading(false);
+        }
     };
 
 
@@ -165,6 +175,11 @@ const AdminLoginScreen = () => {
 
 
                     {/* 5. Submit Button */}
+                    {error && (
+                        <div className="mb-[18px] text-[#B91C1C] text-[14px] font-medium">
+                            {error}
+                        </div>
+                    )}
 
                     <button
 

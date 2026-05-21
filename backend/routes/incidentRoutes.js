@@ -7,6 +7,8 @@ const { upload, uploadToCloudinary } = require("../middleware/upload");
 
 // --- 1. SPECIFIC ROUTES FIRST (The Fix for 404) ---
 router.get('/my-reports', verifyToken, incidentController.getMyReports);
+router.get('/assigned', verifyToken, allowRoles("Admin", "Authority"), incidentController.getAssignedIncidents);
+
 
 router.get('/clusters', async (req, res) => {
     try {
@@ -25,6 +27,7 @@ router.post('/', verifyToken, upload.single("image"), uploadToCloudinary, incide
 
 // --- 3. PARAMETERIZED ROUTES LAST ---
 router.post('/:id/feedback', verifyToken, incidentController.addIncidentFeedback);
-router.put('/:id/status', verifyToken, allowRoles("Admin", "Authority"), incidentController.updateIncidentStatus);
+router.put('/:id/status', verifyToken, allowRoles("Admin", "Authority"), incidentController.updateResponseStatus);
+router.get('/:id/progress', verifyToken, incidentController.getResponseProgress);
 
 module.exports = router;

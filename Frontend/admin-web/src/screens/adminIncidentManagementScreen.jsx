@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AlertCircle, CheckCircle, Users, MapPin, Clock, Truck, 
   Activity, Navigation, CheckCircle2, Shield, Flame, Plus, X, ToggleRight
 } from 'lucide-react';
+import { getIncidents, updateIncidentStatus } from '../services/analyticsService';
 
 const AdminIncidentManagementScreen = () => {
-  // --- MOCK DATA ---
-  const [incidents, setIncidents] = useState([
-    { id: 'INC-1042', title: 'Large Brush Fire', type: 'Fire', location: 'Route 66, Mile Marker 42', status: 'Dispatched', time: '10 mins ago', assigned: ['Unit 12 (Fire)'] },
-    { id: 'INC-1043', title: 'Multi-Car Collision', type: 'Accident', location: 'Downtown Intersection, 5th Ave', status: 'Verified', time: '2 mins ago', assigned: [] },
-    { id: 'INC-1041', title: 'Building Collapse', type: 'Hazard', location: 'Industrial District, Block B', status: 'On Scene', time: '45 mins ago', assigned: ['Unit 04 (Medical)', 'Unit 09 (Rescue)'] },
-  ]);
+    const [incidents, setIncidents] = useState([]);
+    const [loadingIncidents, setLoadingIncidents] = useState(true);
+    const [incidentError, setIncidentError] = useState(null);
 
   const [availableResponders, setAvailableResponders] = useState([
     { id: 'R-01', name: 'Unit 04 (Medical)', distance: '1.2 km away', lat: '35%', lng: '45%' },
@@ -18,7 +16,7 @@ const AdminIncidentManagementScreen = () => {
     { id: 'R-03', name: 'Unit 15 (Fire/Rescue)', distance: '3.1 km away', lat: '25%', lng: '65%' }
   ]);
 
-  const [selectedIncidentId, setSelectedIncidentId] = useState('INC-1043'); 
+    const [selectedIncidentId, setSelectedIncidentId] = useState(null);
   const selectedIncident = incidents.find(i => i.id === selectedIncidentId);
 
   // --- ASSIGN LOGIC ---
@@ -37,24 +35,72 @@ const AdminIncidentManagementScreen = () => {
   };
 
   // --- RESOLVE & REMOVE LOGIC ---
-  const [resolveModalOpen, setResolveModalOpen] = useState(false);
-  
-  const handleResolveSequence = () => {
-    setResolveModalOpen(true);
-    setIncidents(prev => prev.map(inc => 
-        inc.id === selectedIncidentId ? { ...inc, status: 'Resolved' } : inc
-    ));
+    const [resolveModalOpen, setResolveModalOpen] = useState(false);
 
-    setTimeout(() => {
-        setIncidents(prev => {
-            const remaining = prev.filter(i => i.id !== selectedIncidentId);
-            if (remaining.length > 0) setSelectedIncidentId(remaining[0].id);
-            else setSelectedIncidentId(null);
-            return remaining;
-        });
-        setResolveModalOpen(false);
-    }, 3000);
-  };
+    const handleResolveSequence = async () => {
+        if (!selectedIncidentId) return;
+        setResolveModalOpen(true);
+        try {
+            await updateIncidentStatus(selectedIncidentId, 'Resolved');
+        } catch (err) {
+            console.warn('Unable to update incident status', err);
+        }
+        setIncidents(prev => prev.map(inc => 
+                inc.id === selectedIncidentId ? { ...inc, status: 'Resolved' } : inc
+        ));
+
+        setTimeout(() => {
+            setIncidents(prev => {
+                const remaining = prev.filter(i => i.id !== selectedIncidentId);
+                if (remaining.length > 0) setSelectedIncidentId(remaining[0].id);
+                else setSelectedIncidentId(null);
+                return remaining;
+            });
+            setResolveModalOpen(false);
+        }, 3000);
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const formatIncident = (incident) => {
+            const coords = incident.location?.coordinates;
+            const location = coords ? `${coords[1].toFixed(3)}, ${coords[0].toFixed(3)}` : 'Unknown location';
+            const reportTime = incident.timestamp ? new Date(incident.timestamp) : null;
+            const timeLabel = reportTime ? `${Math.max(1, Math.floor((Date.now() - reportTime.getTime()) / 60000))}m ago` : 'Unknown';
+            return {
+                id: incident._id,
+                title: incident.type || incident.description || 'Incident Reported',
+                type: incident.type || 'Unknown',
+                location,
+                status: incident.status === 'Assigned' ? 'Dispatched' : incident.status === 'Pending' ? 'Reported' : incident.status,
+                rawStatus: incident.status,
+                time: timeLabel,
+                assigned: Array.isArray(incident.assignedAuthorities) ? incident.assignedAuthorities.map((item) => String(item)) : [],
+            };
+        };
+
+        const loadIncidents = async () => {
+            try {
+                setLoadingIncidents(true);
+                setIncidentError(null);
+                const incidentRecords = await getIncidents(1, 20);
+                if (cancelled) return;
+                const transformed = Array.isArray(incidentRecords) ? incidentRecords.map(formatIncident) : [];
+                setIncidents(transformed);
+                if (transformed.length > 0) {
+                    setSelectedIncidentId(transformed[0].id);
+                }
+            } catch (err) {
+                if (!cancelled) setIncidentError(err.message || 'Unable to load incidents');
+            } finally {
+                if (!cancelled) setLoadingIncidents(false);
+            }
+        };
+
+        loadIncidents();
+        return () => { cancelled = true; };
+    }, []);
 
   const getStatusClasses = (status) => {
     switch(status) {
