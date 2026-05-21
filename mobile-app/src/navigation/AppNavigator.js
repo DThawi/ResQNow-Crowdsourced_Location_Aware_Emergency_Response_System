@@ -54,14 +54,20 @@ import ResponderIncidentDetailsScreen4 from "../screens/Responder/IncidentDetail
 import ResponderDashboard from "../screens/Responder/ResponderDashboard";
 import AlertsNotifications from "../screens/Responder/AlertsNotifications";
 
+
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+
+      
+
         
         {/* Auth & Utility flow */}
+        
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register1" component={Register1} />

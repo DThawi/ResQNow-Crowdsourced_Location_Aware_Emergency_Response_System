@@ -10,16 +10,7 @@ router.get('/my-reports', verifyToken, incidentController.getMyReports);
 router.get('/assigned', verifyToken, allowRoles("Admin", "Authority"), incidentController.getAssignedIncidents);
 
 
-router.get('/clusters', async (req, res) => {
-    try {
-        const clusters = await Incident.aggregate([
-            { $group: { _id: "$cluster_id", incidents: { $push: "$$ROOT" }, count: { $sum: 1 } } }
-        ]);
-        res.json(clusters);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+router.get('/clusters', incidentController.getNearbyClusters);
 
 // --- 2. GENERAL ROUTES ---
 router.get('/', incidentController.getAllIncidents);

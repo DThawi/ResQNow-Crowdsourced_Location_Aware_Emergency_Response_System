@@ -67,6 +67,49 @@ exports.addIncidentFeedback = async (req, res) => {
     }
 };
 
+const NEARBY_CLUSTER_RADIUS_METERS = 10 * 1000; // 10 km
+
+// Cluster incidents near the user's live GPS location
+exports.getNearbyClusters = async (req, res) => {
+    try {
+        const latitude = parseFloat(req.query.latitude);
+        const longitude = parseFloat(req.query.longitude);
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            return res.status(400).json({
+                message: "Query parameters latitude and longitude are required",
+            });
+        }
+
+        const radiusKm = parseFloat(req.query.radiusKm);
+        const maxDistanceMeters = Number.isFinite(radiusKm) && radiusKm > 0
+            ? radiusKm * 1000
+            : NEARBY_CLUSTER_RADIUS_METERS;
+
+        const clusters = await Incident.aggregate([
+            {
+                $geoNear: {
+                    near: { type: "Point", coordinates: [longitude, latitude] },
+                    distanceField: "distanceFromUser",
+                    maxDistance: maxDistanceMeters,
+                    spherical: true,
+                },
+            },
+            {
+                $group: {
+                    _id: { $ifNull: ["$cluster_id", "$_id"] },
+                    incidents: { $push: "$$ROOT" },
+                    count: { $sum: 1 },
+                },
+            },
+        ]);
+
+        res.status(200).json(clusters);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Get all incidents with pagination
 exports.getAllIncidents = async (req, res) => {
     try {
