@@ -3,18 +3,42 @@ import {
   AlertCircle, CheckCircle, Users, MapPin, Clock, Truck, 
   Activity, Navigation, CheckCircle2, Shield, Flame, Plus, X, ToggleRight
 } from 'lucide-react';
-import { getIncidents, updateIncidentStatus } from '../services/analyticsService';
+import { getIncidents, updateIncidentStatus, getNearbyClusters } from '../services/analyticsService';
+
+const NEARBY_CLUSTER_RADIUS_KM = 10;
+
+const formatDistanceLabel = (meters) => {
+  if (!Number.isFinite(meters)) return 'Distance unknown';
+  if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km away`;
+  return `${Math.round(meters)} m away`;
+};
+
+const formatClusterUnit = (cluster) => {
+  const incidents = cluster.incidents || [];
+  if (incidents.length === 0) return null;
+
+  const center = incidents[0];
+  const count = cluster.count ?? incidents.length;
+  const name = center.type
+    ? `${center.type} cluster (${count} report${count > 1 ? 's' : ''})`
+    : `Incident cluster (${count})`;
+
+  return {
+    id: String(cluster._id),
+    name,
+    distance: formatDistanceLabel(center.distanceFromUser),
+    cluster,
+  };
+};
 
 const AdminIncidentManagementScreen = () => {
     const [incidents, setIncidents] = useState([]);
     const [loadingIncidents, setLoadingIncidents] = useState(true);
     const [incidentError, setIncidentError] = useState(null);
 
-  const [availableResponders, setAvailableResponders] = useState([
-    { id: 'R-01', name: 'Unit 04 (Medical)', distance: '1.2 km away', lat: '35%', lng: '45%' },
-    { id: 'R-02', name: 'Unit 07 (Police)', distance: '2.5 km away', lat: '65%', lng: '55%' },
-    { id: 'R-03', name: 'Unit 15 (Fire/Rescue)', distance: '3.1 km away', lat: '25%', lng: '65%' }
-  ]);
+  const [availableResponders, setAvailableResponders] = useState([]);
+  const [loadingClusters, setLoadingClusters] = useState(false);
+  const [clustersError, setClustersError] = useState(null);
 
     const [selectedIncidentId, setSelectedIncidentId] = useState(null);
   const selectedIncident = incidents.find(i => i.id === selectedIncidentId);
@@ -73,6 +97,8 @@ const AdminIncidentManagementScreen = () => {
                 title: incident.type || incident.description || 'Incident Reported',
                 type: incident.type || 'Unknown',
                 location,
+                latitude: coords ? coords[1] : null,
+                longitude: coords ? coords[0] : null,
                 status: incident.status === 'Assigned' ? 'Dispatched' : incident.status === 'Pending' ? 'Reported' : incident.status,
                 rawStatus: incident.status,
                 time: timeLabel,
@@ -102,6 +128,55 @@ const AdminIncidentManagementScreen = () => {
         return () => { cancelled = true; };
     }, []);
 
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadNearbyClusters = async () => {
+            const incident = incidents.find((i) => i.id === selectedIncidentId);
+            if (!incident?.latitude || !incident?.longitude) {
+                setAvailableResponders([]);
+                setClustersError(null);
+                return;
+            }
+
+            try {
+                setLoadingClusters(true);
+                setClustersError(null);
+                const clusters = await getNearbyClusters(
+                    incident.latitude,
+                    incident.longitude,
+                    NEARBY_CLUSTER_RADIUS_KM
+                );
+                if (cancelled) return;
+
+                const units = (Array.isArray(clusters) ? clusters : [])
+                    .map(formatClusterUnit)
+                    .filter(Boolean)
+                    .filter((unit) => {
+                        const ids = (unit.cluster.incidents || []).map((i) => String(i._id));
+                        return !(ids.length === 1 && ids[0] === String(selectedIncidentId));
+                    });
+
+                setAvailableResponders(units);
+            } catch (err) {
+                if (!cancelled) {
+                    setClustersError(err.message || 'Unable to load nearby clusters');
+                    setAvailableResponders([]);
+                }
+            } finally {
+                if (!cancelled) setLoadingClusters(false);
+            }
+        };
+
+        if (selectedIncidentId) {
+            loadNearbyClusters();
+        } else {
+            setAvailableResponders([]);
+        }
+
+        return () => { cancelled = true; };
+    }, [selectedIncidentId, incidents]);
+
   const getStatusClasses = (status) => {
     switch(status) {
         case 'Verified': return 'bg-[#FEF3C7] text-[#D97706]'; 
@@ -117,7 +192,7 @@ const AdminIncidentManagementScreen = () => {
       <div className="flex gap-[25px] h-[calc(100vh-150px)]">
           
           {/* LEFT LIST - Width reduced to 380px and added ml-2 for border visibility */}
-          <div className="w-[380px] ml-2 flex flex-col shrink-0">
+          <div className="w-[380px] ml-4 flex flex-col shrink-0">
               <h2 className="m-0 mb-[5px] text-[24px] text-[#1E293B] font-extrabold">Active Incidents</h2>
               <p className="m-0 mb-[20px] text-[#64748B] text-[14px]">Verified events requiring dispatch</p>
               
@@ -126,7 +201,7 @@ const AdminIncidentManagementScreen = () => {
                       const isSelected = selectedIncidentId === incident.id;
                       return (
                           <div key={incident.id} onClick={() => setSelectedIncidentId(incident.id)} 
-                            className={`bg-white rounded-[18px] p-[20px] cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.03)] ${isSelected ? 'border-[2.5px] border-[#1E293B] scale-[1.02]' : 'border border-[#E2E8F0] scale-100 hover:border-slate-300'}`}>
+                            className={`bg-white rounded-[18px] p-[20px] cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.03)] ${isSelected ? 'border-[2.5px] border-[#1E293B] scale-[1]' : 'border border-[#E2E8F0] scale-100 hover:border-slate-300'}`}>
                               <div className="flex justify-between items-center mb-[12px]">
                                   <div className="flex items-center gap-[8px]">
                                       {incident.type === 'Fire' ? <Flame size={18} color="#D62828" /> : <AlertCircle size={18} color="#F59E0B" />}
@@ -169,31 +244,11 @@ const AdminIncidentManagementScreen = () => {
                                   <span className="flex items-center gap-[6px]"><AlertCircle size={18} /> ID: {selectedIncident.id}</span>
                               </div>
                           </div>
-                          <button 
-                            onClick={handleResolveSequence} 
-                            className="px-[30px] py-[15px] rounded-[14px] border-none bg-[#10B981] text-white font-extrabold text-[16px] cursor-pointer flex items-center gap-[10px] shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:bg-emerald-600 transition-colors"
-                          >
-                              <CheckCircle2 size={20} /> Mark as Resolved
-                          </button>
+                          
                       </div>
 
                       <div className="flex-1 p-[30px] overflow-y-auto flex flex-col gap-[25px]">
-                          <div className="w-full h-[320px] bg-[#F1F5F9] rounded-[20px] relative overflow-hidden border border-[#E2E8F0] shrink-0">
-                              <div className="w-full h-full opacity-40 bg-[radial-gradient(#CBD5E1_1.5px,transparent_1.5px)] bg-[size:25px_25px]"></div>
-                              <div className="absolute top-[45%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10">
-                                  <div className="bg-[#D62828] p-[10px] rounded-full text-white shadow-[0_0_20px_rgba(214,40,40,0.4)] relative z-10">
-                                      <AlertCircle size={24} />
-                                  </div>
-                                  <div className="w-[60px] h-[60px] bg-[#D62828] rounded-full absolute -top-[10px] -left-[10px] opacity-20 animate-[pulseMarker_2s_infinite]"></div>
-                              </div>
-                              {availableResponders.map(r => (
-                                <div key={r.id} className="absolute flex flex-col items-center" style={{ top: r.lat, left: r.lng }}>
-                                    <div className="bg-[#1D4ED8] p-[5px] rounded-full text-white border-[2px] border-white shadow-md">
-                                        <Truck size={14} />
-                                    </div>
-                                </div>
-                              ))}
-                          </div>
+                          
 
                           <div className="flex gap-[30px]">
                               <div className="flex-1">
@@ -226,19 +281,37 @@ const AdminIncidentManagementScreen = () => {
                                               </div>
                                           )}
                                       </div>
-                                      <h4 className="m-0 mb-[12px] text-[11px] text-[#94A3B8] font-[900] tracking-[1px]">AVAILABLE UNITS NEARBY</h4>
+                                      <h4 className="m-0 mb-[12px] text-[11px] text-[#94A3B8] font-[900] tracking-[1px]">NEARBY INCIDENT CLUSTERS</h4>
                                       <div className="flex flex-col gap-[12px]">
-                                          {availableResponders.map(unit => (
-                                              <div key={unit.id} className="flex justify-between items-center bg-white p-[15px] rounded-[12px] border border-[#E2E8F0] shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                                                  <div>
-                                                      <div className="text-[15px] font-extrabold text-[#1E293B]">{unit.name}</div>
-                                                      <div className="text-[12px] text-[#94A3B8]">{unit.distance}</div>
-                                                  </div>
-                                                  <button onClick={() => handleAssign(unit)} className="bg-[#EEF2FF] text-[#4F46E5] border-[1.5px] border-[#C7D2FE] px-[18px] py-[8px] rounded-[10px] text-[13px] font-extrabold cursor-pointer flex items-center gap-[6px] hover:bg-indigo-100 transition-colors">
-                                                      <Plus size={16} /> Assign
-                                                  </button>
+                                          {loadingClusters ? (
+                                              <div className="bg-white p-[20px] rounded-[12px] border border-dashed border-[#CBD5E1] text-center text-[14px] text-[#94A3B8]">
+                                                  Loading nearby clusters...
                                               </div>
-                                          ))}
+                                          ) : clustersError ? (
+                                              <div className="bg-white p-[20px] rounded-[12px] border border-dashed border-[#FECACA] text-center text-[14px] text-[#DC2626]">
+                                                  {clustersError}
+                                              </div>
+                                          ) : !selectedIncident?.latitude || !selectedIncident?.longitude ? (
+                                              <div className="bg-white p-[20px] rounded-[12px] border border-dashed border-[#CBD5E1] text-center text-[14px] text-[#94A3B8] italic">
+                                                  No location data for this incident.
+                                              </div>
+                                          ) : availableResponders.length === 0 ? (
+                                              <div className="bg-white p-[20px] rounded-[12px] border border-dashed border-[#CBD5E1] text-center text-[14px] text-[#94A3B8] italic">
+                                                  No other incident clusters within {NEARBY_CLUSTER_RADIUS_KM} km.
+                                              </div>
+                                          ) : (
+                                              availableResponders.map(unit => (
+                                                  <div key={unit.id} className="flex justify-between items-center bg-white p-[15px] rounded-[12px] border border-[#E2E8F0] shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                                                      <div>
+                                                          <div className="text-[15px] font-extrabold text-[#1E293B]">{unit.name}</div>
+                                                          <div className="text-[12px] text-[#94A3B8]">{unit.distance}</div>
+                                                      </div>
+                                                      <button onClick={() => handleAssign(unit)} className="bg-[#EEF2FF] text-[#4F46E5] border-[1.5px] border-[#C7D2FE] px-[18px] py-[8px] rounded-[10px] text-[13px] font-extrabold cursor-pointer flex items-center gap-[6px] hover:bg-indigo-100 transition-colors">
+                                                          <Plus size={16} /> Assign
+                                                      </button>
+                                                  </div>
+                                              ))
+                                          )}
                                       </div>
                                   </div>
                               </div>

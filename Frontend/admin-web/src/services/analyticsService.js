@@ -56,3 +56,10 @@ export const updateIncidentStatus = async (incidentId, status) => {
   const res = await API.put(`/incidents/${incidentId}/status`, { status });
   return res.data;
 };
+
+export const getNearbyClusters = async (latitude, longitude, radiusKm = 10) => {
+  const res = await API.get("/incidents/clusters", {
+    params: { latitude, longitude, radiusKm },
+  });
+  return res.data;
+};
