@@ -6,11 +6,49 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { Feather, Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import API from '../../services/api';
 import Header from '../../components/layout/header';
 
+// ── Moved to top level to avoid "already declared" error ──────────────────────
+const InputField = ({
+  label,
+  iconComponent,
+  placeholder,
+  onChangeText,
+  keyboardType,
+  secureTextEntry,
+  multiline,
+  required = true,
+}) => (
+  <>
+    <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
+      {label} {required && <Text className="text-[#D62828]">*</Text>}
+    </Text>
+    <View
+      className={`flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full mb-1 ${
+        multiline ? 'h-20 items-start pt-3' : 'h-12'
+      }`}
+    >
+      {iconComponent}
+      <TextInput
+        className="flex-1 text-sm text-black ml-2"
+        placeholder={placeholder}
+        placeholderTextColor="#999"
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        multiline={multiline}
+        autoCapitalize="none"
+      />
+    </View>
+  </>
+);
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function Register2({ navigation, route }) {
   const { role } = route.params || {};
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [contact_number, setContactNumber] = useState('');
@@ -48,7 +86,6 @@ export default function Register2({ navigation, route }) {
       alert('Password must be at least 8 characters');
       return;
     }
-
     if (role === 'Citizen') {
       if (!name || !email || !contact_number || !nic || !address || !district) {
         alert('Please fill in all fields');
@@ -75,7 +112,7 @@ export default function Register2({ navigation, route }) {
         name,
         email: role === 'Admin' ? adminEmail : email,
         password,
-        role,
+        role: role.toLowerCase(),   // backend expects 'citizen' | 'responder' | 'admin'
         district,
         contact_number,
         organization,
@@ -89,59 +126,106 @@ export default function Register2({ navigation, route }) {
     }
   };
 
-  const InputField = ({ label, icon, placeholder, onChangeText, keyboardType, secureTextEntry, multiline, required = true }) => (
-    <>
-      <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
-        {label} {required && <Text className="text-[#D62828]">*</Text>}
-      </Text>
-      <View className={`flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full mb-1 ${multiline ? 'h-20 items-start pt-3' : 'h-12'}`}>
-        <Text className="mr-2">{icon}</Text>
-        <TextInput
-          className="flex-1 text-sm text-black"
-          placeholder={placeholder}
-          placeholderTextColor="#999"
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          multiline={multiline}
-          autoCapitalize="none"
-        />
-      </View>
-    </>
-  );
+  // ── Role-specific field renderers ──────────────────────────────────────────
 
   const renderCitizenFields = () => (
     <>
-      <InputField label="Full Name" icon="👤" placeholder="Enter your full name" onChangeText={setName} />
-      <InputField label="Email" icon="✉️" placeholder="Enter your email" onChangeText={setEmail} keyboardType="email-address" />
-      <InputField label="Phone Number" icon="📞" placeholder="Enter your phone number" onChangeText={setContactNumber} keyboardType="phone-pad" />
-      <InputField label="NIC / Passport Number" icon="💳" placeholder="Enter your NIC or Passport Number" onChangeText={setNic} />
-      <InputField label="District" icon="🗺️" placeholder="Enter your district" onChangeText={setDistrict} />
-      <InputField label="Residential Address" icon="📍" placeholder="Enter your complete address" onChangeText={setAddress} multiline />
+      <InputField
+        label="Full Name"
+        iconComponent={<Ionicons name="person-outline" size={18} color="#999" />}
+        placeholder="Enter your full name"
+        onChangeText={setName}
+      />
+      <InputField
+        label="Email"
+        iconComponent={<Feather name="mail" size={18} color="#999" />}
+        placeholder="Enter your email"
+        onChangeText={setEmail}
+        keyboardType="email-address"
+      />
+      <InputField
+        label="Phone Number"
+        iconComponent={<Feather name="phone" size={18} color="#999" />}
+        placeholder="Enter your phone number"
+        onChangeText={setContactNumber}
+        keyboardType="phone-pad"
+      />
+      <InputField
+        label="NIC / Passport Number"
+        iconComponent={<MaterialCommunityIcons name="card-account-details-outline" size={18} color="#999" />}
+        placeholder="Enter your NIC or Passport Number"
+        onChangeText={setNic}
+      />
+      <InputField
+        label="District"
+        iconComponent={<Ionicons name="map-outline" size={18} color="#999" />}
+        placeholder="Enter your district"
+        onChangeText={setDistrict}
+      />
+      <InputField
+        label="Residential Address"
+        iconComponent={<Ionicons name="location-outline" size={18} color="#999" />}
+        placeholder="Enter your complete address"
+        onChangeText={setAddress}
+        multiline
+      />
     </>
   );
 
   const renderResponderFields = () => (
     <>
-      <InputField label="Full Name" icon="👤" placeholder="Enter your full name" onChangeText={setName} />
-      <InputField label="Email" icon="✉️" placeholder="Enter your email" onChangeText={setEmail} keyboardType="email-address" />
-      <InputField label="Phone Number" icon="📞" placeholder="Enter your phone number" onChangeText={setContactNumber} keyboardType="phone-pad" />
-      <InputField label="District" icon="🗺️" placeholder="Enter your district" onChangeText={setDistrict} />
-      <InputField label="Organization" icon="🏢" placeholder="Enter your organization name" onChangeText={setOrganization} />
+      <InputField
+        label="Full Name"
+        iconComponent={<Ionicons name="person-outline" size={18} color="#999" />}
+        placeholder="Enter your full name"
+        onChangeText={setName}
+      />
+      <InputField
+        label="Email"
+        iconComponent={<Feather name="mail" size={18} color="#999" />}
+        placeholder="Enter your email"
+        onChangeText={setEmail}
+        keyboardType="email-address"
+      />
+      <InputField
+        label="Phone Number"
+        iconComponent={<Feather name="phone" size={18} color="#999" />}
+        placeholder="Enter your phone number"
+        onChangeText={setContactNumber}
+        keyboardType="phone-pad"
+      />
+      <InputField
+        label="District"
+        iconComponent={<Ionicons name="map-outline" size={18} color="#999" />}
+        placeholder="Enter your district"
+        onChangeText={setDistrict}
+      />
+      <InputField
+        label="Organization"
+        iconComponent={<Ionicons name="business-outline" size={18} color="#999" />}
+        placeholder="Enter your organization name"
+        onChangeText={setOrganization}
+      />
     </>
   );
 
   const renderAdminFields = () => (
     <>
-      <InputField label="Full Name" icon="👤" placeholder="Enter your full name" onChangeText={setName} />
+      <InputField
+        label="Full Name"
+        iconComponent={<Ionicons name="person-outline" size={18} color="#999" />}
+        placeholder="Enter your full name"
+        onChangeText={setName}
+      />
 
+      {/* Email + Get Code button */}
       <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
         Email <Text className="text-[#D62828]">*</Text>
       </Text>
-      <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full h-12 mb-1">
-        <Text className="mr-2">✉️</Text>
+      <View className="flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full h-12 mb-1">
+        <Feather name="mail" size={18} color="#999" />
         <TextInput
-          className="flex-1 text-sm text-black"
+          className="flex-1 text-sm text-black ml-2"
           placeholder="Enter your email"
           placeholderTextColor="#999"
           onChangeText={setAdminEmail}
@@ -159,7 +243,7 @@ export default function Register2({ navigation, route }) {
       {codeSent && (
         <InputField
           label="Admin Verification Code"
-          icon="🔐"
+          iconComponent={<Ionicons name="shield-checkmark-outline" size={18} color="#999" />}
           placeholder="Enter the admin secret code"
           onChangeText={setAdminCode}
           keyboardType="number-pad"
@@ -168,21 +252,25 @@ export default function Register2({ navigation, route }) {
     </>
   );
 
+  // ── Title / icon per role ──────────────────────────────────────────────────
+
   const getTitle = () => {
-    if (role === 'Citizen') return { title: 'Citizen Registration', subtitle: 'Please provide your personal details' };
+    if (role === 'Citizen')   return { title: 'Citizen Registration',  subtitle: 'Please provide your personal details' };
     if (role === 'Responder') return { title: 'Responder Registration', subtitle: 'Please provide your organization details' };
-    if (role === 'Admin') return { title: 'Admin Registration', subtitle: 'Verify your admin access' };
+    if (role === 'Admin')     return { title: 'Admin Registration',     subtitle: 'Verify your admin access' };
     return { title: 'Personal Information', subtitle: 'Please provide your details' };
   };
 
-  const getIcon = () => {
-    if (role === 'Citizen') return '👤';
-    if (role === 'Responder') return '🚑';
-    if (role === 'Admin') return '🛡️';
-    return '👤';
+  const getRoleIcon = () => {
+    if (role === 'Citizen')   return <Ionicons name="person-outline" size={32} color="#D62828" />;
+    if (role === 'Responder') return <FontAwesome5 name="ambulance" size={26} color="#D62828" />;
+    if (role === 'Admin')     return <Ionicons name="shield-checkmark-outline" size={32} color="#D62828" />;
+    return <Ionicons name="person-outline" size={32} color="#D62828" />;
   };
 
   const { title, subtitle } = getTitle();
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
@@ -190,69 +278,78 @@ export default function Register2({ navigation, route }) {
 
       <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center' }}>
 
+        {/* Avatar */}
         <View className="w-[70px] h-[70px] rounded-full bg-[#FFE5E5] justify-center items-center mb-3">
-          <Text className="text-3xl">{getIcon()}</Text>
+          {getRoleIcon()}
         </View>
 
         <Text className="text-xl font-bold text-black mb-1">{title}</Text>
         <Text className="text-sm text-gray-400 mb-5">{subtitle}</Text>
 
-        {role === 'Citizen' && renderCitizenFields()}
+        {/* Role-specific fields */}
+        {role === 'Citizen'   && renderCitizenFields()}
         {role === 'Responder' && renderResponderFields()}
-        {role === 'Admin' && renderAdminFields()}
+        {role === 'Admin'     && renderAdminFields()}
 
+        {/* Password — shared across all roles */}
         <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
           Password <Text className="text-[#D62828]">*</Text>
         </Text>
-        <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full h-12 mb-1">
+        <View className="flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full h-12 mb-1">
+          <Feather name="lock" size={18} color="#999" />
           <TextInput
-            className="flex-1 text-sm text-black"
+            className="flex-1 text-sm text-black ml-2"
             placeholder="Create a strong password"
             placeholderTextColor="#999"
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text>👁️</Text>
+            <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#999" />
           </TouchableOpacity>
         </View>
         <Text className="text-xs text-gray-400 self-start mb-2">
           Minimum 8 characters with letters, numbers and symbols
         </Text>
 
+        {/* Confirm Password */}
         <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
           Confirm Password <Text className="text-[#D62828]">*</Text>
         </Text>
-        <View className="flex-row items-center border-2 border-gray-200 rounded-lg px-3 bg-white w-full h-12 mb-1">
+        <View className="flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full h-12 mb-1">
+          <Feather name="lock" size={18} color="#999" />
           <TextInput
-            className="flex-1 text-sm text-black"
+            className="flex-1 text-sm text-black ml-2"
             placeholder="Re-enter your password"
             placeholderTextColor="#999"
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirm}
           />
           <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
-            <Text>👁️</Text>
+            <Feather name={showConfirm ? 'eye' : 'eye-off'} size={18} color="#999" />
           </TouchableOpacity>
         </View>
 
-        <View className="flex-row w-full mt-6 mb-4 gap-3">
+        {/* Buttons */}
+        <View className="flex-row w-full mt-6 mb-4" style={{ gap: 12 }}>
           <TouchableOpacity
-            className="flex-1 h-12 rounded-xl border-2 border-[#D62828] justify-center items-center"
+            className="flex-1 h-12 rounded-full border-2 border-[#D62828] justify-center items-center flex-row"
             onPress={() => navigation.goBack()}
           >
-            <Text className="text-[#D62828] text-sm font-bold">← Back</Text>
+            <Ionicons name="arrow-back" size={16} color="#D62828" style={{ marginRight: 4 }} />
+            <Text className="text-[#D62828] text-sm font-bold">Back</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-[2] h-12 rounded-xl bg-[#D62828] justify-center items-center"
+            className="flex-[2] h-12 rounded-full bg-[#D62828] justify-center items-center flex-row"
             onPress={handleRegister}
           >
-            <Text className="text-white text-sm font-bold">Complete Registration →</Text>
+            <Text className="text-white text-sm font-bold mr-1">Complete Registration</Text>
+            <Ionicons name="arrow-forward" size={16} color="white" />
           </TouchableOpacity>
         </View>
 
-        <View className="flex-row items-center">
+        <View className="flex-row items-center mb-6">
           <Text className="text-sm text-gray-400">Already have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
             <Text className="text-sm text-[#D62828] font-bold">Sign in</Text>

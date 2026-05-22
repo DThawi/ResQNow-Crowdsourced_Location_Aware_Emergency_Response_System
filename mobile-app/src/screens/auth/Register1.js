@@ -35,7 +35,7 @@ export default function Register1({ navigation }) {
           <LinearGradient
             colors={['#261007', '#6D1307']}
             className={`rounded-2xl items-center ${selectedRole === 'Citizen' ? 'border-2 border-white' : ''}`}
-            style={{ height: height * 0.18 , justifyContent: 'center' }}
+            style={{ height: height * 0.30 , justifyContent: 'center' }}
           >
             <Text className="text-4xl mb-2">👥</Text>
             <Text className="text-white text-lg font-bold mb-1">Citizen</Text>
@@ -47,7 +47,7 @@ export default function Register1({ navigation }) {
           <LinearGradient
             colors={['#022334', '#001F33']}
             className={`rounded-2xl items-center ${selectedRole === 'Responder' ? 'border-2 border-white' : ''}`}
-            style={{ height: height * 0.18, justifyContent: 'center' }}
+            style={{ height: height * 0.30, justifyContent: 'center' }}
           >
             <Text className="text-4xl mb-2">🚑</Text>
             <Text className="text-white text-lg font-bold mb-1">Responder</Text>

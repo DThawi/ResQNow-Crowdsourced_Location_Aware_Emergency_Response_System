@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { findCluster } = require("../utils/clustering");
 const User = require('../models/User');
 const Incident = require('../models/Incident');
+const { notifyAssignment, notifyStatusChange } = require('../utils/notificationHelper');
 
 // Fetch user-specific reports
 exports.getMyReports = async (req, res) => {
@@ -129,6 +130,14 @@ exports.updateResponseStatus = async (req, res) => {
     });
 
     await incident.save();
+
+    // 🔔 Notify the citizen who reported the incident
+    await notifyStatusChange(incident);
+ 
+    // 🔔 Notify assigned authorities if status is Assigned
+    if (status === 'Assigned') {
+      await notifyAssignment(incident);
+    }
 
     res.status(200).json({ message: "Response status updated", incident });
 
