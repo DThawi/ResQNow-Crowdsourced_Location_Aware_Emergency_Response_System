@@ -1,243 +1,186 @@
 import React, { useState } from 'react';
-
 import { useNavigate } from 'react-router-dom';
-
-import { Mail, Lock, AlertCircle, Shield } from 'lucide-react';
-
+import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { login } from '../services/authService';
-
-// Import the multi-step modal
-
 import AdminForgotPasswordModal from "../components/adminForgotPasswordModal.jsx";
 
-
+// Import your custom high-resolution logo asset path dynamically
+import logoImg from '../assets/logo.png'; 
 
 const AdminLoginScreen = () => {
-
-    const [email, setEmail] = useState('');
-
-    const [password, setPassword] = useState('');
-
-    const [loading, setLoading] = useState(false);
-
-    const [error, setError] = useState('');
-
-    // State to control the Forgot Password Modal
-
-    const [isForgotOpen, setIsForgotOpen] = useState(false);
-
-    const navigate = useNavigate();
-
-
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            const response = await login(email, password);
-            localStorage.setItem('token', response.token);
-            navigate('/dashboard');
-        } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Login failed');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-
-    return (
-
-        <div className="bg-[#f3f4f6] min-h-screen flex items-center justify-center p-[20px] font-sans">
-
-            <div className="bg-white w-full max-w-[420px] px-[35px] py-[45px] rounded-[35px] shadow-[0_15px_35px_rgba(0,0,0,0.08)] flex flex-col items-center">
-
-               
-
-                {/* 1. Header Section */}
-
-                <div className="w-full text-center mb-[35px]">
-
-                    <div className="w-[95px] h-[95px] bg-gradient-to-b from-[#A52426] to-[#2B2D42] rounded-full flex items-center justify-center mx-auto mb-[18px] shadow-[0_8px_20px_rgba(43,45,66,0.2)]">
-
-                        <div className="border-2 border-white/30 rounded-[16px] p-[8px] flex">
-
-                            <Shield color="white" size={38} strokeWidth={2} />
-
-                        </div>
-
-                    </div>
-
-                    <h1 className="text-[#2B2D42] text-[28px] font-extrabold m-0">Admin Dashboard</h1>
-
-                    <p className="text-[#8D99AE] text-[15px] mt-[6px] font-medium">ResQNow Authority Portal</p>
-
-                </div>
-
-
-
-                <form onSubmit={handleLogin} className="w-full text-left">
-
-                    {/* 2. Admin Email Input */}
-
-                    <div className="mb-[22px]">
-
-                        <label className="block text-[#2B2D42] font-bold text-[14px] mb-[8px] ml-[4px]">Admin Email</label>
-
-                        <div className="relative">
-
-                            <Mail className="absolute left-[16px] top-[15px] text-[#8D99AE]" size={18} />
-
-                            <input
-
-                                type="email"
-
-                                placeholder="Enter your admin email"
-
-                                className="w-full py-[14px] pr-[15px] pl-[48px] border-[1.5px] border-[#edf2f7] rounded-[18px] outline-none box-border text-[14px] text-[#2d3748] focus:border-[#D62828] transition-colors"
-
-                                value={email}
-
-                                onChange={(e) => setEmail(e.target.value)}
-
-                                required
-
-                            />
-
-                        </div>
-
-                    </div>
-
-
-
-                    {/* 3. Password Input */}
-
-                    <div className="mb-[22px]">
-
-                        <label className="block text-[#2B2D42] font-bold text-[14px] mb-[8px] ml-[4px]">Password</label>
-
-                        <div className="relative">
-
-                            <Lock className="absolute left-[16px] top-[15px] text-[#8D99AE]" size={18} />
-
-                            <input
-
-                                type="password"
-
-                                placeholder="Enter your password"
-
-                                className="w-full py-[14px] pr-[15px] pl-[48px] border-[1.5px] border-[#edf2f7] rounded-[18px] outline-none box-border text-[14px] text-[#2d3748] focus:border-[#D62828] transition-colors"
-
-                                value={password}
-
-                                onChange={(e) => setPassword(e.target.value)}
-
-                                required
-
-                            />
-
-                        </div>
-
-                    </div>
-
-
-
-                    {/* 4. Row: Remember Me & Forgot Password */}
-
-                    <div className="flex justify-between items-center mb-[28px] px-[4px]">
-
-                        <div className="flex items-center gap-[8px]">
-
-                            <input type="checkbox" className="accent-[#D62828] w-[16px] h-[16px]" />
-
-                            <span className="text-[#8D99AE] text-[13px] font-medium">Remember me</span>
-
-                        </div>
-
-                        {/* CLICKABLE TRIGGER FOR MODAL */}
-
-                        <span
-
-                            onClick={() => setIsForgotOpen(true)}
-
-                            className="text-[#D62828] text-[13px] font-bold cursor-pointer hover:underline"
-
-                        >
-
-                            Forgot Password?
-
-                        </span>
-
-                    </div>
-
-
-
-                    {/* 5. Submit Button */}
-                    {error && (
-                        <div className="mb-[18px] text-[#B91C1C] text-[14px] font-medium">
-                            {error}
-                        </div>
-                    )}
-
-                    <button
-
-                        type="submit"
-
-                        disabled={loading}
-
-                        className="w-full bg-[#D62828] text-white p-[16px] rounded-[18px] border-none font-bold text-[17px] cursor-pointer shadow-[0_6px_15px_rgba(214,40,40,0.25)] transition-colors duration-200 hover:bg-red-700 disabled:opacity-70 disabled:cursor-not-allowed"
-
-                    >
-
-                        {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
-
-                    </button>
-
-                </form>
-
-
-
-                {/* 6. Restricted Access Box */}
-
-                <div className="mt-[35px] bg-[#f8f9fa] p-[18px] rounded-[20px] flex items-start gap-[12px] text-left w-full box-border">
-
-                    <div className="bg-white rounded-full p-[5px] flex border border-[#e9ecef] shrink-0">
-
-                        <AlertCircle color="#f59e0b" size={16} />
-
-                    </div>
-
-                    <p className="m-0 text-[#8D99AE] text-[10.5px] leading-[1.6] font-medium">
-
-                        This portal is restricted to authorized personnel only. Unauthorized access is prohibited.
-
-                    </p>
-
-                </div>
-
-
-
-                {/* MODAL COMPONENT */}
-
-                <AdminForgotPasswordModal
-
-                    isOpen={isForgotOpen}
-
-                    onClose={() => setIsForgotOpen(false)}
-
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Modal tracking controller state
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await login(email, password);
+      // Synchronize authorization tokens directly into persistent browser memory space
+      localStorage.setItem('token', response.token);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Login authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAFAFB] font-sans">
+      
+      {/* ========================================================================= */}
+      {/* LEFT PANEL: BRAND AREA WITH CENTRAL BADGE LOGO & GEOMETRIC DESIGN         */}
+      {/* ========================================================================= */}
+      {/* UPDATED: Deep premium dark radial gradient canvas background profile */}
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#1E1E2F] to-[#11111E] relative overflow-hidden flex-col items-center justify-center p-12 text-white selection:bg-[#D62828]/30">
+        
+        {/* Architectural Brand Glow Elements */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#D62828]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-slate-500/5 rounded-full blur-3xl" />
+
+        {/* Central Logo Panel Module Stack */}
+        <div className="relative z-10 flex flex-col items-center max-w-md text-center animate-[fadeIn_0.4s_ease-out]">
+          
+          {/* UPDATED: Square container background/border stripped down to flat borderless layout */}
+          <div className="mb-6 transition-transform duration-300 hover:scale-105 select-none pointer-events-none">
+            <img 
+              src={logoImg} 
+              alt="ResQNow Operational Badge Logo" 
+              className="w-[260px] h-[260px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.35)]"
+              onError={(e) => {
+                // Graceful fallback if the image asset pipeline encounters directory link updates
+                e.target.style.display = 'none';
+                e.target.parentNode.innerHTML = '<div className="w-[260px] h-[260px] bg-[#D62828] rounded-full flex items-center justify-center text-4xl font-black shadow-xl">ResQNow</div>';
+              }}
+            />
+          </div>
+          
+          <h1 className="text-[30px] font-[900] tracking-tight leading-tight mb-3 text-white">
+            ResQNow Authority Portal
+          </h1>
+          <div className="w-12 h-[3.5px] bg-[#D62828] rounded-full mb-5 mx-auto" />
+          <p className="text-slate-400 text-sm font-medium max-w-xs leading-relaxed opacity-90">
+            Command & Control Center — Access the Secure Emergency Command Dashboard.
+          </p>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* RIGHT PANEL: TRANSACTIONAL FORM CONTROLLER LAYER                          */}
+      {/* ========================================================================= */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-[#FAFAFB]">
+        <div className="bg-white w-full max-w-[440px] px-8 md:px-10 py-10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-slate-100/80 flex flex-col">
+          
+          {/* Header Section */}
+          <div className="w-full text-center mb-8">
+            <h2 className="text-[#2B2D42] text-[26px] font-[900] m-0 tracking-tight">Admin Dashboard</h2>
+            <p className="text-[#8D99AE] text-xs mt-1.5 font-bold tracking-wider uppercase">Sign in to continue</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="w-full flex flex-col">
+            
+            {/* Input fields: Admin Email Row */}
+            <div className="mb-5">
+              <label className="block text-[#2B2D42] font-extrabold text-xs uppercase tracking-wider mb-2 ml-1">
+                Admin Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-3.5 text-slate-400" size={18} />
+                <input
+                  type="email"
+                  placeholder="Enter your admin email"
+                  className="w-full py-3 pr-4 pl-12 border border-slate-200 rounded-xl outline-none box-border text-sm font-medium text-slate-700 bg-slate-50/50 focus:bg-white focus:border-[#D62828] transition-all"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
-
+              </div>
             </div>
 
+            {/* Input fields: Password Row */}
+            <div className="mb-5">
+              <label className="block text-[#2B2D42] font-extrabold text-xs uppercase tracking-wider mb-2 ml-1">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-3.5 text-slate-400" size={18} />
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  className="w-full py-3 pr-4 pl-12 border border-slate-200 rounded-xl outline-none box-border text-sm font-medium text-slate-700 bg-slate-50/50 focus:bg-white focus:border-[#D62828] transition-all"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Optional Operations: Remember Me & Forgot Password Toggles */}
+            <div className="flex justify-between items-center mb-6 px-1">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  className="accent-[#D62828] w-4 h-4 rounded-sm border-slate-300 cursor-pointer" 
+                />
+                <span className="text-[#8D99AE] text-sm font-medium group-hover:text-slate-600 transition-colors">
+                  Remember me
+                </span>
+              </label>
+              <span
+                onClick={() => setIsForgotOpen(true)}
+                className="text-[#D62828] text-sm font-bold cursor-pointer hover:text-red-700 hover:underline transition-colors"
+              >
+                Forgot Password?
+              </span>
+            </div>
+
+            {/* Network Exception Validation Messaging */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-[#B91C1C] text-sm font-semibold flex items-center gap-2 animate-[shake_0.2s_ease-in-out]">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Form Submission Execution Trigger */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#D62828] text-white py-3.5 rounded-xl border-none font-bold text-base cursor-pointer shadow-[0_6px_20px_rgba(214,40,40,0.2)] transition-all duration-200 hover:bg-red-700 hover:shadow-lg active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Authenticating Personnel...' : 'Sign In to Dashboard'}
+            </button>
+          </form>
+
+          {/* Restricted Operations Slat Information Container */}
+          <div className="mt-8 bg-slate-50 p-4 rounded-2xl flex items-start gap-3 border border-slate-100 text-left w-full box-border">
+            <div className="bg-white rounded-xl p-1.5 flex border border-slate-200 shadow-xs shrink-0 mt-0.5">
+              <AlertCircle color="#F59E0B" size={15} />
+            </div>
+            <p className="m-0 text-slate-400 text-xs leading-relaxed font-medium">
+              This portal is restricted to authorized personnel only. Unauthorized access configurations or operations are strictly prohibited.
+            </p>
+          </div>
+
+          {/* Verification Center Account Reset Overlay Modal Component */}
+          <AdminForgotPasswordModal
+            isOpen={isForgotOpen}
+            onClose={() => setIsForgotOpen(false)}
+          />
+
         </div>
-
-    );
-
+      </div>
+    </div>
+  );
 };
 
-
-
 export default AdminLoginScreen;
-
