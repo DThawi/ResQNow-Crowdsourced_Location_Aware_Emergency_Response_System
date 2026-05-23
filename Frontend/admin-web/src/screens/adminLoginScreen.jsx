@@ -10,6 +10,7 @@ import logoImg from '../assets/logo.png';
 const AdminLoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false); // FIXED: Added state tracking for Remember Me
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -23,7 +24,9 @@ const AdminLoginScreen = () => {
     setError('');
 
     try {
-      const response = await login(email, password);
+      // FIXED: Added rememberMe parameter pass-through context
+      const response = await login(email, password, rememberMe);
+      
       // Synchronize authorization tokens directly into persistent browser memory space
       localStorage.setItem('token', response.token);
       navigate('/dashboard');
@@ -38,37 +41,37 @@ const AdminLoginScreen = () => {
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FAFAFB] font-sans">
       
       {/* ========================================================================= */}
-      {/* LEFT PANEL: BRAND AREA WITH CENTRAL BADGE LOGO & GEOMETRIC DESIGN         */}
+      {/* LEFT PANEL: MATCHES MOBILE SPLASH GRADIENT ['#070000', '#830F11']          */}
       {/* ========================================================================= */}
-      {/* UPDATED: Deep premium dark radial gradient canvas background profile */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#1E1E2F] to-[#11111E] relative overflow-hidden flex-col items-center justify-center p-12 text-white selection:bg-[#D62828]/30">
-        
-        {/* Architectural Brand Glow Elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#D62828]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-slate-500/5 rounded-full blur-3xl" />
+      <div 
+        style={{ background: 'linear-gradient(to bottom, #070000, #830F11)' }}
+        className="hidden md:flex md:w-1/2 relative overflow-hidden flex-col items-center justify-center p-12 text-white selection:bg-[#D62828]/30"
+      >
+        {/* Abstract Background Branding Accents */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-black/40 rounded-full blur-3xl" />
 
         {/* Central Logo Panel Module Stack */}
         <div className="relative z-10 flex flex-col items-center max-w-md text-center animate-[fadeIn_0.4s_ease-out]">
           
-          {/* UPDATED: Square container background/border stripped down to flat borderless layout */}
+          {/* High-fidelity Borderless Logo Frame */}
           <div className="mb-6 transition-transform duration-300 hover:scale-105 select-none pointer-events-none">
             <img 
               src={logoImg} 
               alt="ResQNow Operational Badge Logo" 
-              className="w-[260px] h-[260px] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.35)]"
+              className="w-[260px] h-[260px] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)]"
               onError={(e) => {
-                // Graceful fallback if the image asset pipeline encounters directory link updates
                 e.target.style.display = 'none';
-                e.target.parentNode.innerHTML = '<div className="w-[260px] h-[260px] bg-[#D62828] rounded-full flex items-center justify-center text-4xl font-black shadow-xl">ResQNow</div>';
+                e.target.parentNode.innerHTML = '<div className="w-[260px] h-[260px] bg-[#830F11] rounded-full flex items-center justify-center text-4xl font-black shadow-xl">ResQNow</div>';
               }}
             />
           </div>
           
-          <h1 className="text-[30px] font-[900] tracking-tight leading-tight mb-3 text-white">
+          <h1 className="text-[32px] font-[900] tracking-tight leading-tight mb-3 text-white">
             ResQNow Authority Portal
           </h1>
           <div className="w-12 h-[3.5px] bg-[#D62828] rounded-full mb-5 mx-auto" />
-          <p className="text-slate-400 text-sm font-medium max-w-xs leading-relaxed opacity-90">
+          <p className="text-white/70 text-sm font-medium max-w-xs leading-relaxed">
             Command & Control Center — Access the Secure Emergency Command Dashboard.
           </p>
         </div>
@@ -78,7 +81,7 @@ const AdminLoginScreen = () => {
       {/* RIGHT PANEL: TRANSACTIONAL FORM CONTROLLER LAYER                          */}
       {/* ========================================================================= */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-[#FAFAFB]">
-        <div className="bg-white w-full max-w-[440px] px-8 md:px-10 py-10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-slate-100/80 flex flex-col">
+        <div className="bg-white w-full max-w-[440px] px-8 md:px-10 py-10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col">
           
           {/* Header Section */}
           <div className="w-full text-center mb-8">
@@ -124,11 +127,13 @@ const AdminLoginScreen = () => {
               </div>
             </div>
 
-            {/* Optional Operations: Remember Me & Forgot Password Toggles */}
+            {/* FIXED Remember Me & Forgot Password Toggles */}
             <div className="flex justify-between items-center mb-6 px-1">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input 
                   type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="accent-[#D62828] w-4 h-4 rounded-sm border-slate-300 cursor-pointer" 
                 />
                 <span className="text-[#8D99AE] text-sm font-medium group-hover:text-slate-600 transition-colors">
@@ -145,13 +150,13 @@ const AdminLoginScreen = () => {
 
             {/* Network Exception Validation Messaging */}
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-[#B91C1C] text-sm font-semibold flex items-center gap-2 animate-[shake_0.2s_ease-in-out]">
+              <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-[#B91C1C] text-sm font-semibold flex items-center gap-2">
                 <AlertCircle size={16} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Form Submission Execution Trigger */}
+            {/* Form Submission Button */}
             <button
               type="submit"
               disabled={loading}
@@ -161,7 +166,7 @@ const AdminLoginScreen = () => {
             </button>
           </form>
 
-          {/* Restricted Operations Slat Information Container */}
+          {/* Restricted Operations Container */}
           <div className="mt-8 bg-slate-50 p-4 rounded-2xl flex items-start gap-3 border border-slate-100 text-left w-full box-border">
             <div className="bg-white rounded-xl p-1.5 flex border border-slate-200 shadow-xs shrink-0 mt-0.5">
               <AlertCircle color="#F59E0B" size={15} />
@@ -171,7 +176,7 @@ const AdminLoginScreen = () => {
             </p>
           </div>
 
-          {/* Verification Center Account Reset Overlay Modal Component */}
+          {/* Forgot Password Multi-Step Modal */}
           <AdminForgotPasswordModal
             isOpen={isForgotOpen}
             onClose={() => setIsForgotOpen(false)}
