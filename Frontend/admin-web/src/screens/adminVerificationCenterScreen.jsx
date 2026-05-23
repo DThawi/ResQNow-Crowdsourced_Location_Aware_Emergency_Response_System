@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   AlertCircle, CheckCircle, MapPin, Clock, ShieldCheck, XCircle, Image as ImageIcon, X, RefreshCw
 } from 'lucide-react';
-import API from '../../services/api'; // adjust path if needed
+import API from '../services/api'; // adjust path if needed
 
 const AdminVerificationCenterScreen = () => {
 
