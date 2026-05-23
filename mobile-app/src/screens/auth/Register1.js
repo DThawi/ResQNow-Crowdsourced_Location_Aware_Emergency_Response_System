@@ -43,10 +43,10 @@ export default function Register1({ navigation }) {
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity className="w-full mb-4" onPress={() => setSelectedRole('Responder')}>
+        <TouchableOpacity className="w-full mb-4" onPress={() => setSelectedRole('Authority')}>
           <LinearGradient
             colors={['#022334', '#001F33']}
-            className={`rounded-2xl items-center ${selectedRole === 'Responder' ? 'border-2 border-white' : ''}`}
+            className={`rounded-2xl items-center ${selectedRole === 'Authority' ? 'border-2 border-white' : ''}`}
             style={{ height: height * 0.30, justifyContent: 'center' }}
           >
             <Text className="text-4xl mb-2">🚑</Text>

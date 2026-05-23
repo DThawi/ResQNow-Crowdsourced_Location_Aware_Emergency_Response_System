@@ -5,12 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  StyleSheet,
+  Platform,
 } from 'react-native';
 import { Feather, Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import API from '../../services/api';
-import Header from '../../components/layout/header';
+import GradientHeader from '../../components/layout/header';
 
-// ── Moved to top level to avoid "already declared" error ──────────────────────
 const InputField = ({
   label,
   iconComponent,
@@ -21,30 +22,27 @@ const InputField = ({
   multiline,
   required = true,
 }) => (
-  <>
-    <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
-      {label} {required && <Text className="text-[#D62828]">*</Text>}
+  <View style={{ width: '100%' }}>
+    <Text style={styles.label}>
+      {label}{required ? <Text style={styles.required}> *</Text> : null}
     </Text>
-    <View
-      className={`flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full mb-1 ${
-        multiline ? 'h-20 items-start pt-3' : 'h-12'
-      }`}
-    >
-      {iconComponent}
+    <View style={[styles.inputBox, multiline && styles.inputBoxMultiline]}>
+      <View style={styles.iconWrap}>{iconComponent}</View>
       <TextInput
-        className="flex-1 text-sm text-black ml-2"
+        style={[styles.textInput, multiline && { textAlignVertical: 'top' }]}
         placeholder={placeholder}
-        placeholderTextColor="#999"
+        placeholderTextColor="#aaaaaa"
         onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        multiline={multiline}
+        keyboardType={keyboardType || 'default'}
+        secureTextEntry={secureTextEntry || false}
+        multiline={multiline || false}
         autoCapitalize="none"
+        autoCorrect={false}
+        underlineColorAndroid="transparent"
       />
     </View>
-  </>
+  </View>
 );
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function Register2({ navigation, route }) {
   const { role } = route.params || {};
@@ -61,23 +59,12 @@ export default function Register2({ navigation, route }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Admin specific
-  const [adminEmail, setAdminEmail] = useState('');
-  const [adminCode, setAdminCode] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
-
-  const ADMIN_SECRET_CODE = 'RESQADMIN2024';
-
-  const handleRequestAdminCode = () => {
-    if (!adminEmail) {
-      alert('Please enter your email first');
+  const handleContinue = async () => {
+  if (role === 'Citizen') {
+    if (!name || !email || !contact_number || !nic || !address || !district) {
+      alert('Please fill in all fields');
       return;
     }
-    setCodeSent(true);
-    alert('Please enter the admin secret code provided by your organization');
-  };
-
-  const handleRegister = async () => {
     if (password !== confirmPassword) {
       alert('Passwords do not match');
       return;
@@ -86,273 +73,142 @@ export default function Register2({ navigation, route }) {
       alert('Password must be at least 8 characters');
       return;
     }
-    if (role === 'Citizen') {
-      if (!name || !email || !contact_number || !nic || !address || !district) {
-        alert('Please fill in all fields');
-        return;
-      }
-    } else if (role === 'Responder') {
-      if (!name || !email || !contact_number || !district || !organization) {
-        alert('Please fill in all fields');
-        return;
-      }
-    } else if (role === 'Admin') {
-      if (!name || !adminEmail || !adminCode) {
-        alert('Please fill in all fields');
-        return;
-      }
-      if (adminCode !== ADMIN_SECRET_CODE) {
-        alert('Invalid admin code');
-        return;
-      }
-    }
-
     try {
       await API.post('/auth/register', {
-        name,
-        email: role === 'Admin' ? adminEmail : email,
-        password,
-        role: role.toLowerCase(),   // backend expects 'citizen' | 'responder' | 'admin'
-        district,
-        contact_number,
-        organization,
-        latitude: 0,
-        longitude: 0,
+        name, email, password,
+        role, district, contact_number,
+        organization, latitude: 0, longitude: 0,
       });
       navigation.navigate('Login');
       alert('Registration successful! Please login.');
     } catch (err) {
       alert(err.response?.data?.message || 'Registration failed');
     }
-  };
-
-  // ── Role-specific field renderers ──────────────────────────────────────────
+  } else if (role === 'Authority') {  // ← fix this line
+    if (!name || !email || !contact_number || !nic) {
+      alert('Please fill in all fields');
+      return;
+    }
+    navigation.navigate('Register3', { role, name, email, contact_number, nic });
+  }
+};
 
   const renderCitizenFields = () => (
     <>
-      <InputField
-        label="Full Name"
-        iconComponent={<Ionicons name="person-outline" size={18} color="#999" />}
-        placeholder="Enter your full name"
-        onChangeText={setName}
-      />
-      <InputField
-        label="Email"
-        iconComponent={<Feather name="mail" size={18} color="#999" />}
-        placeholder="Enter your email"
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <InputField
-        label="Phone Number"
-        iconComponent={<Feather name="phone" size={18} color="#999" />}
-        placeholder="Enter your phone number"
-        onChangeText={setContactNumber}
-        keyboardType="phone-pad"
-      />
-      <InputField
-        label="NIC / Passport Number"
-        iconComponent={<MaterialCommunityIcons name="card-account-details-outline" size={18} color="#999" />}
-        placeholder="Enter your NIC or Passport Number"
-        onChangeText={setNic}
-      />
-      <InputField
-        label="District"
-        iconComponent={<Ionicons name="map-outline" size={18} color="#999" />}
-        placeholder="Enter your district"
-        onChangeText={setDistrict}
-      />
-      <InputField
-        label="Residential Address"
-        iconComponent={<Ionicons name="location-outline" size={18} color="#999" />}
-        placeholder="Enter your complete address"
-        onChangeText={setAddress}
-        multiline
-      />
+      <InputField label="Full Name" iconComponent={<Ionicons name="person-outline" size={18} color="#aaaaaa" />} placeholder="Enter your full name" onChangeText={setName} />
+      <InputField label="Email" iconComponent={<Feather name="mail" size={18} color="#aaaaaa" />} placeholder="Enter your email" onChangeText={setEmail} keyboardType="email-address" />
+      <InputField label="Phone Number" iconComponent={<Feather name="phone" size={18} color="#aaaaaa" />} placeholder="Enter your phone number" onChangeText={setContactNumber} keyboardType="phone-pad" />
+      <InputField label="NIC / Passport Number" iconComponent={<MaterialCommunityIcons name="card-account-details-outline" size={18} color="#aaaaaa" />} placeholder="Enter your NIC or Passport Number" onChangeText={setNic} />
+      <InputField label="District" iconComponent={<Ionicons name="map-outline" size={18} color="#aaaaaa" />} placeholder="Enter your district" onChangeText={setDistrict} />
+      <InputField label="Residential Address" iconComponent={<Ionicons name="location-outline" size={18} color="#aaaaaa" />} placeholder="Enter your complete address" onChangeText={setAddress} multiline />
     </>
   );
 
   const renderResponderFields = () => (
     <>
-      <InputField
-        label="Full Name"
-        iconComponent={<Ionicons name="person-outline" size={18} color="#999" />}
-        placeholder="Enter your full name"
-        onChangeText={setName}
-      />
-      <InputField
-        label="Email"
-        iconComponent={<Feather name="mail" size={18} color="#999" />}
-        placeholder="Enter your email"
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <InputField
-        label="Phone Number"
-        iconComponent={<Feather name="phone" size={18} color="#999" />}
-        placeholder="Enter your phone number"
-        onChangeText={setContactNumber}
-        keyboardType="phone-pad"
-      />
-      <InputField
-        label="District"
-        iconComponent={<Ionicons name="map-outline" size={18} color="#999" />}
-        placeholder="Enter your district"
-        onChangeText={setDistrict}
-      />
-      <InputField
-        label="Organization"
-        iconComponent={<Ionicons name="business-outline" size={18} color="#999" />}
-        placeholder="Enter your organization name"
-        onChangeText={setOrganization}
-      />
+      <InputField label="Full Name" iconComponent={<Ionicons name="person-outline" size={18} color="#aaaaaa" />} placeholder="Enter your full name" onChangeText={setName} />
+      <InputField label="Email" iconComponent={<Feather name="mail" size={18} color="#aaaaaa" />} placeholder="Enter your email" onChangeText={setEmail} keyboardType="email-address" />
+      <InputField label="Phone Number" iconComponent={<Feather name="phone" size={18} color="#aaaaaa" />} placeholder="Enter your phone number" onChangeText={setContactNumber} keyboardType="phone-pad" />
+      <InputField label="NIC / Passport Number" iconComponent={<MaterialCommunityIcons name="card-account-details-outline" size={18} color="#aaaaaa" />} placeholder="Enter your NIC or Passport Number" onChangeText={setNic} />
     </>
   );
-
-  const renderAdminFields = () => (
-    <>
-      <InputField
-        label="Full Name"
-        iconComponent={<Ionicons name="person-outline" size={18} color="#999" />}
-        placeholder="Enter your full name"
-        onChangeText={setName}
-      />
-
-      {/* Email + Get Code button */}
-      <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
-        Email <Text className="text-[#D62828]">*</Text>
-      </Text>
-      <View className="flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full h-12 mb-1">
-        <Feather name="mail" size={18} color="#999" />
-        <TextInput
-          className="flex-1 text-sm text-black ml-2"
-          placeholder="Enter your email"
-          placeholderTextColor="#999"
-          onChangeText={setAdminEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TouchableOpacity
-          className="px-3 py-1 rounded-lg bg-[#D62828]"
-          onPress={handleRequestAdminCode}
-        >
-          <Text className="text-white text-xs font-bold">Get Code</Text>
-        </TouchableOpacity>
-      </View>
-
-      {codeSent && (
-        <InputField
-          label="Admin Verification Code"
-          iconComponent={<Ionicons name="shield-checkmark-outline" size={18} color="#999" />}
-          placeholder="Enter the admin secret code"
-          onChangeText={setAdminCode}
-          keyboardType="number-pad"
-        />
-      )}
-    </>
-  );
-
-  // ── Title / icon per role ──────────────────────────────────────────────────
 
   const getTitle = () => {
-    if (role === 'Citizen')   return { title: 'Citizen Registration',  subtitle: 'Please provide your personal details' };
-    if (role === 'Responder') return { title: 'Responder Registration', subtitle: 'Please provide your organization details' };
-    if (role === 'Admin')     return { title: 'Admin Registration',     subtitle: 'Verify your admin access' };
+    if (role === 'Citizen') return { title: 'Citizen Registration', subtitle: 'Please provide your personal details' };
+    if (role === 'Authority') return { title: 'Responder Registration', subtitle: 'Please provide your personal details' };
     return { title: 'Personal Information', subtitle: 'Please provide your details' };
   };
 
   const getRoleIcon = () => {
-    if (role === 'Citizen')   return <Ionicons name="person-outline" size={32} color="#D62828" />;
-    if (role === 'Responder') return <FontAwesome5 name="ambulance" size={26} color="#D62828" />;
-    if (role === 'Admin')     return <Ionicons name="shield-checkmark-outline" size={32} color="#D62828" />;
+    if (role === 'Citizen') return <Ionicons name="person-outline" size={32} color="#D62828" />;
+    if (role === 'Authority') return <FontAwesome5 name="ambulance" size={26} color="#D62828" />;
     return <Ionicons name="person-outline" size={32} color="#D62828" />;
   };
 
   const { title, subtitle } = getTitle();
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   return (
-    <View className="flex-1 bg-[#F5F5F5]">
-      <Header title="Create Account" onClose={() => navigation.navigate('Register1')} />
+    <View style={styles.screen}>
+      <GradientHeader title="Create Account" onClose={() => navigation.navigate('Register1')} />
 
-      <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center' }}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
 
-        {/* Avatar */}
-        <View className="w-[70px] h-[70px] rounded-full bg-[#FFE5E5] justify-center items-center mb-3">
+        {role === 'Authority' && (
+          <View style={styles.stepWrap}>
+            <Text style={styles.stepText}>Step 1 of 6</Text>
+            <View style={styles.stepBar}>
+              <View style={styles.stepFill} />
+            </View>
+          </View>
+        )}
+
+        <View style={styles.iconCircle}>
           {getRoleIcon()}
         </View>
 
-        <Text className="text-xl font-bold text-black mb-1">{title}</Text>
-        <Text className="text-sm text-gray-400 mb-5">{subtitle}</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
 
-        {/* Role-specific fields */}
-        {role === 'Citizen'   && renderCitizenFields()}
-        {role === 'Responder' && renderResponderFields()}
-        {role === 'Admin'     && renderAdminFields()}
+        {role === 'Citizen' && renderCitizenFields()}
+        {role === 'Authority' && renderResponderFields()}
 
-        {/* Password — shared across all roles */}
-        <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
-          Password <Text className="text-[#D62828]">*</Text>
-        </Text>
-        <View className="flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full h-12 mb-1">
-          <Feather name="lock" size={18} color="#999" />
-          <TextInput
-            className="flex-1 text-sm text-black ml-2"
-            placeholder="Create a strong password"
-            placeholderTextColor="#999"
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#999" />
-          </TouchableOpacity>
-        </View>
-        <Text className="text-xs text-gray-400 self-start mb-2">
-          Minimum 8 characters with letters, numbers and symbols
-        </Text>
+        {role === 'Citizen' && (
+          <>
+            <Text style={styles.label}>Password<Text style={styles.required}> *</Text></Text>
+            <View style={styles.inputBox}>
+              <View style={styles.iconWrap}><Feather name="lock" size={18} color="#aaaaaa" /></View>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Create a strong password"
+                placeholderTextColor="#aaaaaa"
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                underlineColorAndroid="transparent"
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+                <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#aaaaaa" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.hint}>Minimum 8 characters with letters, numbers and symbols</Text>
 
-        {/* Confirm Password */}
-        <Text className="text-sm font-bold text-black self-start mb-1 mt-2">
-          Confirm Password <Text className="text-[#D62828]">*</Text>
-        </Text>
-        <View className="flex-row items-center border border-gray-200 rounded-xl px-3 bg-white w-full h-12 mb-1">
-          <Feather name="lock" size={18} color="#999" />
-          <TextInput
-            className="flex-1 text-sm text-black ml-2"
-            placeholder="Re-enter your password"
-            placeholderTextColor="#999"
-            onChangeText={setConfirmPassword}
-            secureTextEntry={!showConfirm}
-          />
-          <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
-            <Feather name={showConfirm ? 'eye' : 'eye-off'} size={18} color="#999" />
-          </TouchableOpacity>
-        </View>
+            <Text style={styles.label}>Confirm Password<Text style={styles.required}> *</Text></Text>
+            <View style={styles.inputBox}>
+              <View style={styles.iconWrap}><Feather name="lock" size={18} color="#aaaaaa" /></View>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Re-enter your password"
+                placeholderTextColor="#aaaaaa"
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirm}
+                underlineColorAndroid="transparent"
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
+                <Feather name={showConfirm ? 'eye' : 'eye-off'} size={18} color="#aaaaaa" />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
-        {/* Buttons */}
-        <View className="flex-row w-full mt-6 mb-4" style={{ gap: 12 }}>
-          <TouchableOpacity
-            className="flex-1 h-12 rounded-full border-2 border-[#D62828] justify-center items-center flex-row"
-            onPress={() => navigation.goBack()}
-          >
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={16} color="#D62828" style={{ marginRight: 4 }} />
-            <Text className="text-[#D62828] text-sm font-bold">Back</Text>
+            <Text style={styles.backBtnText}>Back</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            className="flex-[2] h-12 rounded-full bg-[#D62828] justify-center items-center flex-row"
-            onPress={handleRegister}
-          >
-            <Text className="text-white text-sm font-bold mr-1">Complete Registration</Text>
-            <Ionicons name="arrow-forward" size={16} color="white" />
+          <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
+            <Text style={styles.continueBtnText}>
+              {role === 'Citizen' ? 'Complete Registration' : 'Continue'}
+            </Text>
+            <Ionicons name="arrow-forward" size={16} color="#ffffff" style={{ marginLeft: 4 }} />
           </TouchableOpacity>
         </View>
 
-        <View className="flex-row items-center mb-6">
-          <Text className="text-sm text-gray-400">Already have an account? </Text>
+        <View style={styles.signinRow}>
+          <Text style={styles.signinText}>Already have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text className="text-sm text-[#D62828] font-bold">Sign in</Text>
+            <Text style={styles.signinLink}>Sign in</Text>
           </TouchableOpacity>
         </View>
 
@@ -360,3 +216,160 @@ export default function Register2({ navigation, route }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  scrollContent: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  stepWrap: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  stepText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginBottom: 4,
+  },
+  stepBar: {
+    width: '100%',
+    height: 4,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 99,
+  },
+  stepFill: {
+    width: '16%',
+    height: 4,
+    backgroundColor: '#D62828',
+    borderRadius: 99,
+  },
+  iconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFE5E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000000',
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  required: {
+    color: '#D62828',
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    width: '100%',
+    height: 50,
+    paddingHorizontal: 12,
+    marginBottom: 4,
+    ...Platform.select({
+      android: { elevation: 1 },
+    }),
+  },
+  inputBoxMultiline: {
+    height: 80,
+    alignItems: 'flex-start',
+    paddingTop: 12,
+  },
+  iconWrap: {
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000000',
+    paddingVertical: 0,
+    includeFontPadding: false,
+  },
+  eyeBtn: {
+    padding: 4,
+  },
+  hint: {
+    fontSize: 12,
+    color: '#9ca3af',
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    marginTop: 24,
+    marginBottom: 16,
+    gap: 12,
+  },
+  backBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 99,
+    borderWidth: 2,
+    borderColor: '#D62828',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+  },
+  backBtnText: {
+    color: '#D62828',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  continueBtn: {
+    flex: 2,
+    height: 48,
+    borderRadius: 99,
+    backgroundColor: '#D62828',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  continueBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  signinRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  signinText: {
+    fontSize: 14,
+    color: '#9ca3af',
+  },
+  signinLink: {
+    fontSize: 14,
+    color: '#D62828',
+    fontWeight: 'bold',
+  },
+});
