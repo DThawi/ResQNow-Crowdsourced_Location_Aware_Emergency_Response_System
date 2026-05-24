@@ -94,7 +94,7 @@ export default function Register2({ navigation, route }) {
         alert('Please fill in all fields');
         return;
       }
-      navigation.navigate('Register3', { role, name, email, contact_number, nic });
+      navigation.navigate('Register3', { role, name, email, contact_number, nic, organization: '' });
     }
   };
 

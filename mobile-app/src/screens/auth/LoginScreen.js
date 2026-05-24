@@ -25,17 +25,25 @@ export default function LoginScreen({ navigation }) {
   try {
     const response = await API.post('/auth/login', { email, password });
     const { token, role } = response.data;
-    
+
     await AsyncStorage.setItem('token', token);
     await AsyncStorage.setItem('role', role);
 
-    // ← Add this: fetch user profile after login
+    // Fetch and save user profile
     const profileResponse = await API.get('/auth/profile', {
       headers: { Authorization: `Bearer ${token}` }
     });
     await AsyncStorage.setItem('user', JSON.stringify(profileResponse.data));
 
-    navigation.navigate('Home');
+    // Navigate based on role
+    if (role === 'Authority') {
+      navigation.navigate('ResponderDashboard');
+    } else if (role === 'Admin') {
+      navigation.navigate('Home');
+    } else {
+      navigation.navigate('Home');
+    }
+
   } catch (err) {
     alert(err.response?.data?.message || 'Login failed');
   }

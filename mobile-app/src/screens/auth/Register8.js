@@ -42,7 +42,7 @@ export default function Register8({ navigation, route }) {
         password,
         role: 'Authority',          // backend expects 'Authority' for Responders
         district: prevData.district || '',
-        organization: prevData.orgName || prevData.organization || '',
+        organization: prevData.organizationName || prevData.orgName || prevData.organization || '',
         contact_number: prevData.contact_number || '',
         latitude: prevData.latitude || 0,
         longitude: prevData.longitude || 0,

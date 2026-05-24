@@ -64,22 +64,23 @@ export default function Register5({ navigation, route }) {
   };
 
   const handleContinue = () => {
-    if (!district || !divisionalSecretariat || !availability || languages.length === 0) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    navigation.navigate('Register6', {
-      ...params,
-      district,
-      divisionalSecretariat,
-      responseArea,
-      availability,
-      workSchedule,
-      vehicles,
-      equipment,
-      languages,
-    });
-  };
+  if (!district || !divisionalSecretariat || !availability || languages.length === 0) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  navigation.navigate('Register8', {
+    ...params,
+    district,
+    divisionalSecretariat,
+    responseArea,
+    availability,
+    workSchedule,
+    vehicles,
+    equipment,
+    languages,
+  });
+};
 
   return (
     <View style={styles.screen}>
