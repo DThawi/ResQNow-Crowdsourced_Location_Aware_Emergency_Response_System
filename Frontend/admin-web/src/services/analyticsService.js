@@ -52,7 +52,24 @@ export const getIncidents = async (page = 1, limit = 20) => {
   return res.data;
 };
 
+/** Fetch all incidents (admin dashboards). Falls back to paginated route. */
+export const getAllIncidents = async () => {
+  try {
+    const res = await API.get("/incidents/all");
+    return res.data;
+  } catch (err) {
+    if (err?.response?.status !== 404) throw err;
+    const res = await API.get("/incidents?page=1&limit=1000");
+    return res.data;
+  }
+};
+
 export const updateIncidentStatus = async (incidentId, status) => {
   const res = await API.put(`/incidents/${incidentId}/status`, { status });
+  return res.data;
+};
+
+export const createIncident = async (payload) => {
+  const res = await API.post("/incidents", payload);
   return res.data;
 };

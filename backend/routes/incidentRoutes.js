@@ -11,6 +11,7 @@ router.get('/assigned', verifyToken, allowRoles("Admin", "Authority"), incidentC
 
 
 router.get('/clusters', incidentController.getNearbyClusters);
+router.get('/all', incidentController.getAllIncidents);
 
 // --- 2. GENERAL ROUTES ---
 router.get('/', incidentController.getAllIncidents);
