@@ -49,9 +49,15 @@ const UserSchema = new mongoose.Schema({
   otpExpire: { type: Date },
 
   isVerified: {
-  type: Boolean,
-  default: false
-}
+    type: Boolean,
+    default: false
+  },
+
+  status: {
+    type: String,
+    enum: ['Active', 'Suspended'],
+    default: 'Active'
+  }
 
 });
 
