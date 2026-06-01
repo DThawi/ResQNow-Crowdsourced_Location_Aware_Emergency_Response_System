@@ -1,11 +1,41 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import GradientHeader from '../../components/layout/header';
 
-export default function IncidentDetailsScreen() {
+export default function IncidentDetailsScreen({ route, navigation }) {
     const [notes, setNotes] = useState('');
+    const incident = route?.params?.incident || {};
+
+    // Formatted Coordinates
+    const coordinatesText = incident.location?.coordinates
+        ? `Lng: ${incident.location.coordinates[0].toFixed(4)}, Lat: ${incident.location.coordinates[1].toFixed(4)}`
+        : 'Southern Expressway - Kottawa Interchange';
+
+    // Incident Title/Type
+    const typeText = incident.type || 'Car Accident';
+
+    // Description
+    const descriptionText = incident.description || 'Multi-vehicle collision on highway, traffic blocked';
+
+    // Time
+    const timestampText = incident.timestamp
+        ? `Reported ${new Date(incident.timestamp).toLocaleString()}`
+        : 'Reported Dec 9, 3:15 PM';
+
+    // Reporter
+    const reporterText = incident.user_id?.name || (incident.user_id ? `Citizen ${String(incident.user_id).slice(-4)}` : 'Sahan Madawela');
+
+    // Verifications
+    const verifiedCount = incident.verified_by?.length !== undefined ? incident.verified_by.length : 15;
+
+    // Flagged
+    const flaggedCount = incident.reported_inaccurate_by?.length !== undefined ? incident.reported_inaccurate_by.length : 0;
+
+    const handleSaveNotes = () => {
+        Alert.alert("Success", "Notes saved successfully!");
+    };
 
     return (
         <KeyboardAvoidingView
@@ -45,14 +75,14 @@ export default function IncidentDetailsScreen() {
                     {/* Details Card */}
                     <View className="mx-4 mb-6 bg-white rounded-2xl p-5 shadow-sm">
                         <View className="flex-row justify-between items-center mb-2">
-                            <Text className="text-[#2B2D42] text-[22px] font-extrabold">Car Accident</Text>
+                            <Text className="text-[#2B2D42] text-[22px] font-extrabold">{typeText}</Text>
                             <View className="border border-[#2ECC71] rounded-full px-3 py-1">
                                 <Text className="text-[#2ECC71] text-xs font-semibold">Resolved</Text>
                             </View>
                         </View>
 
                         <Text className="text-[#8D99AE] text-[15px] mb-5 leading-6">
-                            Multi-vehicle collision on highway, traffic blocked
+                            {descriptionText}
                         </Text>
 
                         {/* Info Rows */}
@@ -60,36 +90,40 @@ export default function IncidentDetailsScreen() {
                             <View className="flex-row items-start mb-3.5">
                                 <Feather name="map-pin" size={18} color="#8D99AE" className="mt-1" />
                                 <View className="ml-3.5 flex-1">
-                                    <Text className="text-[#8D99AE] text-[14px]">Southern Expressway - Kottawa Interchange</Text>
+                                    <Text className="text-[#8D99AE] text-[14px]">{coordinatesText}</Text>
                                     <Text className="text-[#8D99AE] text-[14px]">Sri Lanka, SL</Text>
                                 </View>
                             </View>
 
                             <View className="flex-row items-center mb-3.5">
                                 <Feather name="clock" size={18} color="#8D99AE" />
-                                <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported Dec 9, 3:15 PM</Text>
+                                <Text className="text-[#8D99AE] text-[14px] ml-3.5">{timestampText}</Text>
                             </View>
 
                             <View className="flex-row items-center mb-4">
                                 <Feather name="user" size={18} color="#8D99AE" />
-                                <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported by Sahan Madawela</Text>
+                                <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported by {reporterText}</Text>
                             </View>
 
                             <View className="flex-row items-center mb-2.5">
                                 <Feather name="check-circle" size={18} color="#2ECC71" />
-                                <Text className="text-[#2ECC71] text-[14px] font-semibold ml-3.5">15 community verifications</Text>
+                                <Text className="text-[#2ECC71] text-[14px] font-semibold ml-3.5">{verifiedCount} community verifications</Text>
                             </View>
 
                             <View className="flex-row items-center">
                                 <Feather name="alert-circle" size={18} color="#F6AA1C" />
-                                <Text className="text-[#F6AA1C] text-[14px] font-semibold ml-3.5">0 flagged</Text>
+                                <Text className="text-[#F6AA1C] text-[14px] font-semibold ml-3.5">{flaggedCount} flagged</Text>
                             </View>
                         </View>
                     </View>
 
                     {/* Action Buttons */}
                     <View className="mx-4 mb-6">
-                        <TouchableOpacity activeOpacity={0.7} className="bg-[#E8F8F5] py-4 rounded-xl items-center flex-row justify-center border border-[#2ECC71]">
+                        <TouchableOpacity 
+                            activeOpacity={0.7} 
+                            className="bg-[#E8F8F5] py-4 rounded-xl items-center flex-row justify-center border border-[#2ECC71]"
+                            onPress={() => navigation.navigate('ResponderDashboard')}
+                        >
                             <Feather name="check-circle" size={18} color="#2ECC71" className="mr-2.5" />
                             <Text className="text-[#2ECC71] font-medium text-[16px]">Incident resolved successfully</Text>
                         </TouchableOpacity>
@@ -109,7 +143,7 @@ export default function IncidentDetailsScreen() {
                             onChangeText={setNotes}
                         />
                         <View className="items-center mt-4">
-                            <TouchableOpacity className="border border-[#D62828] px-8 py-2 rounded-xl">
+                            <TouchableOpacity className="border border-[#D62828] px-8 py-2 rounded-xl" onPress={handleSaveNotes}>
                                 <Text className="text-[#D62828] font-semibold text-[14px]">Save Notes</Text>
                             </TouchableOpacity>
                         </View>
