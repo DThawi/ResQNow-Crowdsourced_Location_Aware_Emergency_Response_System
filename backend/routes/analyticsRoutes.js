@@ -42,4 +42,9 @@ router.get(
   analyticsController.getTopLocations
 );
 
+router.get(
+  "/resolved-today",
+  verifyToken,
+  analyticsController.getResolvedToday
+);
 module.exports = router;

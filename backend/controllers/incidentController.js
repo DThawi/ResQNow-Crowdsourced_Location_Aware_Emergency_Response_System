@@ -99,4 +99,8 @@ exports.updateIncidentStatus = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Error updating status" });
     }
+
+    if (status === "Assigned") {
+  incident.assigned_at = new Date();
+}
 };

@@ -123,3 +123,96 @@ exports.getTopLocations = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.getResolvedToday = async (req, res) => {
+  try {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    const incidents = await Incident.find({
+      status: "Resolved"
+    });
+
+    const count = incidents.filter((incident) => {
+      const resolvedRecord = incident.status_history
+        ?.filter(h => h.status === "Resolved")
+        ?.sort((a, b) =>
+          new Date(b.timestamp) - new Date(a.timestamp)
+        )[0];
+
+      if (!resolvedRecord) return false;
+
+      const resolvedTime = new Date(
+        resolvedRecord.timestamp
+      );
+
+      return resolvedTime >= start &&
+             resolvedTime < end;
+    }).length;
+
+    res.json({ count });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+exports.getResponseTime = async (req, res) => {
+  try {
+
+    const incidents = await Incident.find({
+      assigned_at: { $ne: null }
+    });
+
+    if (!incidents.length) {
+      return res.json({
+        averageResponseTime_minutes: 0
+      });
+    }
+
+    let total = 0;
+
+    incidents.forEach((incident) => {
+
+      const reported =
+        new Date(incident.timestamp);
+
+      const assigned =
+        new Date(incident.assigned_at);
+
+      total += assigned - reported;
+    });
+
+    const avgMs = total / incidents.length;
+
+    res.json({
+      averageResponseTime_ms: avgMs,
+      averageResponseTime_minutes:
+        Number((avgMs / 60000).toFixed(1))
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+exports.getStatusAnalytics = async (req, res) => {
+
+  const data = await Incident.aggregate([
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  res.json(data);
+};
