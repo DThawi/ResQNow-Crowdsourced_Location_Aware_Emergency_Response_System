@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  getAllIncidents,
+  getAnalyticsTotal,
+  getIncidents,
   getAnalyticsResponseTime,
   createIncident,
 } from '../services/analyticsService';
+import { exportZoneReportPdf } from '../utils/exportZoneReportPdf';
 import { 
   AlertCircle, Users, ShieldAlert, Download, Calendar, 
   Plus, Search, Map, Cpu, Smartphone, Link, X, 
@@ -22,6 +24,8 @@ const AdminDangerZoneScreen = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [avgResponseMinutes, setAvgResponseMinutes] = useState(0);
   
@@ -36,6 +40,7 @@ const AdminDangerZoneScreen = () => {
   });
 
   const [allIncidents, setAllIncidents] = useState([]);
+  const [totalIncidentsCount, setTotalIncidentsCount] = useState(0);
   const [zones, setZones] = useState([]);
 
   const filterIncidentsByDateRange = useCallback((incidents, range) => {
@@ -74,19 +79,19 @@ const AdminDangerZoneScreen = () => {
       setLoading(true);
       setLoadError(null);
 
-      const incidentsRes = await getAllIncidents();
+      const [totalRes, incidentsRes, responseRes] = await Promise.all([
+        getAnalyticsTotal(),
+        getIncidents(1, 1000),
+        getAnalyticsResponseTime(),
+      ]);
+
       const incidents = Array.isArray(incidentsRes)
         ? incidentsRes
         : incidentsRes?.incidents || [];
 
       setAllIncidents(incidents);
-
-      try {
-        const responseRes = await getAnalyticsResponseTime();
-        setAvgResponseMinutes(responseRes?.averageResponseTime_minutes || 0);
-      } catch {
-        setAvgResponseMinutes(0);
-      }
+      setTotalIncidentsCount(totalRes?.totalIncidents || 0);
+      setAvgResponseMinutes(responseRes?.averageResponseTime_minutes || 0);
     } catch (error) {
       console.error('FETCH ERROR:', error);
       setLoadError(
@@ -95,6 +100,8 @@ const AdminDangerZoneScreen = () => {
           'Failed to load dashboard data'
       );
       setAllIncidents([]);
+      setTotalIncidentsCount(0);
+      setAvgResponseMinutes(0);
     } finally {
       setLoading(false);
     }
@@ -144,6 +151,20 @@ const AdminDangerZoneScreen = () => {
     [zones]
   );
 
+  const activeZonesCount = useMemo(() => {
+    if (dateRange === 'All Time') {
+      return allIncidents.filter((incident) => incident.status !== 'Resolved').length;
+    }
+    return zones.filter((zone) => zone.status === 'ACTIVE').length;
+  }, [dateRange, allIncidents, zones]);
+
+  const totalCreatedCount = useMemo(() => {
+    if (dateRange === 'All Time') {
+      return totalIncidentsCount;
+    }
+    return zones.length;
+  }, [dateRange, totalIncidentsCount, zones]);
+
   const avgDurationLabel = useMemo(() => {
     if (!avgResponseMinutes) return '—';
     if (avgResponseMinutes >= 60) {
@@ -174,6 +195,34 @@ const AdminDangerZoneScreen = () => {
           setNewZoneData({ ...newZoneData, affected: Math.max(10, finalEstimate).toString() });
           setIsCalculating(false);
       }, 1200);
+  };
+
+  const handleExportZoneReport = async () => {
+    setExportMessage(null);
+    setExporting(true);
+    try {
+      exportZoneReportPdf({
+        dateRange,
+        searchTerm,
+        stats: {
+          activeZonesCount,
+          peopleAffectedCount: peopleAffectedTotal,
+          peopleAffectedLabel: peopleAffectedTotal.toLocaleString(),
+          totalCreatedCount,
+          avgDurationLabel,
+        },
+        severitySummary,
+        zones: filteredZones,
+      });
+      setExportMessage('PDF report downloaded successfully.');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      setExportMessage(
+        error?.message || 'Could not generate the PDF. Please try again.'
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleCreateZone = async () => {
@@ -240,16 +289,34 @@ const AdminDangerZoneScreen = () => {
                 </select>
             </div>
         </div>
-        <button className="bg-[#D62828] text-white border-none py-[10px] px-[15px] rounded-[8px] font-bold text-[13px] flex items-center gap-[8px] cursor-pointer hover:bg-red-700 transition-colors">
-            <Download size={16} /> Export Zone Report
+        <button
+          type="button"
+          onClick={handleExportZoneReport}
+          disabled={exporting || loading}
+          className="bg-[#D62828] text-white border-none py-[10px] px-[15px] rounded-[8px] font-bold text-[13px] flex items-center gap-[8px] cursor-pointer hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+            <Download size={16} />
+            {exporting ? 'Generating PDF…' : 'Export Zone Report'}
         </button>
       </div>
 
+      {exportMessage && (
+        <div
+          className={`mb-[20px] rounded-[10px] border px-[16px] py-[12px] text-[13px] font-semibold ${
+            exportMessage.includes('successfully')
+              ? 'border-[#BBF7D0] bg-[#F0FDF4] text-[#166534]'
+              : 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+          }`}
+        >
+          {exportMessage}
+        </div>
+      )}
+
       {/* 2. STAT CARDS */}
       <div className="grid grid-cols-4 gap-[20px] mb-[25px]">
-          <StatCard title="Active Zones" value={zones.filter(z => z.status === 'ACTIVE').length} trend="+12%" isPositive={true} icon={<AlertCircle color="#D62828" size={20} />} iconBg="#FEE2E2" />
+          <StatCard title="Active Zones" value={activeZonesCount} trend="+12%" isPositive={true} icon={<AlertCircle color="#D62828" size={20} />} iconBg="#FEE2E2" />
           <StatCard title="People Affected" value={peopleAffectedTotal.toLocaleString()} trend="+28%" isPositive={false} icon={<Users color="#D97706" size={20} />} iconBg="#FEF3C7" />
-          <StatCard title="Total Created" value={zones.length} trend="+5%" isPositive={false} icon={<MapPin color="#2563EB" size={20} />} iconBg="#DBEAFE" />
+          <StatCard title="Total Created" value={totalCreatedCount} trend="+5%" isPositive={false} icon={<MapPin color="#2563EB" size={20} />} iconBg="#DBEAFE" />
           <StatCard title="Average Duration" value={avgDurationLabel} trend="-15%" isPositive={true} icon={<Clock color="#8B5CF6" size={20} />} iconBg="#EDE9FE" />
       </div>
 
