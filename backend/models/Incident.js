@@ -20,6 +20,12 @@ const IncidentSchema = new mongoose.Schema({
   assignedAuthorities: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User" }
   ],
+
+  severity: {
+    type: String,
+    enum: ['Low', 'Moderate', 'High'],
+    default: 'Low'
+},
   status: {
     type: String,
     enum: ['Pending', 'Verified', 'Assigned', 'Resolved'],
