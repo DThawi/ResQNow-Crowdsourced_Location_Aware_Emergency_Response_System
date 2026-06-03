@@ -94,6 +94,13 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Block suspended users
+    if (user.status === "Suspended") {
+      return res.status(403).json({
+        message: "Your account has been suspended"
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {

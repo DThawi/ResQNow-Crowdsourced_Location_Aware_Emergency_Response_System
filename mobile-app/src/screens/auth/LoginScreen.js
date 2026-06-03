@@ -22,18 +22,32 @@ export default function LoginScreen({ navigation }) {
   const logoSize = Math.min(width * 0.5, 200); // max 200px
 
   const handleLogin = async () => {
-    try {
-      const response = await API.post('/auth/login', { email, password });
-      const { token, role } = response.data;
-      
-      await AsyncStorage.setItem('token', token);
-      await AsyncStorage.setItem('role', role);
-      
+  try {
+    const response = await API.post('/auth/login', { email, password });
+    const { token, role } = response.data;
+
+    await AsyncStorage.setItem('token', token);
+    await AsyncStorage.setItem('role', role);
+
+    // Fetch and save user profile
+    const profileResponse = await API.get('/auth/profile', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    await AsyncStorage.setItem('user', JSON.stringify(profileResponse.data));
+
+    // Navigate based on role
+    if (role === 'Authority') {
+      navigation.navigate('ResponderDashboard');
+    } else if (role === 'Admin') {
       navigation.navigate('Home');
-    } catch (err) {
-      alert(err.response?.data?.message || 'Login failed');
+    } else {
+      navigation.navigate('Home');
     }
-  };
+
+  } catch (err) {
+    alert(err.response?.data?.message || 'Login failed');
+  }
+};
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-white">

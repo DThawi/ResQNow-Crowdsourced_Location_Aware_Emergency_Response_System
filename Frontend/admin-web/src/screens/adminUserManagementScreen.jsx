@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Filter, Download, Plus, Edit, Trash2, UserX, X, Shield, CheckCircle, AlertCircle, Check
 } from 'lucide-react';
+import API from '../services/api';
 
 const AdminUserManagementScreen = () => {
   // --- DATA STATE ---
-  const [users, setUsers] = useState([
-    { id: 'U001', name: 'Alice Johnson', email: 'alice.j@email.com', role: 'Citizen', status: 'Active', date: 'Jan 15, 2024', avatar: 'AJ' },
-    { id: 'U002', name: 'Bob Smith', email: 'bob.s@email.com', role: 'Citizen', status: 'Active', date: 'Feb 20, 2024', avatar: 'BS' },
-    { id: 'U003', name: 'Carol Martinez', email: 'carol.m@resq.com', role: 'Responder', status: 'Active', date: 'Nov 10, 2023', avatar: 'CM' },
-    { id: 'U004', name: 'David Lee', email: 'david.l@email.com', role: 'Citizen', status: 'Suspended', date: 'Mar 05, 2024', avatar: 'DL' },
-    { id: 'U005', name: 'Emma Wilson', email: 'emma.w@resq.com', role: 'Admin', status: 'Active', date: 'Aug 12, 2023', avatar: 'EW' },
-    { id: 'U006', name: 'Michael Chen', email: 'm.chen@resq.com', role: 'Admin', status: 'Active', date: 'Sep 01, 2023', avatar: 'MC' },
-  ]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // --- UI STATES ---
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,8 +26,38 @@ const AdminUserManagementScreen = () => {
   const [successType, setSuccessType] = useState('add'); 
   const [selectedUser, setSelectedUser] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Citizen' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Citizen', contact_number: '', district: '', organization: '' });
   const [countdown, setCountdown] = useState(3);
+
+  // --- DATA FETCHING ---
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await API.get('/admin/users');
+      const formatted = res.data.map(u => ({
+        id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role === 'Authority' ? 'Responder' : u.role,
+        status: u.status || 'Active',
+        date: new Date(u.registered_date || u.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        avatar: u.name ? u.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??',
+        contact_number: u.contact_number || '',
+        district: u.district || '',
+        organization: u.organization || ''
+      }));
+      setUsers(formatted);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load system users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   // --- TIMER FOR SUCCESS POPUP ---
   useEffect(() => {
@@ -57,36 +83,100 @@ const AdminUserManagementScreen = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
-    setIsEditModalOpen(false);
-    setSuccessType('edit');
-    setIsSuccessModalOpen(true);
+  const handleSaveEdit = async () => {
+    try {
+      const roleMapped = selectedUser.role === 'Responder' ? 'Authority' : selectedUser.role;
+      const res = await API.put(`/admin/users/${selectedUser.id}`, {
+        name: selectedUser.name,
+        role: roleMapped,
+        status: selectedUser.status,
+        contact_number: selectedUser.contact_number,
+        district: selectedUser.role === 'Responder' ? selectedUser.district : undefined,
+        organization: selectedUser.role === 'Responder' ? selectedUser.organization : undefined
+      });
+      
+      setUsers(users.map(u => u.id === selectedUser.id ? {
+        ...selectedUser,
+        date: new Date(res.data.registered_date || res.data.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        avatar: selectedUser.name ? selectedUser.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??'
+      } : u));
+      
+      setIsEditModalOpen(false);
+      setSuccessType('edit');
+      setIsSuccessModalOpen(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update user');
+    }
   };
 
-  const handleAddUser = () => {
-    const userEntry = {
-        ...newUser,
-        id: `U00${users.length + 1}`,
-        status: 'Active',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        avatar: newUser.name ? newUser.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??'
-    };
-    setUsers([userEntry, ...users]);
-    setIsAddModalOpen(false);
-    setSuccessType('add');
-    setIsSuccessModalOpen(true);
-    setNewUser({ name: '', email: '', role: 'Citizen' });
+  const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password || !newUser.contact_number) {
+      alert('Please fill out all required fields (Name, Email, Password, Contact Number)');
+      return;
+    }
+    try {
+      const roleMapped = newUser.role === 'Responder' ? 'Authority' : newUser.role;
+      const payload = {
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password,
+        role: roleMapped,
+        contact_number: newUser.contact_number,
+        district: newUser.role === 'Responder' ? newUser.district : undefined,
+        organization: newUser.role === 'Responder' ? newUser.organization : undefined
+      };
+      
+      const res = await API.post('/admin/users', payload);
+      const createdUser = res.data;
+      
+      const formattedUser = {
+        id: createdUser._id,
+        name: createdUser.name,
+        email: createdUser.email,
+        role: createdUser.role === 'Authority' ? 'Responder' : createdUser.role,
+        status: createdUser.status || 'Active',
+        date: new Date(createdUser.registered_date || createdUser.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        avatar: createdUser.name ? createdUser.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??',
+        contact_number: createdUser.contact_number || '',
+        district: createdUser.district || '',
+        organization: createdUser.organization || ''
+      };
+      
+      setUsers([formattedUser, ...users]);
+      setIsAddModalOpen(false);
+      setSuccessType('add');
+      setIsSuccessModalOpen(true);
+      setNewUser({ name: '', email: '', password: '', role: 'Citizen', contact_number: '', district: '', organization: '' });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create user');
+    }
   };
 
-  const toggleStatus = (id) => {
-    setUsers(users.map(u => u.id === id ? { ...u, status: u.status === 'Active' ? 'Suspended' : 'Active' } : u));
+  const toggleStatus = async (id) => {
+    const userToToggle = users.find(u => u.id === id);
+    if (!userToToggle) return;
+    const newStatus = userToToggle.status === 'Active' ? 'Suspended' : 'Active';
+    try {
+      const roleMapped = userToToggle.role === 'Responder' ? 'Authority' : userToToggle.role;
+      await API.put(`/admin/users/${id}`, {
+        status: newStatus,
+        role: roleMapped
+      });
+      setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update user status');
+    }
   };
 
-  const confirmDelete = () => {
-    setUsers(users.filter(u => u.id !== userToDelete.id));
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
+  const confirmDelete = async () => {
+    try {
+      await API.delete(`/admin/users/${userToDelete.id}`);
+      setUsers(users.filter(u => u.id !== userToDelete.id));
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete user');
+    }
   };
 
   const toggleSelectUser = (id) => {
@@ -104,6 +194,30 @@ const AdminUserManagementScreen = () => {
 
   const totalPages = Math.ceil(filteredUsers.length / entriesPerPage);
   const currentUsers = filteredUsers.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-slate-400">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D62828] mb-4"></div>
+        <p className="text-[16px] font-semibold text-slate-600">Loading system users...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-slate-400">
+        <AlertCircle size={48} className="text-red-400 mb-4" />
+        <p className="text-[16px] font-semibold text-slate-600 mb-4">{error}</p>
+        <button
+          onClick={fetchUsers}
+          className="px-6 py-2 bg-[#D62828] text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-[fadeIn_0.3s_ease-out]">
@@ -237,29 +351,49 @@ const AdminUserManagementScreen = () => {
       {/* --- ADD MODAL --- */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex justify-center items-center z-[10000]">
-            <div className="bg-white w-full max-w-[450px] rounded-[24px] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
-                <div className="p-[20px_25px] border-b border-[#F1F5F9] flex justify-between items-center">
+            <div className="bg-white w-full max-w-[480px] max-h-[90vh] overflow-y-auto rounded-[24px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] animate-[fadeIn_0.2s_ease-out]">
+                <div className="p-[20px_25px] border-b border-[#F1F5F9] flex justify-between items-center sticky top-0 bg-white z-10">
                     <h3 className="m-0 text-[18px] font-extrabold text-slate-800">Add New System User</h3>
-                    <X onClick={() => setIsAddModalOpen(false)} className="cursor-pointer text-[#94A3B8] hover:text-slate-800 transition-colors" />
+                    <X onClick={() => { setIsAddModalOpen(false); setNewUser({ name: '', email: '', password: '', role: 'Citizen', contact_number: '', district: '', organization: '' }); }} className="cursor-pointer text-[#94A3B8] hover:text-slate-800 transition-colors" />
                 </div>
                 <div className="p-[30px_25px] flex flex-col gap-[20px]">
                     <div>
-                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Full Name</label>
-                        <input type="text" placeholder="John Doe" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828]" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} />
+                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Full Name *</label>
+                        <input type="text" placeholder="John Doe" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} />
                     </div>
                     <div>
-                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Email Address</label>
-                        <input type="email" placeholder="john@resqnow.gov" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828]" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Email Address *</label>
+                        <input type="email" placeholder="john@resqnow.gov" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
                     </div>
                     <div>
-                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Assigned Role</label>
-                        <select className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] bg-white cursor-pointer" value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})}>
+                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Password *</label>
+                        <input type="password" placeholder="••••••••" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Contact Number *</label>
+                        <input type="text" placeholder="0770000000" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" value={newUser.contact_number} onChange={e => setNewUser({...newUser, contact_number: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Assigned Role *</label>
+                        <select className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] bg-white cursor-pointer transition-colors" value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})}>
                             <option value="Citizen">Citizen</option>
-                            <option value="Responder">Responder</option>
+                            <option value="Responder">Responder (Authority)</option>
                             <option value="Admin">Admin</option>
                         </select>
                     </div>
-                    <button onClick={handleAddUser} className="w-full mt-[10px] p-[12px_25px] rounded-[12px] border-none bg-[#D62828] text-white font-bold cursor-pointer hover:bg-red-700 transition-colors">
+                    {newUser.role === 'Responder' && (
+                        <>
+                            <div>
+                                <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">District *</label>
+                                <input type="text" placeholder="Colombo" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" value={newUser.district} onChange={e => setNewUser({...newUser, district: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Organization *</label>
+                                <input type="text" placeholder="Red Cross" className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" value={newUser.organization} onChange={e => setNewUser({...newUser, organization: e.target.value})} />
+                            </div>
+                        </>
+                    )}
+                    <button onClick={handleAddUser} className="w-full mt-[10px] p-[12px_25px] rounded-[12px] border-none bg-[#D62828] text-white font-bold cursor-pointer hover:bg-red-700 transition-colors shadow-[0_4px_12px_rgba(214,40,40,0.2)]">
                         Create User Account
                     </button>
                 </div>
@@ -270,8 +404,8 @@ const AdminUserManagementScreen = () => {
       {/* --- EDIT MODAL --- */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex justify-center items-center z-[10000]">
-            <div className="bg-white w-full max-w-[450px] rounded-[24px] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
-                <div className="p-[20px_25px] border-b border-[#F1F5F9] flex justify-between items-center">
+            <div className="bg-white w-full max-w-[480px] max-h-[90vh] overflow-y-auto rounded-[24px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] animate-[fadeIn_0.2s_ease-out]">
+                <div className="p-[20px_25px] border-b border-[#F1F5F9] flex justify-between items-center sticky top-0 bg-white z-10">
                     <div>
                         <h3 className="m-0 text-[18px] font-extrabold text-slate-800">Edit User Profile</h3>
                         <p className="m-0 text-[13px] text-[#94A3B8]">User ID: {selectedUser.id}</p>
@@ -281,16 +415,20 @@ const AdminUserManagementScreen = () => {
                 <div className="p-[30px_25px] flex flex-col gap-[20px]">
                     <div>
                         <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Full Name</label>
-                        <input type="text" value={selectedUser.name} onChange={e => setSelectedUser({...selectedUser, name: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828]" />
+                        <input type="text" value={selectedUser.name} onChange={e => setSelectedUser({...selectedUser, name: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" />
                     </div>
                     <div>
                         <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Email Address (Read Only)</label>
                         <input type="text" value={selectedUser.email} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none bg-[#F8FAFC] text-[#64748B]" readOnly />
                     </div>
+                    <div>
+                        <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Contact Number</label>
+                        <input type="text" value={selectedUser.contact_number} onChange={e => setSelectedUser({...selectedUser, contact_number: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" />
+                    </div>
                     <div className="flex gap-[15px]">
                         <div className="flex-1">
                             <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">System Role</label>
-                            <select value={selectedUser.role} onChange={e => setSelectedUser({...selectedUser, role: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] bg-white cursor-pointer">
+                            <select value={selectedUser.role} onChange={e => setSelectedUser({...selectedUser, role: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] bg-white cursor-pointer transition-colors">
                                 <option value="Admin">Admin</option>
                                 <option value="Responder">Responder</option>
                                 <option value="Citizen">Citizen</option>
@@ -298,12 +436,24 @@ const AdminUserManagementScreen = () => {
                         </div>
                         <div className="flex-1">
                             <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Account Status</label>
-                            <select value={selectedUser.status} onChange={e => setSelectedUser({...selectedUser, status: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] bg-white cursor-pointer">
+                            <select value={selectedUser.status} onChange={e => setSelectedUser({...selectedUser, status: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] bg-white cursor-pointer transition-colors">
                                 <option value="Active">Active</option>
                                 <option value="Suspended">Suspended</option>
                             </select>
                         </div>
                     </div>
+                    {selectedUser.role === 'Responder' && (
+                        <>
+                            <div>
+                                <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">District</label>
+                                <input type="text" value={selectedUser.district} onChange={e => setSelectedUser({...selectedUser, district: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-[13px] font-bold text-[#475569] mb-[8px]">Organization</label>
+                                <input type="text" value={selectedUser.organization} onChange={e => setSelectedUser({...selectedUser, organization: e.target.value})} className="w-full p-[12px] rounded-[10px] border border-[#E2E8F0] box-border outline-none focus:border-[#D62828] transition-colors" />
+                            </div>
+                        </>
+                    )}
                 </div>
                 <div className="p-[20px_25px] border-t border-[#F1F5F9] flex justify-end gap-[12px] bg-[#F8FAFC]">
                     <button onClick={() => setIsEditModalOpen(false)} className="flex-1 p-[12px] rounded-[12px] border border-[#E2E8F0] bg-white font-semibold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>

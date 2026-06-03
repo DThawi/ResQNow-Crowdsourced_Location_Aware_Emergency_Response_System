@@ -65,6 +65,14 @@ describe("Incident API", () => {
         expect(res.body.message).toBe("Invalid status value");
       }
     });
+
+    test("Assign responder - rejects unauthorized request", async () => {
+      const res = await request(app)
+        .put(`/api/incidents/${testIncidentId}/assign`)
+        .send({ responderId: new mongoose.Types.ObjectId() });
+      
+      expect([401, 403]).toContain(res.statusCode);
+    });
   });
 
 });

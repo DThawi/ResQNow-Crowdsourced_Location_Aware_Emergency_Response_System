@@ -1,9 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  getAnalyticsTotal,
+  getIncidents,
+  getAnalyticsResponseTime,
+  createIncident,
+} from '../services/analyticsService';
+import { exportZoneReportPdf } from '../utils/exportZoneReportPdf';
 import { 
   AlertCircle, Users, ShieldAlert, Download, Calendar, 
   Plus, Search, Map, Cpu, Smartphone, Link, X, 
   ToggleRight, ToggleLeft, MapPin, Clock, Wand2 
 } from 'lucide-react';
+
+const DEFAULT_LAT = '6.9271';
+const DEFAULT_LNG = '79.8612';
 
 const AdminDangerZoneScreen = () => {
   const [dateRange, setDateRange] = useState('Last 7 Days');
@@ -13,6 +23,11 @@ const AdminDangerZoneScreen = () => {
   const [automationModalOpen, setAutomationModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [avgResponseMinutes, setAvgResponseMinutes] = useState(0);
   
   const [autoAlerts, setAutoAlerts] = useState(true);
   const [autoResolve, setAutoResolve] = useState(true);
@@ -24,15 +39,82 @@ const AdminDangerZoneScreen = () => {
       affected: ''
   });
 
-  const initialZones = [
-    { id: 'DZ-01', name: 'Downtown Fire Zone', type: 'Fire', severity: 'CRITICAL', affected: '1,200', status: 'ACTIVE', created: '12/9/2023' },
-    { id: 'DZ-02', name: 'Chemical Spill - Hwy 95', type: 'Hazmat', severity: 'HIGH', affected: '450', status: 'ACTIVE', created: '12/9/2023' },
-    { id: 'DZ-03', name: 'Flood Risk Area - West End', type: 'Flood', severity: 'MEDIUM', affected: '200', status: 'INACTIVE', created: '12/9/2023' },
-    { id: 'DZ-04', name: 'Civil Unrest - Broadway', type: 'Civil Unrest', severity: 'MEDIUM', affected: '800', status: 'ACTIVE', created: '12/9/2023' },
-    { id: 'DZ-05', name: 'Gas Leak Detection Zone', type: 'Chemical', severity: 'LOW', affected: '100', status: 'ACTIVE', created: '12/9/2023' },
-  ];
+  const [allIncidents, setAllIncidents] = useState([]);
+  const [totalIncidentsCount, setTotalIncidentsCount] = useState(0);
+  const [zones, setZones] = useState([]);
 
-  const [zones, setZones] = useState(initialZones);
+  const filterIncidentsByDateRange = useCallback((incidents, range) => {
+    if (range === 'All Time') return incidents;
+    const now = new Date();
+    const start = new Date(now);
+    if (range === 'Last 7 Days') start.setDate(now.getDate() - 7);
+    else if (range === 'Last 30 Days') start.setDate(now.getDate() - 30);
+    else if (range === 'This Year') start.setFullYear(now.getFullYear(), 0, 1);
+    return incidents.filter((incident) => {
+      if (!incident.timestamp) return true;
+      return new Date(incident.timestamp) >= start;
+    });
+  }, []);
+
+  const mapIncidentToZone = useCallback((incident, index) => {
+    const affectedCount = estimateAffectedCount(incident);
+    return {
+      id: incident._id,
+      name: incident.description?.substring(0, 48) || incident.type || `Danger Zone ${index + 1}`,
+      type: incident.type || 'Unknown',
+      severity: getSeverityFromStatus(incident.status),
+      affected: affectedCount.toLocaleString(),
+      affectedCount,
+      status: incident.status === 'Resolved' ? 'INACTIVE' : 'ACTIVE',
+      created: incident.timestamp
+        ? new Date(incident.timestamp).toLocaleDateString('en-US')
+        : '—',
+      coordinates: parseCoordinates(incident.location),
+      timestamp: incident.timestamp,
+    };
+  }, []);
+
+  const fetchAllData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+
+      const [totalRes, incidentsRes, responseRes] = await Promise.all([
+        getAnalyticsTotal(),
+        getIncidents(1, 1000),
+        getAnalyticsResponseTime(),
+      ]);
+
+      const incidents = Array.isArray(incidentsRes)
+        ? incidentsRes
+        : incidentsRes?.incidents || [];
+
+      setAllIncidents(incidents);
+      setTotalIncidentsCount(totalRes?.totalIncidents || 0);
+      setAvgResponseMinutes(responseRes?.averageResponseTime_minutes || 0);
+    } catch (error) {
+      console.error('FETCH ERROR:', error);
+      setLoadError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to load dashboard data'
+      );
+      setAllIncidents([]);
+      setTotalIncidentsCount(0);
+      setAvgResponseMinutes(0);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  useEffect(() => {
+    const filtered = filterIncidentsByDateRange(allIncidents, dateRange);
+    setZones(filtered.map(mapIncidentToZone));
+  }, [allIncidents, dateRange, filterIncidentsByDateRange, mapIncidentToZone]);
 
   const filteredZones = zones.filter(zone => 
       zone.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -54,15 +136,42 @@ const AdminDangerZoneScreen = () => {
       return { total, items };
   }, [zones]);
 
-  const activeTrend7d = useMemo(() => ([
-      { label: 'Mon', active: 3, affected: 980, affectedScaled: 3.9 },
-      { label: 'Tue', active: 4, affected: 1120, affectedScaled: 4.5 },
-      { label: 'Wed', active: 5, affected: 1350, affectedScaled: 5.4 },
-      { label: 'Thu', active: 4, affected: 1250, affectedScaled: 5.0 },
-      { label: 'Fri', active: 6, affected: 1620, affectedScaled: 6.5 },
-      { label: 'Sat', active: 5, affected: 1490, affectedScaled: 6.0 },
-      { label: 'Sun', active: 6, affected: 1710, affectedScaled: 6.8 },
-  ]), []);
+  const activeTrend7d = useMemo(() => buildActiveTrend7d(zones), [zones]);
+
+  const trendYMax = useMemo(() => {
+    const peak = Math.max(
+      ...activeTrend7d.map((d) => Math.max(d.active, d.affectedScaled)),
+      1
+    );
+    return Math.ceil(peak);
+  }, [activeTrend7d]);
+
+  const peopleAffectedTotal = useMemo(
+    () => zones.reduce((sum, z) => sum + (z.affectedCount || 0), 0),
+    [zones]
+  );
+
+  const activeZonesCount = useMemo(() => {
+    if (dateRange === 'All Time') {
+      return allIncidents.filter((incident) => incident.status !== 'Resolved').length;
+    }
+    return zones.filter((zone) => zone.status === 'ACTIVE').length;
+  }, [dateRange, allIncidents, zones]);
+
+  const totalCreatedCount = useMemo(() => {
+    if (dateRange === 'All Time') {
+      return totalIncidentsCount;
+    }
+    return zones.length;
+  }, [dateRange, totalIncidentsCount, zones]);
+
+  const avgDurationLabel = useMemo(() => {
+    if (!avgResponseMinutes) return '—';
+    if (avgResponseMinutes >= 60) {
+      return `${(avgResponseMinutes / 60).toFixed(1)} h`;
+    }
+    return `${avgResponseMinutes.toFixed(0)} min`;
+  }, [avgResponseMinutes]);
 
   // --- ACTIONS ---
   const handleAutoEstimate = () => {
@@ -88,19 +197,52 @@ const AdminDangerZoneScreen = () => {
       }, 1200);
   };
 
-  const handleCreateZone = () => {
-      const newEntry = {
-          id: `DZ-0${zones.length + 1}`,
-          name: newZoneData.name || 'Manual Danger Zone',
+  const handleExportZoneReport = async () => {
+    setExportMessage(null);
+    setExporting(true);
+    try {
+      exportZoneReportPdf({
+        dateRange,
+        searchTerm,
+        stats: {
+          activeZonesCount,
+          peopleAffectedCount: peopleAffectedTotal,
+          peopleAffectedLabel: peopleAffectedTotal.toLocaleString(),
+          totalCreatedCount,
+          avgDurationLabel,
+        },
+        severitySummary,
+        zones: filteredZones,
+      });
+      setExportMessage('PDF report downloaded successfully.');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      setExportMessage(
+        error?.message || 'Could not generate the PDF. Please try again.'
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleCreateZone = async () => {
+      try {
+        await createIncident({
           type: newZoneData.type,
-          severity: newZoneData.severity,
-          affected: newZoneData.affected || '0',
-          status: 'ACTIVE',
-          created: new Date().toLocaleDateString('en-US') 
-      };
-      setZones([newEntry, ...zones]);
-      setCreateModalOpen(false);
-      setNewZoneData({ name: '', type: 'Fire', severity: 'HIGH', affected: '' });
+          description: newZoneData.name || `${newZoneData.type} danger zone`,
+          longitude: DEFAULT_LNG,
+          latitude: DEFAULT_LAT,
+        });
+        setCreateModalOpen(false);
+        setNewZoneData({ name: '', type: 'Fire', severity: 'HIGH', affected: '' });
+        await fetchAllData();
+      } catch (error) {
+        console.error(error);
+        alert(
+          error?.response?.data?.message ||
+            'Failed to create danger zone. Sign in as admin and try again.'
+        );
+      }
   };
 
   const getSeverityClasses = (severity) => {
@@ -113,8 +255,22 @@ const AdminDangerZoneScreen = () => {
       }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[80vh]">
+        <div className="text-[18px] font-bold text-slate-700">Loading dashboard...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-[fadeIn_0.3s_ease-out]">
+
+      {loadError && (
+        <div className="mb-[20px] rounded-[10px] border border-[#FECACA] bg-[#FEF2F2] px-[16px] py-[12px] text-[13px] font-semibold text-[#B91C1C]">
+          {loadError}
+        </div>
+      )}
       
       {/* 1. TOP ACTION BAR */}
       <div className="flex justify-between items-center mb-[25px]">
@@ -133,17 +289,35 @@ const AdminDangerZoneScreen = () => {
                 </select>
             </div>
         </div>
-        <button className="bg-[#D62828] text-white border-none py-[10px] px-[15px] rounded-[8px] font-bold text-[13px] flex items-center gap-[8px] cursor-pointer hover:bg-red-700 transition-colors">
-            <Download size={16} /> Export Zone Report
+        <button
+          type="button"
+          onClick={handleExportZoneReport}
+          disabled={exporting || loading}
+          className="bg-[#D62828] text-white border-none py-[10px] px-[15px] rounded-[8px] font-bold text-[13px] flex items-center gap-[8px] cursor-pointer hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+            <Download size={16} />
+            {exporting ? 'Generating PDF…' : 'Export Zone Report'}
         </button>
       </div>
 
+      {exportMessage && (
+        <div
+          className={`mb-[20px] rounded-[10px] border px-[16px] py-[12px] text-[13px] font-semibold ${
+            exportMessage.includes('successfully')
+              ? 'border-[#BBF7D0] bg-[#F0FDF4] text-[#166534]'
+              : 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+          }`}
+        >
+          {exportMessage}
+        </div>
+      )}
+
       {/* 2. STAT CARDS */}
       <div className="grid grid-cols-4 gap-[20px] mb-[25px]">
-          <StatCard title="Active Zones" value={zones.filter(z => z.status === 'ACTIVE').length} trend="+12%" isPositive={true} icon={<AlertCircle color="#D62828" size={20} />} iconBg="#FEE2E2" />
-          <StatCard title="People Affected" value="2,550" trend="+28%" isPositive={false} icon={<Users color="#D97706" size={20} />} iconBg="#FEF3C7" />
-          <StatCard title="Total Created" value={zones.length} trend="+5%" isPositive={false} icon={<MapPin color="#2563EB" size={20} />} iconBg="#DBEAFE" />
-          <StatCard title="Average Duration" value="4.2 h" trend="-15%" isPositive={true} icon={<Clock color="#8B5CF6" size={20} />} iconBg="#EDE9FE" />
+          <StatCard title="Active Zones" value={activeZonesCount} trend="+12%" isPositive={true} icon={<AlertCircle color="#D62828" size={20} />} iconBg="#FEE2E2" />
+          <StatCard title="People Affected" value={peopleAffectedTotal.toLocaleString()} trend="+28%" isPositive={false} icon={<Users color="#D97706" size={20} />} iconBg="#FEF3C7" />
+          <StatCard title="Total Created" value={totalCreatedCount} trend="+5%" isPositive={false} icon={<MapPin color="#2563EB" size={20} />} iconBg="#DBEAFE" />
+          <StatCard title="Average Duration" value={avgDurationLabel} trend="-15%" isPositive={true} icon={<Clock color="#8B5CF6" size={20} />} iconBg="#EDE9FE" />
       </div>
 
       {/* 3. CHARTS GRID */}
@@ -201,8 +375,8 @@ const AdminDangerZoneScreen = () => {
                     { key: 'active', label: 'Active Zones', color: '#D62828' },
                     { key: 'affectedScaled', label: 'People Affected', color: '#10B981', tooltipKey: 'affected', tooltipFormatter: (v) => `${Number(v).toLocaleString()} people` },
                 ]}
-                yMax={8}
-                yTicks={[0, 2, 4, 6, 8]}
+                yMax={trendYMax}
+                yTicks={Array.from({ length: 5 }, (_, i) => Math.round((trendYMax / 4) * i))}
                 yTickSuffix=""
             />
             <div className="mt-[8px] text-[11px] text-[#9CA3AF] font-semibold">
@@ -249,7 +423,13 @@ const AdminDangerZoneScreen = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredZones.map((zone) => (
+                    {filteredZones.length === 0 ? (
+                        <tr>
+                            <td colSpan={6} className="p-[20px_25px] text-center text-[#64748B] text-[13px]">
+                                No incidents found in the database for this date range.
+                            </td>
+                        </tr>
+                    ) : filteredZones.map((zone) => (
                         <tr key={zone.id} className="border-b border-[#F3F4F6] hover:bg-slate-50 transition-colors">
                             <td className="p-[15px_25px] text-[13px] font-bold text-[#2B2D42]">{zone.name}</td>
                             <td className="p-[15px_10px] text-[13px]">{zone.type}</td>
@@ -704,5 +884,78 @@ const LiveZoneMapPreview = ({ zones }) => {
         </div>
     );
 };
+
+function parseCoordinates(location) {
+  const coords = location?.coordinates;
+  if (Array.isArray(coords) && coords.length >= 2) {
+    return [Number(coords[0]) || 0, Number(coords[1]) || 0];
+  }
+  if (typeof coords === 'string') {
+    const parts = coords.trim().split(/[\s,]+/).map(Number);
+    if (parts.length >= 2 && parts.every(Number.isFinite)) {
+      return [parts[0], parts[1]];
+    }
+  }
+  return [0, 0];
+}
+
+function getSeverityFromStatus(status) {
+  switch (status) {
+    case 'Pending':
+      return 'LOW';
+    case 'Verified':
+      return 'MEDIUM';
+    case 'Assigned':
+      return 'HIGH';
+    case 'Resolved':
+      return 'LOW';
+    default:
+      return 'MEDIUM';
+  }
+}
+
+function estimateAffectedCount(incident) {
+  const verified = incident.verified_by?.length || 0;
+  const inaccurate = incident.reported_inaccurate_by?.length || 0;
+  const base = 50;
+  return Math.max(10, base + verified * 75 - inaccurate * 25);
+}
+
+function buildActiveTrend7d(zones = []) {
+  const now = new Date();
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now);
+    date.setDate(now.getDate() - (6 - index));
+    return {
+      label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      active: 0,
+      affected: 0,
+      affectedScaled: 0,
+    };
+  });
+
+  zones.forEach((zone) => {
+    if (!zone.timestamp) return;
+    const date = new Date(zone.timestamp);
+    const day = days.find(
+      (item) =>
+        item.label === date.toLocaleDateString('en-US', { weekday: 'short' })
+    );
+    if (!day) return;
+    if (zone.status === 'ACTIVE') day.active += 1;
+    day.affected += zone.affectedCount || 0;
+  });
+
+  const maxAffected = Math.max(...days.map((d) => d.affected), 1);
+  const maxActive = Math.max(...days.map((d) => d.active), 1);
+  const scaleBase = Math.max(maxAffected, maxActive, 1);
+
+  days.forEach((d) => {
+    d.affectedScaled =
+      Math.round((d.affected / scaleBase) * Math.max(maxActive, 4) * 10) / 10;
+  });
+
+  return days;
+}
 
 export default AdminDangerZoneScreen;

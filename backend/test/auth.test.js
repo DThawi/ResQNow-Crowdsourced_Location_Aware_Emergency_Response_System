@@ -9,8 +9,9 @@ describe("Authentication API Tests", () => {
     email: `test${Date.now()}@example.com`,
     password: "123456",
     role: "Citizen",
-  contact_number: "0771234567"
-    
+    contact_number: "0771234567",
+    latitude: "6.9271",
+    longitude: "79.8612"
   };
 
 

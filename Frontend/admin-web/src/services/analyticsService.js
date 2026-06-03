@@ -52,7 +52,42 @@ export const getIncidents = async (page = 1, limit = 20) => {
   return res.data;
 };
 
+/** Fetch all incidents (admin dashboards). Falls back to paginated route. */
+export const getAllIncidents = async () => {
+  try {
+    const res = await API.get("/incidents/all");
+    return res.data;
+  } catch (err) {
+    if (err?.response?.status !== 404) throw err;
+    const res = await API.get("/incidents?page=1&limit=1000");
+    return res.data;
+  }
+};
+
 export const updateIncidentStatus = async (incidentId, status) => {
   const res = await API.put(`/incidents/${incidentId}/status`, { status });
+  return res.data;
+};
+
+export const createIncident = async (payload) => {
+  const res = await API.post("/incidents", payload);
+  return res.data;
+};
+
+
+export const getNearbyClusters = async (latitude, longitude, radiusKm = 10) => {
+  const res = await API.get("/incidents/clusters", {
+    params: { latitude, longitude, radiusKm },
+  });
+  return res.data;
+};
+
+export const getResponders = async () => {
+  const res = await API.get("/admin/responders");
+  return res.data;
+};
+
+export const assignResponder = async (incidentId, responderId) => {
+  const res = await API.put(`/incidents/${incidentId}/assign`, { responderId });
   return res.data;
 };

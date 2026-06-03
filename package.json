@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "cloudinary": "^2.9.0",
+    "expo-document-picker": "^56.0.4",
     "multer": "^2.1.1"
   }
 }
