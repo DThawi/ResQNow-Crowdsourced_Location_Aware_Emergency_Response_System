@@ -18,17 +18,26 @@ exports.getMyReports = async (req, res) => {
 // Create new incident report
 exports.createIncident = async (req, res) => {
     try {
-        let { type, description, longitude, latitude } = req.body;
+        console.log("BODY:", req.body);
+
+        let { type, description, longitude, latitude, severity } = req.body;
+
+        console.log("SEVERITY:", severity);
+
         const lat = parseFloat(latitude);
         const lng = parseFloat(longitude);
 
         const existingCluster = await findCluster(lat, lng);
-        let clusterId = existingCluster ? (existingCluster.cluster_id || existingCluster._id) : new mongoose.Types.ObjectId();
+
+        let clusterId = existingCluster
+            ? (existingCluster.cluster_id || existingCluster._id)
+            : new mongoose.Types.ObjectId();
 
         const newIncident = new Incident({
-            user_id: req.user.id, // 
+            user_id: req.user.id,
             type,
             description,
+            severity,
             location: {
                 type: 'Point',
                 coordinates: [lng, lat]
@@ -38,10 +47,21 @@ exports.createIncident = async (req, res) => {
             status: 'Pending'
         });
 
+        console.log("NEW INCIDENT:", newIncident);
+
         const savedIncident = await newIncident.save();
+
+        console.log("SAVED INCIDENT:", savedIncident);
+
         res.status(201).json(savedIncident);
+
     } catch (err) {
-        res.status(500).json({ message: "Error creating incident", error: err.message });
+        console.log("ERROR:", err);
+
+        res.status(500).json({
+            message: "Error creating incident",
+            error: err.message
+        });
     }
 };
 

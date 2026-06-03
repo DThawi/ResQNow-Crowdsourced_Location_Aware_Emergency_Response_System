@@ -8,7 +8,7 @@ import GradientHeader from "../../components/layout/header";
 import { Linking, Platform } from "react-native";
 import * as Location from "expo-location";
 
-import MapView, { Marker, Circle, Callout } from "react-native-maps";
+import MapView, { Marker, Circle, Callout, Heatmap } from "react-native-maps";
 import API from "../../services/api";
 
 const FILTERS = [
@@ -236,6 +236,17 @@ export default function LiveMapScreen({ navigation }) {
           }}
           showsUserLocation={true}
         >
+
+          <Heatmap
+  points={heatmapPoints}
+  radius={50}
+  opacity={0.7}
+  gradient={{
+    colors: ["#22C55E", "#EAB308", "#F97316", "#DC2626"],
+    startPoints: [0.2, 0.4, 0.6, 0.8],
+    colorMapSize: 256,
+  }}
+/>
           {/* Incident Markers */}
           {filtered.map((incident, index) => {
             if (!incident.location || !incident.location.coordinates) {
