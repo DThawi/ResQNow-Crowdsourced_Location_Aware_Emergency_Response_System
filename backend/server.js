@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./db");
 const User = require("./models/User");
+const heatmapRoutes = require("./routes/heatmapRoutes");
 
 // Route imports
 const authRoutes = require("./routes/authRoutes.js");
@@ -22,6 +23,7 @@ app.use("/api/incidents", incidentRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/heatmap", heatmapRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {

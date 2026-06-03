@@ -5,13 +5,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons"; // Expo icon library
 import { Ionicons } from "@expo/vector-icons";
 import GradientHeader from "../../components/layout/header";
+import { Linking, Platform } from "react-native";
 import * as Location from "expo-location";
 
-
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Heatmap } from "react-native-maps";
 import API from "../../services/api";
-
-
 
 const FILTERS = [
   { key: "All", label: "All" },
@@ -19,98 +17,124 @@ const FILTERS = [
   { key: "Verified", label: "Verified" },
   { key: "Assigned", label: "Assigned" },
   { key: "Resolved", label: "Resolved" },
-
 ];
 
 const PIN_COLORS = {
   Pending: "#DC2626",
   Verified: "#F59E0B",
-   Assigned: "#3B82F6",
+  Assigned: "#3B82F6",
   Resolved: "#1F2937",
 };
 
 export default function LiveMapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [incidents, setIncidents] = useState([]);
+  const [heatmapPoints, setHeatmapPoints] = useState([]);
   const [filter, setFilter] = useState("All");
+  const [selectedIncident, setSelectedIncident] = useState(null);
 
   const [region, setRegion] = useState({
-  latitude: 7.8731,
-  longitude: 80.7718,
-  latitudeDelta: 2,
-  longitudeDelta: 2,
-});
+    latitude: 7.8731,
+    longitude: 80.7718,
+    latitudeDelta: 2,
+    longitudeDelta: 2,
+  });
 
-const [mapType, setMapType] = useState("standard");
+  const [mapType, setMapType] = useState("standard");
 
   useEffect(() => {
-  fetchIncidents();
+    fetchIncidents();
+    fetchHeatmapData();
 
-  const interval = setInterval(fetchIncidents, 5000); // every 5 seconds
+    const interval = setInterval(() => {
+      fetchIncidents();
+      fetchHeatmapData();
+    }, 5000); // every 5 seconds
 
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchIncidents = async () => {
-  try {
-    const res = await API.get("/incidents");
+    try {
+      const res = await API.get("/incidents");
 
-    console.log("API DATA:", res.data); 
+      console.log("API DATA:", res.data);
 
-    setIncidents(res.data || []);
-  } catch (err) {
-    console.log("ERROR FETCHING INCIDENTS:", err.message);
-  }
-};
+      setIncidents(res.data || []);
+    } catch (err) {
+      console.log("ERROR FETCHING INCIDENTS:", err.message);
+    }
+  };
+  const fetchHeatmapData = async () => {
+    try {
+      const res = await API.get("/heatmap");
+
+      setHeatmapPoints(res.data || []);
+    } catch (err) {
+      console.log("HEATMAP ERROR:", err.message);
+    }
+  };
 
   const filtered =
-  filter === "All"
-    ? incidents
-    : incidents.filter(
-        (i) => i.status?.toLowerCase() === filter.toLowerCase()
-      );
+    filter === "All"
+      ? incidents
+      : incidents.filter(
+          (i) => i.status?.toLowerCase() === filter.toLowerCase(),
+        );
 
   const getCounts = (key) => {
-  if (key === "All") return incidents.length;
+    if (key === "All") return incidents.length;
 
-  return incidents.filter(
-    (i) => i.status?.toLowerCase() === key.toLowerCase()
-  ).length;
-};
+    return incidents.filter(
+      (i) => i.status?.toLowerCase() === key.toLowerCase(),
+    ).length;
+  };
 
-const goToMyLocation = async () => {
-  let { status } = await Location.requestForegroundPermissionsAsync();
+  const goToMyLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
 
-  if (status !== "granted") {
-    alert("Location permission denied");
-    return;
-  }
+    if (status !== "granted") {
+      alert("Location permission denied");
+      return;
+    }
 
-  let location = await Location.getCurrentPositionAsync({});
+    let location = await Location.getCurrentPositionAsync({});
 
-  setRegion({
-    latitude: location.coords.latitude,
-    longitude: location.coords.longitude,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
+    setRegion({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
+    });
+  };
+
+  const toggleMapType = () => {
+    setMapType((prev) => (prev === "standard" ? "satellite" : "standard"));
+  };
+
+  const openGoogleMaps = async (latitude, longitude) => {
+  const url = Platform.select({
+    ios: `http://maps.apple.com/?daddr=${latitude},${longitude}`,
+    android: `google.navigation:q=${latitude},${longitude}`,
   });
-};
 
-const toggleMapType = () => {
-  setMapType((prev) => (prev === "standard" ? "satellite" : "standard"));
+  try {
+    await Linking.openURL(url);
+  } catch (error) {
+    console.log("Navigation error:", error);
+  }
 };
-
 
   return (
     <View className="flex-1 bg-gray-100">
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-
-      {/* HEADER */}
-      <GradientHeader
-        title="Live Incident Map"
-        type="back"
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
       />
 
+      {/* HEADER */}
+      <GradientHeader title="Live Incident Map" type="back" />
 
       {/* FILTER TABS */}
       <View className="flex-row px-3 py-3 bg-white gap-2">
@@ -150,47 +174,162 @@ const toggleMapType = () => {
 
       {/* MAP */}
       <View className="flex-1 relative">
-        
-        <MapView
-              style={{ flex: 1 }}
-              region={region}
-              mapType={mapType}
-        >
+        <MapView style={{ flex: 1 }} region={region} mapType={mapType}>
+          <Heatmap
+            points={heatmapPoints}
+            radius={50}
+            opacity={0.7}
+            gradient={{
+              colors: ["#22C55E", "#EAB308", "#F97316", "#DC2626"],
+
+              startPoints: [0.2, 0.4, 0.6, 0.8],
+
+              colorMapSize: 256,
+            }}
+          />
           {filtered.map((incident) => {
-            if (!incident.location || !incident.location.coordinates) return null;
+            if (!incident.location || !incident.location.coordinates)
+              return null;
 
             const [lng, lat] = incident.location.coordinates;
 
             if (!lat || !lng) return null;
 
             return (
-           <Marker
-                key={incident._id}
-                coordinate={{
-                  latitude: lat,
-                  longitude: lng,
-              }}
-                pinColor={PIN_COLORS[incident.status] || "#DC2626"}
-                onPress={() =>
-                  navigation.navigate("IncidentDetails", { incident })
-                }
-              />
+              <Marker
+  key={incident._id}
+  coordinate={{
+    latitude: lat,
+    longitude: lng,
+  }}
+  pinColor={PIN_COLORS[incident.status] || "#DC2626"}
+  onPress={() => setSelectedIncident(incident)}
+/>
             );
           })}
         </MapView>
 
+        {selectedIncident && (
+  <View
+    style={{
+      position: "absolute",
+      bottom: 20,
+      left: 15,
+      right: 15,
+      backgroundColor: "#fff",
+      borderRadius: 16,
+      padding: 16,
+      elevation: 8,
+    }}
+  >
+    <Text
+      style={{
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 6,
+      }}
+    >
+      {selectedIncident.type}
+    </Text>
+
+    <Text
+      style={{
+        color: "#666",
+        marginBottom: 6,
+      }}
+    >
+      Status: {selectedIncident.status}
+    </Text>
+
+    <Text
+      style={{
+        color: "#444",
+        marginBottom: 15,
+      }}
+    >
+      {selectedIncident.description}
+    </Text>
+
+    {/* View Details */}
+    <TouchableOpacity
+      style={{
+        backgroundColor: "#064092",
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 10,
+      }}
+      onPress={() =>
+        navigation.navigate("IncidentDetails", {
+          incident: selectedIncident,
+        })
+      }
+    >
+      <Text
+        style={{
+          color: "#fff",
+          textAlign: "center",
+          fontWeight: "bold",
+        }}
+      >
+        View Details
+      </Text>
+    </TouchableOpacity>
+
+    {/* Navigate */}
+    <TouchableOpacity
+      style={{
+        backgroundColor: "#DC2626",
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 10,
+      }}
+      onPress={() => {
+        const [lng, lat] =
+          selectedIncident.location.coordinates;
+
+        openGoogleMaps(lat, lng);
+      }}
+    >
+      <Text
+        style={{
+          color: "#fff",
+          textAlign: "center",
+          fontWeight: "bold",
+        }}
+      >
+        Navigate
+      </Text>
+    </TouchableOpacity>
+
+    {/* Close */}
+    <TouchableOpacity
+      onPress={() => setSelectedIncident(null)}
+    >
+      <Text
+        style={{
+          textAlign: "center",
+          color: "#6B7280",
+          fontWeight: "600",
+        }}
+      >
+        Close
+      </Text>
+    </TouchableOpacity>
+  </View>
+)}
+
         {/* MAP CONTROLS */}
         <View className="absolute right-3 top-3 gap-2">
-          <TouchableOpacity 
-          onPress={toggleMapType}
-          className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md"
+          <TouchableOpacity
+            onPress={toggleMapType}
+            className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md"
           >
             <MaterialIcons name="layers" size={24} color="#111827" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-          onPress={goToMyLocation}
-          className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md"
+          <TouchableOpacity
+            onPress={goToMyLocation}
+            className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-md"
           >
             <MaterialIcons name="my-location" size={24} color="#111827" />
           </TouchableOpacity>
@@ -199,14 +338,10 @@ const toggleMapType = () => {
 
       {/* LEGEND HEADER */}
       <View className="flex-row justify-between items-center px-4 pt-3 pb-1 bg-white">
-        <Text className="text-base font-bold text-gray-800">
-          Map Legend
-        </Text>
+        <Text className="text-base font-bold text-gray-800">Map Legend</Text>
 
         <TouchableOpacity>
-          <Text className="text-sm font-semibold text-red-600">
-            🔻 Filter
-          </Text>
+          <Text className="text-sm font-semibold text-red-600">🔻 Filter</Text>
         </TouchableOpacity>
       </View>
 
@@ -219,12 +354,8 @@ const toggleMapType = () => {
         <View className="flex-row items-center gap-2">
           <View className="w-3.5 h-3.5 rounded-full bg-red-600" />
           <View>
-            <Text className="text-sm font-semibold text-gray-800">
-              New
-            </Text>
-            <Text className="text-xs text-gray-500">
-              Unverified
-            </Text>
+            <Text className="text-sm font-semibold text-gray-800">New</Text>
+            <Text className="text-xs text-gray-500">Unverified</Text>
           </View>
         </View>
 
@@ -235,24 +366,19 @@ const toggleMapType = () => {
             <Text className="text-sm font-semibold text-gray-800">
               Verified
             </Text>
-            <Text className="text-xs text-gray-500">
-              Active
-            </Text>
+            <Text className="text-xs text-gray-500">Active</Text>
           </View>
         </View>
 
-
         {/* Assigned */}
         <View className="flex-row items-center gap-2">
-           <View className="w-3.5 h-3.5 rounded-full bg-blue-500" />
-           <View>
+          <View className="w-3.5 h-3.5 rounded-full bg-blue-500" />
+          <View>
             <Text className="text-sm font-semibold text-gray-800">
-            Assigned
+              Assigned
             </Text>
-            <Text className="text-xs text-gray-500">
-            Responders 
-            </Text>
-           </View>
+            <Text className="text-xs text-gray-500">Responders</Text>
+          </View>
         </View>
 
         {/* Resolved */}
@@ -262,13 +388,9 @@ const toggleMapType = () => {
             <Text className="text-sm font-semibold text-gray-800">
               Resolved
             </Text>
-            <Text className="text-xs text-gray-500">
-              Closed
-            </Text>
+            <Text className="text-xs text-gray-500">Closed</Text>
           </View>
         </View>
-
-        
       </View>
     </View>
   );
