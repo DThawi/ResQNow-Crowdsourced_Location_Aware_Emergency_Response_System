@@ -13,7 +13,7 @@ const INCIDENT_TYPES = [
   { id: 'Crime', label: 'Crime', icon: 'warning-outline' },
   { id: 'Disaster', label: 'Disaster', icon: 'business-outline' }
 ];
-const URGENCY_LEVELS = ['Low', 'Moderate', 'High'];
+const URGENCY_LEVELS = ['Low', 'Moderate', 'High', 'Critical'];
 
 export default function ReportIncident() {
   const navigation = useNavigation();
