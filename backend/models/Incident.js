@@ -31,6 +31,11 @@ const IncidentSchema = new mongoose.Schema({
     ref: "User"
   },
 
+  assigned_at: {
+  type: Date,
+  default: null
+},
+
   status_history: [{
     status: {
       type: String,
