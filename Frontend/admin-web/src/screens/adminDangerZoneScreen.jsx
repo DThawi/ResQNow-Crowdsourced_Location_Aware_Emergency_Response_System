@@ -57,22 +57,56 @@ const AdminDangerZoneScreen = () => {
   }, []);
 
   const mapIncidentToZone = useCallback((incident, index) => {
-    const affectedCount = estimateAffectedCount(incident);
-    return {
-      id: incident._id,
-      name: incident.description?.substring(0, 48) || incident.type || `Danger Zone ${index + 1}`,
-      type: incident.type || 'Unknown',
-      severity: getSeverityFromStatus(incident.status),
-      affected: affectedCount.toLocaleString(),
-      affectedCount,
-      status: incident.status === 'Resolved' ? 'INACTIVE' : 'ACTIVE',
-      created: incident.timestamp
-        ? new Date(incident.timestamp).toLocaleDateString('en-US')
-        : '—',
-      coordinates: parseCoordinates(incident.location),
-      timestamp: incident.timestamp,
-    };
-  }, []);
+  const affectedCount = estimateAffectedCount(incident);
+
+  let severity = 'LOW';
+
+  switch ((incident.severity || '').toLowerCase()) {
+    case 'high':
+      severity = 'HIGH';
+      break;
+
+    case 'moderate':
+      severity = 'MODERATE';
+      break;
+
+    case 'low':
+      severity = 'LOW';
+      break;
+
+    default:
+      severity = 'LOW';
+  }
+
+  return {
+    id: incident._id,
+    name:
+      incident.description?.substring(0, 48) ||
+      incident.type ||
+      `Danger Zone ${index + 1}`,
+
+    type: incident.type || 'Unknown',
+
+    // REAL BACKEND SEVERITY
+    severity,
+
+    affected: affectedCount.toLocaleString(),
+    affectedCount,
+
+    status:
+      incident.status === 'Resolved'
+        ? 'INACTIVE'
+        : 'ACTIVE',
+
+    created: incident.timestamp
+      ? new Date(incident.timestamp).toLocaleDateString('en-US')
+      : '—',
+
+    coordinates: parseCoordinates(incident.location),
+
+    timestamp: incident.timestamp,
+  };
+}, []);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -126,7 +160,7 @@ const AdminDangerZoneScreen = () => {
           acc[z.severity] = (acc[z.severity] ?? 0) + 1;
           return acc;
       }, /** @type {Record<string, number>} */ ({}));
-      const order = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+      const order = ['CRITICAL', 'HIGH', 'MODERATE', 'LOW'];
       const total = order.reduce((sum, k) => sum + (counts[k] ?? 0), 0);
       const items = order.map((k) => {
           const value = counts[k] ?? 0;
@@ -249,7 +283,7 @@ const AdminDangerZoneScreen = () => {
       switch(severity) {
           case 'CRITICAL': return 'bg-[#FEE2E2] text-[#DC2626]';
           case 'HIGH': return 'bg-[#FFEDD5] text-[#EA580C]';
-          case 'MEDIUM': return 'bg-[#FEF3C7] text-[#D97706]';
+          case 'MODERATE': return 'bg-[#FEF3C7] text-[#D97706]';
           case 'LOW': return 'bg-[#FEF9C3] text-[#CA8A04]';
           default: return 'bg-[#F3F4F6] text-[#4B5563]';
       }
@@ -562,7 +596,7 @@ function getSeverityColor(severity) {
     switch (severity) {
         case 'CRITICAL': return '#DC2626';
         case 'HIGH': return '#EA580C';
-        case 'MEDIUM': return '#D97706';
+        case 'MODERATE': return '#D97706';
         case 'LOW': return '#CA8A04';
         default: return '#6B7280';
     }
@@ -899,20 +933,6 @@ function parseCoordinates(location) {
   return [0, 0];
 }
 
-function getSeverityFromStatus(status) {
-  switch (status) {
-    case 'Pending':
-      return 'LOW';
-    case 'Verified':
-      return 'MEDIUM';
-    case 'Assigned':
-      return 'HIGH';
-    case 'Resolved':
-      return 'LOW';
-    default:
-      return 'MEDIUM';
-  }
-}
 
 function estimateAffectedCount(incident) {
   const verified = incident.verified_by?.length || 0;
