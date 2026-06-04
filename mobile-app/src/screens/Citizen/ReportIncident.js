@@ -13,8 +13,7 @@ const INCIDENT_TYPES = [
   { id: 'Crime', label: 'Crime', icon: 'warning-outline' },
   { id: 'Disaster', label: 'Disaster', icon: 'business-outline' }
 ];
-
-const URGENCY_LEVELS = ['Low', 'Medium', 'High'];
+const URGENCY_LEVELS = ['Low', 'Moderate', 'High', 'Critical'];
 
 export default function ReportIncident() {
   const navigation = useNavigation();
@@ -34,6 +33,7 @@ export default function ReportIncident() {
       formData.append('description', description || 'No description provided');
       formData.append('longitude', '79.8612'); 
       formData.append('latitude', '6.9271');
+      formData.append('severity', urgency);
 
       console.log('Sending formData...', formData);
 
