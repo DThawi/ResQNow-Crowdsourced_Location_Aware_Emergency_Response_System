@@ -22,5 +22,7 @@ router.post('/:id/feedback', verifyToken, incidentController.addIncidentFeedback
 router.put('/:id/status', verifyToken, allowRoles("Admin", "Authority"), incidentController.updateResponseStatus);
 router.get('/:id/progress', verifyToken, incidentController.getResponseProgress);
 router.put('/:id/assign', verifyToken, allowRoles("Admin"), incidentController.assignResponder);
+router.patch('/:id/admin-verify', verifyToken, allowRoles("Admin"), incidentController.adminVerifyIncident);
+router.delete('/:id/admin-reject', verifyToken, allowRoles("Admin"), incidentController.adminRejectIncident);
 
 module.exports = router;
