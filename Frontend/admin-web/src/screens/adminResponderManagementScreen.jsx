@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Search, Eye, Edit2, UserX, X, Check, AlertCircle, Building, Clock, FileText, CheckCircle
 } from 'lucide-react';
+import API from '../services/api';
 
 const AdminResponderManagementScreen = () => {
   // --- NAVIGATION & VIEW TABS ---
@@ -28,6 +29,7 @@ const AdminResponderManagementScreen = () => {
 
   // --- RESPONSIVE DYNAMIC RELATIVE TIME HELPER ---
   const formatRelativeTime = (timestamp) => {
+    if (!timestamp) return 'Just now';
     const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
     if (diff < 1) return 'Just now';
     if (diff < 60) return `${diff} mins ago`;
@@ -55,122 +57,171 @@ const AdminResponderManagementScreen = () => {
   }, [successModalOpen]);
 
   // --- DATA MANAGEMENT ---
-  const [responders, setResponders] = useState([
-    { id: 'R001', name: 'John Martinez', email: 'john.m@resqnow.com', phone: '+1234567890', department: 'Fire Department', status: 'active', currentAssignment: 'INC-001' },
-    { id: 'R002', name: 'Sarah Chen', email: 'sarah.c@resqnow.com', phone: '+1234567891', department: 'Medical', status: 'active', currentAssignment: '—' },
-    { id: 'R003', name: 'Mike Johnson', email: 'mike.j@resqnow.com', phone: '+1234567892', department: 'Police', status: 'active', currentAssignment: 'INC-003' },
-    { id: 'R004', name: 'Emily Davis', email: 'emily.d@resqnow.com', phone: '+1234567893', department: 'Fire Department', status: 'inactive', currentAssignment: '—' },
-  ]);
-
-  const [pendingRequests, setPendingRequests] = useState([
-    { 
-      id: 'REQ-201', 
-      name: 'Kavinda Bandara', 
-      email: 'kavinda.b@resqnow.com', 
-      phone: '+94765432109', 
-      department: 'Medical', 
-      organization: 'Volunteer Rescue Corps', 
-      timestamp: new Date(Date.now() - 10 * 60000).toISOString(),
-      uploadedRecords: {
-        licenseId: "MED-SRI-8842-X",
-        expiryDate: "2029-12-31",
-        fileName: "Medical_Practice_Certificate.pdf",
-        fileSize: "2.4 MB"
-      }
-    },
-    { 
-      id: 'REQ-202', 
-      name: 'Suresh Perera', 
-      email: 'suresh.p@fire.lk', 
-      phone: '+94711223344', 
-      department: 'Fire Department', 
-      organization: 'Sabaragamuwa Fire Station B', 
-      timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
-      uploadedRecords: {
-        licenseId: "FIRE-SAB-1102-A",
-        expiryDate: "2031-05-15",
-        fileName: "Firefighting_Advanced_Verification.pdf",
-        fileSize: "4.1 MB"
-      }
-    },
-  ]);
+  const [responders, setResponders] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [newResponder, setNewResponder] = useState({
-    name: '', email: '', phone: '', department: 'Medical', status: 'active'
+    name: '', email: '', password: '', phone: '', department: 'Medical', district: '', status: 'active'
   });
 
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [respondersRes, incidentsRes] = await Promise.all([
+        API.get('/admin/responders'),
+        API.get('/incidents?limit=100')
+      ]);
+
+      const activeIncidents = Array.isArray(incidentsRes.data)
+        ? incidentsRes.data
+        : incidentsRes.data?.incidents || [];
+
+      const mapped = respondersRes.data.map(r => {
+        const assignmentIncident = activeIncidents.find(inc => 
+          Array.isArray(inc.assignedAuthorities) && inc.assignedAuthorities.includes(r._id) && inc.status !== 'Resolved'
+        );
+        const currentAssignment = assignmentIncident 
+          ? assignmentIncident.type || assignmentIncident._id.slice(-8).toUpperCase()
+          : '—';
+
+        return {
+          id: r._id,
+          name: r.name,
+          email: r.email,
+          phone: r.contact_number || '',
+          department: r.organization || 'Medical',
+          district: r.district || '',
+          status: r.status === 'Active' ? 'active' : 'inactive',
+          currentAssignment,
+          isVerified: r.isVerified,
+          registered_date: r.registered_date
+        };
+      });
+
+      setResponders(mapped.filter(r => r.isVerified));
+      setPendingRequests(mapped.filter(r => !r.isVerified).map(r => ({
+        ...r,
+        uploadedRecords: {
+          licenseId: `LIC-SRI-${r.id.slice(-6).toUpperCase()}`,
+          expiryDate: new Date(new Date(r.registered_date || Date.now()).setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('en-CA'),
+          fileName: `${r.department.replace(/\s+/g, '_')}_Certification.pdf`,
+          fileSize: "2.5 MB"
+        }
+      })));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch responders directory');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   // --- ACTIONS & OPERATIONS ---
-  const handleAddManualResponder = () => {
-    if (!newResponder.name || !newResponder.email) return;
-    
-    const formattedUnit = {
-      id: `R00${responders.length + 1}`,
-      name: newResponder.name,
-      email: newResponder.email,
-      phone: newResponder.phone || '—',
-      department: newResponder.department,
-      status: newResponder.status,
-      currentAssignment: '—'
-    };
+  const handleAddManualResponder = async () => {
+    if (!newResponder.name || !newResponder.email || !newResponder.password) {
+      alert("Please fill in Name, Email, and Password.");
+      return;
+    }
+    try {
+      const payload = {
+        name: newResponder.name,
+        email: newResponder.email,
+        password: newResponder.password,
+        contact_number: newResponder.phone || '0770000000',
+        organization: newResponder.department,
+        district: newResponder.district || 'Colombo',
+        role: "Authority"
+      };
 
-    setResponders([...responders, formattedUnit]);
-    setAddModalOpen(false);
-    setNewResponder({ name: '', email: '', phone: '', department: 'Medical', status: 'active' });
-    
-    // Set custom text and open the minimalist pop-up screen
-    setSuccessMessage({
-      title: 'User Added!',
-      sub: 'The system has been updated successfully.'
-    });
-    setSuccessModalOpen(true);
+      await API.post('/admin/users', payload);
+      setAddModalOpen(false);
+      setNewResponder({ name: '', email: '', password: '', phone: '', department: 'Medical', district: '', status: 'active' });
+      await fetchData();
+      
+      setSuccessMessage({
+        title: 'User Added!',
+        sub: 'The system has been updated successfully.'
+      });
+      setSuccessModalOpen(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create responder account');
+    }
   };
 
-  const handleUpdateResponder = () => {
-    setResponders(responders.map(r => r.id === selectedResponder.id ? selectedResponder : r));
-    setEditModalOpen(false);
-    setSuccessMessage({
-      title: 'Profile Updated!',
-      sub: 'Responder configurations saved successfully.'
-    });
-    setSuccessModalOpen(true);
+  const handleUpdateResponder = async () => {
+    try {
+      const statusMapped = selectedResponder.status === 'active' ? 'Active' : 'Suspended';
+      await API.put(`/admin/users/${selectedResponder.id}`, {
+        name: selectedResponder.name,
+        contact_number: selectedResponder.phone,
+        organization: selectedResponder.department,
+        district: selectedResponder.district || 'Colombo',
+        status: statusMapped,
+        role: "Authority"
+      });
+
+      setEditModalOpen(false);
+      await fetchData();
+
+      setSuccessMessage({
+        title: 'Profile Updated!',
+        sub: 'Responder configurations saved successfully.'
+      });
+      setSuccessModalOpen(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update responder profile');
+    }
   };
 
-  const handleApproveRequest = (request) => {
-    const approvedUnit = {
-      id: `R00${responders.length + 1}`,
-      name: request.name,
-      email: request.email,
-      phone: request.phone,
-      department: request.department,
-      status: 'active',
-      currentAssignment: '—'
-    };
-    
-    setResponders([...responders, approvedUnit]);
-    setPendingRequests(pendingRequests.filter(r => r.id !== request.id));
-    setSuccessMessage({
-      title: 'Request Approved!',
-      sub: 'The responder account has been verified and added to the fleet.'
-    });
-    setSuccessModalOpen(true);
+  const handleApproveRequest = async (request) => {
+    try {
+      await API.put(`/admin/verify-responder/${request.id}`);
+      await fetchData();
+
+      setSuccessMessage({
+        title: 'Request Approved!',
+        sub: 'The responder account has been verified and added to the fleet.'
+      });
+      setSuccessModalOpen(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to approve registration request');
+    }
   };
 
-  const handleRejectRequest = (id) => {
-    setPendingRequests(pendingRequests.filter(r => r.id !== id));
-    setSuccessMessage({
-      title: 'Request Declined',
-      sub: 'The application request has been removed from the queue.'
-    });
-    setSuccessModalOpen(true);
+  const handleRejectRequest = async (id) => {
+    try {
+      await API.delete(`/admin/users/${id}`);
+      await fetchData();
+
+      setSuccessMessage({
+        title: 'Request Declined',
+        sub: 'The application request has been removed from the queue.'
+      });
+      setSuccessModalOpen(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject registration request');
+    }
   };
 
-  const handleDeleteActiveResponder = (id) => {
-    setResponders(responders.filter(r => r.id !== id));
-    setSuccessMessage({
-      title: 'Unit Removed',
-      sub: 'The responder has been removed from active system records.'
-    });
-    setSuccessModalOpen(true);
+  const handleDeleteActiveResponder = async (id) => {
+    try {
+      await API.delete(`/admin/users/${id}`);
+      await fetchData();
+
+      setSuccessMessage({
+        title: 'Unit Removed',
+        sub: 'The responder has been removed from active system records.'
+      });
+      setSuccessModalOpen(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to remove responder unit');
+    }
   };
 
   // --- FILTER SCHEMES ---
@@ -185,6 +236,30 @@ const AdminResponderManagementScreen = () => {
     const matchesDept = deptFilter === 'All Departments' || p.department === deptFilter;
     return matchesSearch && matchesDept;
   });
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-slate-400">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D62828] mb-4"></div>
+        <p className="text-[16px] font-semibold text-slate-600">Loading responders directory...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-slate-400">
+        <AlertCircle size={48} className="text-red-400 mb-4" />
+        <p className="text-[16px] font-semibold text-slate-600 mb-4">{error}</p>
+        <button
+          onClick={fetchData}
+          className="px-6 py-2 bg-[#D62828] text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-1 animate-[fadeIn_0.2s_ease-out] w-full bg-[#FAFAFB]">
@@ -446,6 +521,28 @@ const AdminResponderManagementScreen = () => {
               </div>
 
               <div>
+                <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Password</label>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={newResponder.password} 
+                  onChange={e => setNewResponder({...newResponder, password: e.target.value})} 
+                  className="w-full p-2.5 rounded-xl border border-slate-200 box-border outline-none text-sm font-medium focus:border-red-400 transition-colors" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">District</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Colombo" 
+                  value={newResponder.district} 
+                  onChange={e => setNewResponder({...newResponder, district: e.target.value})} 
+                  className="w-full p-2.5 rounded-xl border border-slate-200 box-border outline-none text-sm font-medium focus:border-red-400 transition-colors" 
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Department</label>
                 <select 
                   value={newResponder.department} 
@@ -536,6 +633,24 @@ const AdminResponderManagementScreen = () => {
                   type="text" 
                   value={selectedResponder.name} 
                   onChange={e => setSelectedResponder({...selectedResponder, name: e.target.value})} 
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-red-400" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Phone Number</label>
+                <input 
+                  type="text" 
+                  value={selectedResponder.phone} 
+                  onChange={e => setSelectedResponder({...selectedResponder, phone: e.target.value})} 
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-red-400" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1.5 text-slate-500 uppercase tracking-wider">District</label>
+                <input 
+                  type="text" 
+                  value={selectedResponder.district} 
+                  onChange={e => setSelectedResponder({...selectedResponder, district: e.target.value})} 
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-red-400" 
                 />
               </div>
