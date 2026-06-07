@@ -11,6 +11,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import Header from '../../components/layout/header';
 import API from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ── Single upload field ───────────────────────────────────────────────────────
 const UploadField = ({ label, subtitle, required, file, onPick, onRemove }) => (
@@ -117,8 +118,12 @@ export default function Register6({ navigation, route }) {
         });
       }
 
-      await API.post('/auth/register', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const token = await AsyncStorage.getItem('token');
+      await API.post('/auth/register-documents', formData, {
+       headers: { 
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+       },
       });
 
       navigation.navigate('Register7');
