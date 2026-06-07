@@ -11,6 +11,7 @@ import {
 import API from '../../services/api';
 import ForgotPasswordModal from '../../components/modals/forgotPasswordModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { connectSocket } from '../../services/socket';
 
 const { width } = Dimensions.get('window');
 
@@ -33,7 +34,13 @@ export default function LoginScreen({ navigation }) {
     const profileResponse = await API.get('/auth/profile', {
       headers: { Authorization: `Bearer ${token}` }
     });
-    await AsyncStorage.setItem('user', JSON.stringify(profileResponse.data));
+    
+    const user = profileResponse.data.user || profileResponse.data;
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+    await AsyncStorage.setItem('userId', user.id || user._id || '');
+
+    // Connect socket
+    await connectSocket();
 
     // Navigate based on role
     if (role === 'Authority') {
@@ -45,7 +52,7 @@ export default function LoginScreen({ navigation }) {
     }
 
   } catch (err) {
-    alert(err.response?.data?.message || 'Login failed');
+    alert(err.response?.data?.message || err.message || 'Login failed');
   }
 };
 
