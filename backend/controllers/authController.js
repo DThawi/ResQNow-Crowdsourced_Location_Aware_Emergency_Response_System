@@ -3,16 +3,13 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-
-
-// REGISTER USER
+// ── A. REGISTER FUNCTION ─────────────────────────────────────────────
 exports.register = async (req, res) => {
   try {
     const {
       name,
       email,
       password,
-      role,
       district,
       longitude,
       latitude,
@@ -20,89 +17,104 @@ exports.register = async (req, res) => {
       contact_number
     } = req.body;
 
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-
-    if (isNaN(lat) || isNaN(lng)) {
-      return res.status(400).json({ message: "Latitude and Longitude required" });
-    }
-
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      return res.status(400).json({ message: "Invalid GPS coordinates" });
-    }
-
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({
+        message: "User already exists"
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    const files = req.files || {};
+    const officialIdPath = files.officialId?.[0]?.path || "";
+    const authLetterPath = files.authLetter?.[0]?.path || "";
+    const certCardsPath = files.certCards?.[0]?.path || "";
+
+    const lat = parseFloat(latitude || 0);
+    const lng = parseFloat(longitude || 0);
+
+    const user = new User({
       name,
       email,
       password: hashedPassword,
-      role,
+      role: "Responder", 
       district,
+      organization,
+      contact_number,
       location: {
         type: "Point",
         coordinates: [lng, lat]
       },
-      organization,
-      contact_number,
-      isVerified: role === "Authority" ? false : true // Authorities need approval
+      status: "Pending", 
+      isVerified: false,
+      documents: {
+        officialIdPath,
+        authLetterPath,
+        certCardsPath
+      }
     });
 
-    await newUser.save();
+    await user.save();
 
-    // Notify Admin when responder registers
-    if (role === "Authority") {
-      await sendEmail(
-        "admin@resqnow.com",
-        "New Responder Registration",
-        `A new responder has registered.\n\nEmail: ${email}\nOrganization: ${organization}`
-      );
-    }
+    await sendEmail(
+      "admin@resqnow.com",
+      "New Responder Registration",
+      `
+New responder registration received.
+
+Name: ${name}
+Email: ${email}
+Organization: ${organization}
+District: ${district}
+
+Please review and approve.
+`
+    );
 
     res.status(201).json({
-      message: role === "Authority"
-        ? "Responder registered. Waiting for admin approval."
-        : "User registered successfully"
+      message: "Registration submitted successfully. Waiting for verification."
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 
-
-// LOGIN USER
+// ── B. LOGIN FUNCTION WITH REVISED CHECKS ────────────────────────────────────
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Block unverified responders
-    if (user.role === "Authority" && !user.isVerified) {
-      return res.status(403).json({
-        message: "Your account is not verified by admin yet"
-      });
-    }
+    if (user.role === "Responder") {
+      if (user.status === "Pending") {
+        return res.status(403).json({
+          message: "Your responder account is still under review."
+        });
+      }
 
-    // Block suspended users
-    if (user.status === "Suspended") {
-      return res.status(403).json({
-        message: "Your account has been suspended"
-      });
+      if (user.status === "Rejected") {
+        return res.status(403).json({
+          message: "Your responder registration has been rejected."
+        });
+      }
+
+      if (user.status === "Suspended") {
+        return res.status(403).json({
+          message: "Your account has been suspended."
+        });
+      }
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
@@ -124,36 +136,90 @@ exports.login = async (req, res) => {
   }
 };
 
-
-// FORGOT PASSWORD (OTP)
-exports.forgotPassword = async (req, res) => {
+// ── 🎯 CRITICAL FIX: ADDED MISSING SETUP APPROVED PASSWORD FUNCTION ──
+exports.setupApprovedPassword = async (req, res) => {
   try {
-    const { email, phone } = req.body;
+    const { email, token, password } = req.body;
 
     const user = await User.findOne({
-      $or: [{ email }, { contact_number: phone }]
+      email,
+      resetOTP: token,
+      otpExpire: { $gt: Date.now() }
     });
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(400).json({ message: "This activation link is invalid or has expired." });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.password = await bcrypt.hash(password, 10);
+    user.resetOTP = null;
+    user.otpExpire = null;
+    user.status = "Approved";
+    user.isVerified = true;
+    await user.save();
 
+    res.status(200).json({ message: "Password created successfully! You can now login." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ── C. ADMIN APPROVAL CONTROLLER ENDPOINT ────────────────────────────────────
+exports.approveResponder = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    user.status = "Approved";
+    user.isVerified = true;
+    await user.save();
+
+    await sendEmail(
+      user.email,
+      "Responder Application Approved",
+      `
+Congratulations!
+
+Your ResQNow responder account has been approved.
+
+You can now login to the mobile application.
+`
+    );
+
+    res.json({
+      message: "Responder approved successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+// ── D. AUXILIARY PROFILE METHODS ────────────────────────────────────
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+    const user = await User.findOne({ $or: [{ email }, { contact_number: phone }] });
+
+    if (!user) return res.status(400).json({ message: "User not found" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetOTP = otp;
     user.otpExpire = Date.now() + 5 * 60 * 1000;
     await user.save();
 
-    if (email) {
-      await sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`);
-    }
-
-    if (phone) {
-      await sendSMS(user.contact_number, `Your OTP is: ${otp}`);
-    }
+    if (email) await sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`);
+    if (phone) await sendSMS(user.contact_number, `Your OTP is: ${otp}`);
 
     res.json({ message: "OTP sent successfully" });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -163,19 +229,12 @@ exports.forgotPassword = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
     const user = await User.findOne({ email });
 
-    if (!user || user.resetOTP !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    if (user.otpExpire < Date.now()) {
-      return res.status(400).json({ message: "OTP expired" });
-    }
+    if (!user || user.resetOTP !== otp) return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpire < Date.now()) return res.status(400).json({ message: "OTP expired" });
 
     res.json({ message: "OTP verified" });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -185,32 +244,27 @@ exports.verifyOTP = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-
     const user = await User.findOne({ email });
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.password = hashedPassword;
     user.resetOTP = null;
     user.otpExpire = null;
-
     await user.save();
 
     res.json({ message: "Password reset successful" });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// GET PROFILE
 exports.getProfile = async (req, res) => {
-    try {
-        // req.user.id comes from your verifyToken middleware
-        const user = await User.findById(req.user.id).select("-password");
-        if (!user) return res.status(404).json({ message: "User not found" });
-        
-        res.status(200).json(user);
-    } catch (err) {
-        res.status(500).json({ message: "Server error", error: err.message });
-    }
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 };
