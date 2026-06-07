@@ -1,19 +1,21 @@
 import { io } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SOCKET_URL = 'http://192.168.0.106:5000';
+// const SOCKET_URL = 'http://192.168.0.106:5000';
+const SOCKET_URL = 'http://192.168.31.106:5000';
 
 let socket = null;
 
 export const connectSocket = async () => {
+try {
   if (socket?.connected) return socket;
 
   socket = io(SOCKET_URL, {
-    transports: ['websocket'],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-  });
+  transports: ['polling', 'websocket'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
   socket.on('connect', async () => {
     console.log('Socket connected:', socket.id);
@@ -31,6 +33,10 @@ export const connectSocket = async () => {
   });
 
   return socket;
+  } catch (err) {
+    console.log('Socket setup error:', err.message);
+    return null;
+  }
 };
 
 export const getSocket = () => socket;
