@@ -69,7 +69,7 @@ export default function Register5({ navigation, route }) {
     return;
   }
 
-  navigation.navigate('Register8', {
+  navigation.navigate('Register6', {
     ...params,
     district,
     divisionalSecretariat,
