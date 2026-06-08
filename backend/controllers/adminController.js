@@ -1,152 +1,110 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const { sendEmail } = require("../utils/notificationService");
 
-// Verify Responder
-exports.verifyResponder = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const responder = await User.findById(userId);
-
-    if (!responder || responder.role !== "Authority") {
-      return res.status(400).json({ message: "Responder not found" });
-    }
-
-    responder.isVerified = true;
-    await responder.save();
-
-    // Notify responder
-    await sendEmail(
-      responder.email,
-      "Account Verified",
-      "Your responder account has been approved by admin. You can now login."
-    );
-
-    res.json({ message: "Responder verified successfully" });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Get all responders (verified and unverified)
+// ── A. GET ALL RESPONDERS (FOR RESPONDER MANAGEMENT PANEL) ──────────────────
 exports.getResponders = async (req, res) => {
   try {
-    const responders = await User.find({ role: "Authority" }).select("-password");
-    res.json(responders);
+    // 🎯 FIX: Query pulls both legacy "Authority" and new uppercase "Responder" formats
+    const responders = await User.find({
+      $or: [
+        { role: "Responder" },
+        { role: "Authority" }
+      ]
+    }).sort({ createdAt: -1 }); // Newest sign-ups appear at the very top of the table!
+
+    res.status(200).json(responders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to fetch responders list", error: error.message });
   }
 };
 
-// Get all system users
+// ── B. GET ALL SYSTEM USERS (FOR GENERAL LOOKUP SCREEN) ─────────────────────
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
-    res.json(users);
+    const allUsers = await User.find({}).sort({ createdAt: -1 });
+    res.status(200).json(allUsers);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to load comprehensive users directory", error: error.message });
   }
 };
 
-// Create a new system user (by Admin)
+// ── C. ADMIN MANUALLY CREATES USER PROFILE ──────────────────────────────────
 exports.createUser = async (req, res) => {
   try {
     const { name, email, password, role, contact_number, district, organization } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User with this email already exists" });
+      return res.status(400).json({ message: "User profile already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    const user = new User({
       name,
       email,
       password: hashedPassword,
       role,
       contact_number,
-      district: role === "Authority" ? district : undefined,
-      organization: role === "Authority" ? organization : undefined,
-      location: {
-        type: "Point",
-        coordinates: [0, 0] // Default dummy coordinates
-      },
-      isVerified: true // Admin-created accounts are verified by default
+      district,
+      organization,
+      status: "Active", // Manually added users default to Active instantly
+      isVerified: true
     });
 
-    await newUser.save();
-
-    const userResponse = newUser.toObject();
-    delete userResponse.password;
-    res.status(201).json(userResponse);
+    await user.save();
+    res.status(201).json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Manual generation failed", error: error.message });
   }
 };
 
-// Update system user details
+// ── D. ADMIN METRICS UPDATE CONTEXT ─────────────────────────────────────────
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role, status, contact_number, district, organization } = req.body;
+    const { name, role, status, contact_number, district, organization } = req.body;
 
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { name, role, status, contact_number, district, organization },
+      { new: true }
+    );
 
-    // Check email uniqueness if email is changed
-    if (email && email !== user.email) {
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use" });
-      }
-      user.email = email;
-    }
-
-    if (name) user.name = name;
-    if (role) user.role = role;
-    if (status) user.status = status;
-    if (contact_number) user.contact_number = contact_number;
-
-    if (role === "Authority" || user.role === "Authority") {
-      user.district = district || user.district;
-      user.organization = organization || user.organization;
-    } else {
-      user.district = undefined;
-      user.organization = undefined;
-    }
-
-    if (role === "Authority" && user.role !== "Authority") {
-      user.isVerified = true;
-    }
-
-    await user.save();
-
-    const userResponse = user.toObject();
-    delete userResponse.password;
-    res.json(userResponse);
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(updatedUser);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Update configuration failed", error: error.message });
   }
 };
 
-// Delete a user
+// ── E. REMOVE USER PERMANENTLY ──────────────────────────────────────────────
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const deletedUser = await User.findByIdAndDelete(id);
 
-    await User.findByIdAndDelete(id);
-    res.json({ message: "User deleted successfully" });
+    if (!deletedUser) return res.status(404).json({ message: "User profile target not located" });
+    res.status(200).json({ message: "User deleted from system data grids successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Deletion thread failed", error: error.message });
   }
 };
 
+// ── F. ADMIN APPROVAL METHOD (FALLBACK HOOK) ────────────────────────────────
+exports.verifyResponder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+
+    if (!user) return res.status(404).json({ message: "User profile target not located" });
+
+    user.status = "Approved";
+    user.isVerified = true;
+    await user.save();
+
+    res.status(200).json({ message: "Responder verification completed cleanly" });
+  } catch (error) {
+    res.status(500).json({ message: "Verification processing failed", error: error.message });
+  }
+};

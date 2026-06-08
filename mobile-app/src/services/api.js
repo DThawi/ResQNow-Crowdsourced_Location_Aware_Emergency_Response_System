@@ -1,9 +1,13 @@
-import axios from "axios";
+import axios from 'axios';
 
 const API = axios.create({
-  // baseURL: "http://192.168.115.151:5000/api",
-  // baseURL: "http://192.168.87.151:5000/api",
-  baseURL: "http://192.168.31.106:5000/api",
+  baseURL: 'http://10.218.167.51:5000/api', 
+  
+  // Increased to 30 seconds so large file uploads don't drop out early
+  timeout: 30000, 
+  headers: {
+    'Accept': 'application/json',
+  }
 });
 
 export default API;
