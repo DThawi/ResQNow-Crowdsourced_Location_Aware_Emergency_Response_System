@@ -155,6 +155,13 @@ const AdminUserManagementScreen = () => {
   const toggleStatus = async (id) => {
     const userToToggle = users.find(u => u.id === id);
     if (!userToToggle) return;
+
+    // 🎯 ARRANGEMENT RULES: Denies modification access for Responders on this generic panel
+    if (userToToggle.role === 'Responder') {
+      alert("Verification controls are restricted. Please manage Responders inside the Responder Fleet panel.");
+      return;
+    }
+
     const newStatus = userToToggle.status === 'Active' ? 'Suspended' : 'Active';
     try {
       const roleMapped = userToToggle.role === 'Responder' ? 'Authority' : userToToggle.role;
@@ -306,7 +313,13 @@ const AdminUserManagementScreen = () => {
                         <td className="p-[15px_10px]"><StatusBadge status={user.status} /></td>
                         <td className="p-[15px_10px] text-[13px] text-[#64748B]">{user.date}</td>
                         <td className="p-[15px_25px] text-right">
-                            <div className="flex justify-end gap-[10px]">
+                            {user.role === 'Responder' ? (
+                              /*  MANAGEMENT COMPONENT BOUNDS RESTRICTION */
+                              <span className="text-[11px] font-black tracking-wide text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                                Pending Fleet Action
+                              </span>
+                            ) : (
+                              <div className="flex justify-end gap-[10px]">
                                 <button onClick={() => handleEditClick(user)} className="border-none bg-transparent cursor-pointer text-[#94A3B8] p-[6px] hover:text-[#3B82F6] transition-colors" title="Edit">
                                     <Edit size={16} />
                                 </button>
@@ -316,12 +329,13 @@ const AdminUserManagementScreen = () => {
                                 <button onClick={() => { setUserToDelete(user); setIsDeleteModalOpen(true); }} className="border-none bg-transparent cursor-pointer text-[#EF4444] p-[6px] hover:text-red-700 transition-colors" title="Delete">
                                     <Trash2 size={16} />
                                 </button>
-                            </div>
+                              </div>
+                            )}
                         </td>
                     </tr>
                 ))}
             </tbody>
-            </table>
+          </table>
         </div>
 
         <div className="p-[15px_25px] border-t border-[#F1F5F9] flex justify-between items-center bg-white">
@@ -513,9 +527,21 @@ const RoleBadge = ({ role }) => {
 
 const StatusBadge = ({ status }) => {
     const isSuspended = status === 'Suspended';
+    const isPending = String(status).toLowerCase() === 'pending';
+    let bgClass = "bg-[#DCFCE7] text-[#166534]";
+    let dotClass = "bg-[#22C55E]";
+    
+    if (isSuspended) {
+      bgClass = "bg-[#FEE2E2] text-[#B91C1C]";
+      dotClass = "bg-[#EF4444]";
+    } else if (isPending) {
+      bgClass = "bg-amber-100 text-amber-800";
+      dotClass = "bg-amber-500";
+    }
+
     return (
-        <span className={`px-[12px] py-[4px] rounded-[20px] text-[11px] font-bold inline-flex items-center gap-[4px] ${isSuspended ? 'bg-[#FEE2E2] text-[#B91C1C]' : 'bg-[#DCFCE7] text-[#166534]'}`}>
-            <span className={`w-[6px] h-[6px] rounded-full ${isSuspended ? 'bg-[#EF4444]' : 'bg-[#22C55E]'}`}></span>{status}
+        <span className={`px-[12px] py-[4px] rounded-[20px] text-[11px] font-bold inline-flex items-center gap-[4px] ${bgClass}`}>
+            <span className={`w-[6px] h-[6px] rounded-full ${dotClass}`}></span>{status}
         </span>
     );
 };

@@ -1,19 +1,19 @@
-const express = require("express")
+const express = require("express");
 const router = express.Router();
 const adminController = require("../controllers/adminController");
 
 const { verifyToken } = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
 
-// Admin verifies responder
+// Admin handles individual responder verification actions
 router.put(
-  "/verify-responder/:userId",
+  "/responders/:id/approve",
   verifyToken,
   allowRoles("Admin"),
   adminController.verifyResponder
 );
 
-// Admin gets all responders
+// Admin pulls responder elements directory
 router.get(
   "/responders",
   verifyToken,
@@ -21,7 +21,7 @@ router.get(
   adminController.getResponders
 );
 
-// Admin gets all users
+// Admin pulls comprehensive user profiles directory
 router.get(
   "/users",
   verifyToken,
@@ -29,7 +29,7 @@ router.get(
   adminController.getAllUsers
 );
 
-// Admin creates user
+// Admin creates a profile manually
 router.post(
   "/users",
   verifyToken,
@@ -37,7 +37,7 @@ router.post(
   adminController.createUser
 );
 
-// Admin updates user
+// Admin modifies an existing profile entry context
 router.put(
   "/users/:id",
   verifyToken,
@@ -45,7 +45,7 @@ router.put(
   adminController.updateUser
 );
 
-// Admin deletes user
+// Admin removes an active profile out of database records completely
 router.delete(
   "/users/:id",
   verifyToken,
