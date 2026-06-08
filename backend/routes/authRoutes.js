@@ -3,7 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const { verifyToken } = require('../middleware/authMiddleware');
-const { upload, uploadDocumentsToCloudinary } = require("../middleware/upload");
+const { uploadDocumentsToCloudinary } = require("../middleware/upload");
 
 const { upload } = require('../middleware/uploadMiddleware');
 
@@ -15,6 +15,7 @@ router.post(
     { name: 'authLetter', maxCount: 1 },
     { name: 'certCards', maxCount: 1 }
   ]), 
+  uploadDocumentsToCloudinary,
   authController.register
 );
 
