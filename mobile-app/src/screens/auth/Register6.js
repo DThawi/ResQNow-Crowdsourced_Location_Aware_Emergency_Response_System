@@ -176,11 +176,9 @@ export default function Register6({ navigation, route }) {
         });
       }
 
-      const token = await AsyncStorage.getItem('token');
-      await API.post('/auth/register-documents', formData, {
+      await API.post('/auth/register', formData, {
        headers: { 
         'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${token}`
        },
       });
 

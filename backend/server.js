@@ -12,6 +12,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 
+const path = require("path");
 const app = express();
 
 app.use(cors());
