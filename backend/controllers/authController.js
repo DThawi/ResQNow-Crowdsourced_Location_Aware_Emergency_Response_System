@@ -27,10 +27,7 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const files = req.files || {};
-    const officialIdPath = files.officialId?.[0]?.path || "";
-    const authLetterPath = files.authLetter?.[0]?.path || "";
-    const certCardsPath = files.certCards?.[0]?.path || "";
+    const { officialId, authLetter, certCards } = req.documentUrls || {};
 
     const lat = parseFloat(latitude || 0);
     const lng = parseFloat(longitude || 0);
@@ -50,9 +47,9 @@ exports.register = async (req, res) => {
       status: "Pending", 
       isVerified: false,
       documents: {
-        officialIdPath,
-        authLetterPath,
-        certCardsPath
+        officialIdPath: officialId || "",
+        authLetterPath: authLetter || "",
+        certCardsPath: certCards || ""
       }
     });
 

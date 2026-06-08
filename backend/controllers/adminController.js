@@ -1,6 +1,14 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
+const normalizePath = (p) => {
+  if (!p) return "";
+  if (p.startsWith("http")) return p;
+  const parts = p.split(/[\\/]/);
+  const filename = parts[parts.length - 1];
+  return `uploads/${filename}`;
+};
+
 // ── A. GET ALL RESPONDERS (FOR RESPONDER MANAGEMENT PANEL) ──────────────────
 exports.getResponders = async (req, res) => {
   try {
@@ -12,7 +20,17 @@ exports.getResponders = async (req, res) => {
       ]
     }).sort({ createdAt: -1 }); // Newest sign-ups appear at the very top of the table!
 
-    res.status(200).json(responders);
+    const normalizedResponders = responders.map(responder => {
+      const r = responder.toObject();
+      if (r.documents) {
+        r.documents.officialIdPath = normalizePath(r.documents.officialIdPath);
+        r.documents.authLetterPath = normalizePath(r.documents.authLetterPath);
+        r.documents.certCardsPath = normalizePath(r.documents.certCardsPath);
+      }
+      return r;
+    });
+
+    res.status(200).json(normalizedResponders);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch responders list", error: error.message });
   }
@@ -22,7 +40,18 @@ exports.getResponders = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const allUsers = await User.find({}).sort({ createdAt: -1 });
-    res.status(200).json(allUsers);
+    
+    const normalizedUsers = allUsers.map(user => {
+      const u = user.toObject();
+      if (u.documents) {
+        u.documents.officialIdPath = normalizePath(u.documents.officialIdPath);
+        u.documents.authLetterPath = normalizePath(u.documents.authLetterPath);
+        u.documents.certCardsPath = normalizePath(u.documents.certCardsPath);
+      }
+      return u;
+    });
+
+    res.status(200).json(normalizedUsers);
   } catch (error) {
     res.status(500).json({ message: "Failed to load comprehensive users directory", error: error.message });
   }
