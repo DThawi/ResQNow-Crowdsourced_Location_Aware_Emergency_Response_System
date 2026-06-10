@@ -12,7 +12,7 @@ import GradientHeader from '../../components/layout/header';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
- 
+
 const getStatusColor = (status) => {
   if (status === 'Assigned') return 'bg-yellow-100 text-yellow-600';
   if (status === 'Resolved') return 'bg-green-100 text-green-600';
@@ -20,7 +20,7 @@ const getStatusColor = (status) => {
   if (status === 'Verified') return 'bg-blue-100 text-blue-600';
   return 'bg-gray-100 text-gray-600';
 };
- 
+
 const getTypeIcon = (type) => {
   if (type === 'Fire') return '🔥';
   if (type === 'Medical') return '🏥';
@@ -28,20 +28,20 @@ const getTypeIcon = (type) => {
   if (type === 'Accident') return '🚗';
   return '⚠️';
 };
- 
+
 const getTimeAgo = (timestamp) => {
   const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
   if (diff < 60) return `${diff}m ago`;
   if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
   return `${Math.floor(diff / 1440)}d ago`;
 };
- 
+
 const StatusBadge = ({ status, colorClass }) => (
   <View className={`px-2 py-0.5 rounded-full ${colorClass.split(' ')[0]}`}>
     <Text className={`text-xs font-semibold ${colorClass.split(' ')[1]}`}>{status}</Text>
   </View>
 );
- 
+
 const IncidentCard = ({ item, onPress }) => (
   <TouchableOpacity
     className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-gray-100"
@@ -61,13 +61,19 @@ const IncidentCard = ({ item, onPress }) => (
       </Text>
       <Text className="text-xs text-gray-400 ml-3">🕐 {getTimeAgo(item.timestamp)}</Text>
     </View>
-    <View className="flex-row items-center mt-1 gap-3">
-      <Text className="text-xs text-green-600">✅ {item.verified_by?.length || 0} verified</Text>
-      <Text className="text-xs text-yellow-500">🚩 {item.reported_inaccurate_by?.length || 0} flagged</Text>
+    <View className="flex-row items-center mt-2 pt-2 border-t border-gray-50 gap-4">
+      <View className="flex-row items-center gap-1">
+        <Ionicons name="shield-checkmark-outline" size={14} color="#10B981" />
+        <Text className="text-xs text-green-600 font-semibold">{item.verified_by?.length || 0} verified</Text>
+      </View>
+      <View className="flex-row items-center gap-1">
+        <Ionicons name="flag-outline" size={14} color="#F59E0B" />
+        <Text className="text-xs text-yellow-600 font-semibold">{item.reported_inaccurate_by?.length || 0} flagged</Text>
+      </View>
     </View>
   </TouchableOpacity>
 );
- 
+
 export default function ResponderDashboard({ navigation }) {
   const [incidents, setIncidents] = useState([]);
   const [newIncident, setNewIncident] = useState(null);
@@ -75,17 +81,19 @@ export default function ResponderDashboard({ navigation }) {
   const [stats, setStats] = useState({ assigned: 0, nearby: 0, active: 0, resolved: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
- 
+
   const fetchData = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
       const userStr = await AsyncStorage.getItem('user');
-      if (userStr) setResponder(JSON.parse(userStr));
- 
+      if (userStr) {
+        setResponder(JSON.parse(userStr));
+      }
+
       const response = await API.get('/incidents/assigned', {
         headers: { Authorization: `Bearer ${token}` },
       });
- 
+
       const data = response.data;
       setIncidents(data);
       setStats({
@@ -94,27 +102,27 @@ export default function ResponderDashboard({ navigation }) {
         active: data.filter(i => i.status === 'Assigned').length,
         resolved: data.filter(i => i.status === 'Resolved').length,
       });
- 
+
       const latest = data.find(i => i.status !== 'Resolved');
       if (latest) setNewIncident(latest);
- 
+
     } catch (err) {
       console.log('Error fetching data:', err.message);
     } finally {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     fetchData();
   }, []);
- 
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
   }, []);
- 
+
   return (
     <SafeAreaView className="flex-1 bg-[#F5F5F5]">
       <GradientHeader
@@ -126,7 +134,7 @@ export default function ResponderDashboard({ navigation }) {
           </TouchableOpacity>
         }
       />
- 
+
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#D62828" />
@@ -137,14 +145,14 @@ export default function ResponderDashboard({ navigation }) {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {/* Dynamic Top Banner (Bypasses missing standalone component) */}
+          {/* Dynamic Top Banner */}
           {newIncident && (
             <View className="mx-4 mt-4 bg-red-50 border border-red-100 rounded-2xl p-4 flex-row justify-between items-center shadow-sm">
               <View className="flex-1 pr-2">
                 <Text className="text-red-700 font-bold text-sm mb-0.5">🚨 Critical Active Task</Text>
                 <Text className="text-gray-700 text-xs numberOfLines={1}">{newIncident.description || 'New Incident Assignment'}</Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 className="bg-[#D62828] px-3 py-1.5 rounded-lg"
                 onPress={() => navigation.navigate('ResponderIncidentDetails', { incident: newIncident })}
               >
@@ -152,22 +160,22 @@ export default function ResponderDashboard({ navigation }) {
               </TouchableOpacity>
             </View>
           )}
- 
-          {/* Profile Card */}
-          <View className="mx-4 mt-4 bg-[#1A2B3C] rounded-2xl p-4 flex-row items-center justify-between">
+
+          {/* Profile Card - Standard View avoids NativeWind wrapping card layout issues */}
+          <View className="mx-4 mt-4 bg-[#1a2b3c] rounded-2xl p-4 flex-row items-center justify-between border border-slate-800 shadow-sm">
             <View>
               <Text className="text-white text-base font-bold">{responder.name}</Text>
-              <Text className="text-gray-400 text-xs mb-2">{responder.organization || 'Responder'}</Text>
-              <View className="flex-row items-center gap-1">
-                <View className="w-2 h-2 rounded-full bg-green-400" />
-                <Text className="text-green-400 text-xs">Active</Text>
+              <Text className="text-slate-400 text-xs mb-2">{responder.organization || 'Responder'}</Text>
+              <View className="flex-row items-center gap-1.5">
+                <View className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                <Text className="text-green-400 text-xs font-semibold">Active</Text>
               </View>
             </View>
-            <View className="w-10 h-10 rounded-full bg-gray-600 items-center justify-center">
-              <Ionicons name="person" size={20} color="white" />
+            <View className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 items-center justify-center">
+              <Ionicons name="shield-checkmark" size={24} color="white" />
             </View>
           </View>
- 
+
           {/* Stats Row */}
           <View className="mx-4 mt-4 flex-row justify-between">
             {[
@@ -176,38 +184,47 @@ export default function ResponderDashboard({ navigation }) {
               { label: 'Active', value: stats.active, color: 'text-gray-700' },
               { label: 'Resolved', value: stats.resolved, color: 'text-green-600' },
             ].map((stat) => (
-              <View key={stat.label} className="bg-white rounded-xl flex-1 mx-1 py-3 items-center shadow-sm">
+              <View key={stat.label} className="bg-white rounded-xl flex-1 mx-1 py-3 items-center shadow-sm border border-gray-100/50">
                 <Text className={`text-lg font-bold ${stat.color}`}>{stat.value}</Text>
                 <Text className="text-xs text-gray-400">{stat.label}</Text>
               </View>
             ))}
           </View>
- 
+
           {/* Quick Actions */}
-          <View className="mx-4 mt-4 flex-row flex-wrap gap-3">
+          <View className="mx-4 mt-4 flex-row flex-wrap gap-3 ">
             {[
-              { icon: '🧭', label: 'Navigate', sub: 'To incident', color: 'text-[#D62828]' },
-              { icon: '⚠️', label: 'Risk Zones', sub: 'Analytics', color: 'text-orange-500' },
-              { icon: '🕐', label: 'Activity', sub: 'View log', color: 'text-blue-500' },
-              { icon: '✅', label: 'Complete', sub: 'Mark resolved', color: 'text-green-500' },
+              { icon: 'navigate-outline', label: 'Navigate', sub: 'To incident', color: 'text-[#D62828]', iconColor: '#D62828', bg: 'bg-red-50' },
+              { icon: 'alert-circle-outline', label: 'Alerts', sub: 'View all', color: 'text-amber-500', iconColor: '#F59E0B', bg: 'bg-amber-50' },
+              { icon: 'time-outline', label: 'Activity', sub: 'View log', color: 'text-blue-500', iconColor: '#3B82F6', bg: 'bg-blue-50' },
+              { icon: 'checkmark-circle-outline', label: 'Complete', sub: 'Mark resolved', color: 'text-green-500', iconColor: '#10B981', bg: 'bg-green-50' },
             ].map((action) => (
               <TouchableOpacity
                 key={action.label}
-                className="bg-white rounded-2xl p-4 items-center justify-center shadow-sm"
-                style={{ width: '47%' }}
+                className="bg-white rounded-2xl p-4 items-center justify-center shadow-md border border-gray-100/50"
+                style={{ width: '47%', minHeight: 110 }}
                 onPress={() => {
                   if (action.label === 'Alerts') navigation?.navigate('AlertsNotifications');
                   if (action.label === 'Navigate') navigation?.navigate('ResponderMap');
-                  if (action.label === 'Risk Zones') navigation?.navigate('ResponderDangerZone');
+                  if (action.label === 'Activity') navigation?.navigate('MyReports');
+                  if (action.label === 'Complete') {
+                    if (newIncident) {
+                      navigation.navigate('ResponderIncidentDetails', { incident: newIncident });
+                    } else {
+                      alert('No active assigned task to resolve');
+                    }
+                  }
                 }}
               >
-                <Text className="text-2xl mb-1">{action.icon}</Text>
+                <View className={`w-10 h-10 rounded-full ${action.bg} items-center justify-center mb-2`}>
+                  <Ionicons name={action.icon} size={22} color={action.iconColor} />
+                </View>
                 <Text className={`text-sm font-bold ${action.color}`}>{action.label}</Text>
-                <Text className="text-xs text-gray-400">{action.sub}</Text>
+                <Text className="text-xs text-gray-400 mt-0.5">{action.sub}</Text>
               </TouchableOpacity>
             ))}
           </View>
- 
+
           {/* Assigned Incidents */}
           <View className="mx-4 mt-5">
             <View className="flex-row justify-between items-center mb-3">
@@ -230,7 +247,7 @@ export default function ResponderDashboard({ navigation }) {
               ))
             )}
           </View>
- 
+
           <View className="h-6" />
         </ScrollView>
       )}
