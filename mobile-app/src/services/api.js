@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://192.168.156.151:5000/api',
+  baseURL: 'http://192.168.180.151:5000/api',
 
   // Increased to 30 seconds so large file uploads don't drop out early
   timeout: 30000,

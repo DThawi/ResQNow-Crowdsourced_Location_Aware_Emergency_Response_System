@@ -279,7 +279,7 @@ exports.assignResponder = async (req, res) => {
     }
 
     const responder = await User.findById(responderId);
-    if (!responder || responder.role !== "Authority") {
+    if (!responder || (responder.role !== "Authority" && responder.role !== "Responder")) {
       return res.status(400).json({ message: "Invalid responder" });
     }
 
