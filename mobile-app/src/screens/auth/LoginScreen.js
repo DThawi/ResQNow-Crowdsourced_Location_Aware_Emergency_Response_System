@@ -43,7 +43,7 @@ export default function LoginScreen({ navigation }) {
     await connectSocket();
 
     // Navigate based on role
-    if (role === 'Authority') {
+    if (role === 'Authority' || role === 'Responder') {
       navigation.navigate('ResponderDashboard');
     } else if (role === 'Admin') {
       navigation.navigate('Home');
