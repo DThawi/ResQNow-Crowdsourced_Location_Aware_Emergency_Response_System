@@ -438,9 +438,6 @@ const AdminDangerZoneScreen = () => {
                       <button onClick={() => setAutomationModalOpen(true)} className="bg-transparent border-none py-[6px] px-[12px] rounded-[6px] font-bold text-[12px] cursor-pointer flex items-center gap-[5px] hover:bg-slate-200">
                           <Cpu size={16} /> Automation
                       </button>
-                      <button onClick={() => setCreateModalOpen(true)} className="bg-[#10B981] text-white border-none py-[6px] px-[15px] rounded-[6px] font-bold text-[12px] cursor-pointer hover:bg-emerald-600">
-                          <Plus size={14} /> Create Zone
-                      </button>
                   </div>
               </div>
           </div>
@@ -483,54 +480,6 @@ const AdminDangerZoneScreen = () => {
             </table>
           </div>
       </div>
-
-      {/* --- CREATE ZONE MODAL --- */}
-      {createModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[2147483647]">
-          <div className="bg-white w-full max-w-[450px] rounded-[16px] shadow-[0_10px_40px_rgba(0,0,0,0.2)] overflow-hidden">
-            <div className="flex justify-between items-center px-[25px] py-[20px] border-b border-[#F3F4F6] bg-[#FAFAFA]">
-              <div className="flex items-center gap-[10px]">
-                  <div className="bg-[#D1FAE5] p-[8px] rounded-[8px] text-[#059669]"><MapPin size={20} /></div>
-                  <h3 className="m-0 text-[18px] font-extrabold text-slate-800">Create Danger Zone</h3>
-              </div>
-              <button onClick={() => setCreateModalOpen(false)} className="bg-transparent border-none cursor-pointer text-[#94A3B8] hover:text-slate-700"><X size={20} /></button>
-            </div>
-            <div className="p-[30px_25px] flex flex-col gap-[20px]">
-              <div>
-                  <label className="block text-[13px] font-bold text-[#4B5563] mb-[8px]">Zone Name</label>
-                  <input type="text" placeholder="e.g. South Park Gas Leak" value={newZoneData.name} onChange={(e) => setNewZoneData({...newZoneData, name: e.target.value})} className="w-full p-[10px] border border-[#D1D5DB] rounded-[8px] box-border outline-none focus:border-red-500" />
-              </div>
-              <div className="flex gap-[15px]">
-                  <div className="flex-1">
-                      <label className="block text-[13px] font-bold text-[#4B5563] mb-[8px]">Type</label>
-                      <select value={newZoneData.type} onChange={(e) => setNewZoneData({...newZoneData, type: e.target.value})} className="w-full p-[10px] border border-[#D1D5DB] rounded-[8px] box-border outline-none cursor-pointer">
-                          <option>Fire</option><option>Hazmat</option><option>Flood</option><option>Civil Unrest</option>
-                      </select>
-                  </div>
-                  <div className="flex-1">
-                      <label className="block text-[13px] font-bold text-[#4B5563] mb-[8px]">Severity</label>
-                      <select value={newZoneData.severity} onChange={(e) => setNewZoneData({...newZoneData, severity: e.target.value})} className="w-full p-[10px] border border-[#D1D5DB] rounded-[8px] box-border outline-none cursor-pointer">
-                          <option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option>
-                      </select>
-                  </div>
-              </div>
-              <div>
-                  <div className="flex justify-between items-center mb-[8px]">
-                      <label className="block text-[13px] font-bold text-[#4B5563]">Estimated Affected</label>
-                      <button onClick={handleAutoEstimate} disabled={isCalculating} className="bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE] py-[4px] px-[10px] rounded-[6px] text-[11px] font-bold cursor-pointer flex items-center gap-[4px] hover:bg-indigo-100 disabled:opacity-50">
-                          {isCalculating ? "Calculating..." : <><Wand2 size={12} /> Auto-Predict</>}
-                      </button>
-                  </div>
-                  <input type="number" placeholder="500" value={newZoneData.affected} onChange={(e) => setNewZoneData({...newZoneData, affected: e.target.value})} disabled={isCalculating} className={`w-full p-[10px] border border-[#D1D5DB] rounded-[8px] box-border outline-none ${isCalculating ? 'bg-[#F3F4F6]' : 'bg-white focus:border-red-500'}`} />
-              </div>
-            </div>
-            <div className="px-[25px] py-[20px] border-t border-[#F3F4F6] flex justify-end gap-[12px] bg-[#FAFAFA]">
-                <button onClick={() => setCreateModalOpen(false)} className="py-[10px] px-[20px] rounded-[8px] border border-[#E2E8F0] bg-white cursor-pointer hover:bg-slate-100 font-semibold transition-colors">Cancel</button>
-                <button onClick={handleCreateZone} className="py-[10px] px-[20px] rounded-[8px] border-none bg-[#10B981] text-white font-bold cursor-pointer hover:bg-emerald-600 transition-colors">Create Zone</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* --- AUTOMATION MODAL --- */}
       {automationModalOpen && (
