@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import GradientHeader from "../../components/layout/header";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
-const SettingItem = ({ icon, title, subtitle, iconColor = "#333" }) => {
+const SettingItem = ({ icon, title, subtitle, iconColor = "#333", onPress }) => {
   return (
-    <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-gray-200">
+    <TouchableOpacity onPress={onPress} className="flex-row items-center justify-between py-4 border-b border-gray-200">
       
       <View className="flex-row items-center">
         <View className="w-10 h-10 rounded-xl items-center justify-center mr-3">
@@ -28,9 +29,9 @@ const SettingItem = ({ icon, title, subtitle, iconColor = "#333" }) => {
   );
 };
 
-const SettingItem2 = ({ icon, title,iconColor }) => {
+const SettingItem2 = ({ icon, title, iconColor, onPress }) => {
   return (
-    <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-gray-200">
+    <TouchableOpacity onPress={onPress} className="flex-row items-center justify-between py-4 border-b border-gray-200">
       
       <View className="flex-row items-center">
         <View className="w-10 h-10 rounded-xl items-center justify-center mr-3">
@@ -48,8 +49,17 @@ const SettingItem2 = ({ icon, title,iconColor }) => {
   );
 };
 
-const SettingsScreen = () => {
+const SettingsScreen = ({ navigation }) => {
   const [status, setStatus] = useState("available");
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      navigation.replace("Login");
+    } catch (e) {
+      console.log("Error logging out:", e.message);
+    }
+  };
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -198,7 +208,10 @@ const SettingsScreen = () => {
         </View>
 
         {/* 🚪 Logout */}
-        <TouchableOpacity className="bg-white rounded-2xl px-4 py-3 shadow-md mt-6 items-center">
+        <TouchableOpacity
+          onPress={handleLogout}
+          className="bg-white rounded-2xl px-4 py-3 shadow-md mt-6 items-center"
+        >
           <View className="flex-row items-center">
             <View className="w-10 h-10 rounded-full items-center justify-center">
               <Ionicons name="log-out-outline" size={20} color="#D62828" />
