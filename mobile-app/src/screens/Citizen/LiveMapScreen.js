@@ -6,23 +6,35 @@ import { MaterialIcons } from "@expo/vector-icons"; // Expo icon library
 import { Ionicons } from "@expo/vector-icons";
 import GradientHeader from "../../components/layout/header";
 import { Linking, Platform } from "react-native";
+import { Modal } from "react-native";
 import * as Location from "expo-location";
 
-import MapView, { Marker, Circle, Callout, Heatmap } from "react-native-maps";
+import MapView from "react-native-map-clustering";
+import { Marker, Heatmap, Circle, PROVIDER_GOOGLE } from "react-native-maps";
 import API from "../../services/api";
 
 const FILTERS = [
   { key: "All", label: "All" },
   { key: "Pending", label: "New" },
   { key: "Verified", label: "Verified" },
+  { key: "Assigned", label: "Assigned" },
   { key: "Resolved", label: "Resolved" },
 ];
 
 const PIN_COLORS = {
   Pending: "#DC2626",
   Verified: "#F59E0B",
-  Resolved: "#064092",
+  Assigned: "#3B82F6",
+  Resolved: "#1F2937",
 };
+
+const SEVERITY_CONFIG = {
+  low: { color: "rgba(34,197,94,0.25)", radius: 120 },
+  moderate: { color: "rgba(234,179,8,0.30)", radius: 200 },
+  high: { color: "rgba(249,115,22,0.35)", radius: 300 },
+  critical: { color: "rgba(239,68,68,0.40)", radius: 450 },
+};
+
 const openGoogleMaps = async (latitude, longitude) => {
   const url = Platform.select({
     ios: `http://maps.apple.com/?daddr=${latitude},${longitude}`,
@@ -99,7 +111,7 @@ export default function LiveMapScreen({ navigation }) {
         longitude: Number(incident.location.coordinates[0]),
       }));
 
-    console.log("VALID COORDINATES:", coordinates);
+    
 
     if (coordinates.length > 0) {
       setTimeout(() => {
@@ -125,14 +137,22 @@ export default function LiveMapScreen({ navigation }) {
 
       setIncidents(res.data || []);
     } catch (err) {
-      console.log("ERROR FETCHING INCIDENTS:", err.message);
+      
     }
   };
   const fetchHeatmapData = async () => {
     try {
       const res = await API.get("/heatmap");
 
-      setHeatmapPoints(res.data || []);
+      const validPoints = (res.data || [])
+        .map((point) => ({
+          latitude: Number(point.latitude),
+          longitude: Number(point.longitude),
+          weight: point.weight || 1,
+        }))
+        .filter((point) => !isNaN(point.latitude) && !isNaN(point.longitude));
+
+      setHeatmapPoints(validPoints);
     } catch (err) {
       console.log("HEATMAP ERROR:", err.message);
     }
@@ -227,7 +247,14 @@ export default function LiveMapScreen({ navigation }) {
         <MapView
           ref={mapRef}
           style={{ flex: 1 }}
+          provider={PROVIDER_GOOGLE}
           mapType={mapType}
+          clusteringEnabled={true}
+          clusterColor="#DC2626"
+          clusterTextColor="#fff"
+          clusterFontSize={14}
+          // region={region}
+          // onRegionChangeComplete={setRegion}
           initialRegion={{
             latitude: 6.9271,
             longitude: 79.8612,
@@ -235,177 +262,214 @@ export default function LiveMapScreen({ navigation }) {
             longitudeDelta: 0.5,
           }}
           showsUserLocation={true}
-        >
-
-          <Heatmap
-  points={heatmapPoints}
-  radius={50}
-  opacity={0.7}
-  gradient={{
-    colors: ["#22C55E", "#EAB308", "#F97316", "#DC2626"],
-    startPoints: [0.2, 0.4, 0.6, 0.8],
-    colorMapSize: 256,
-  }}
-/>
+        > 
           {/* Incident Markers */}
+          {heatmapPoints.length > 0 && (
+            <Heatmap
+              points={heatmapPoints}
+              radius={50}
+              opacity={0.7}
+              gradient={{
+                colors: ["#22C55E", "#EAB308", "#F97316", "#DC2626"],
+                startPoints: [0.2, 0.4, 0.6, 0.8],
+              }}
+            />
+          )}
+
           {filtered.map((incident, index) => {
-            if (!incident.location || !incident.location.coordinates) {
+            if (
+              !incident.location ||
+              !incident.location.coordinates ||
+              incident.location.coordinates.length < 2
+            ) {
               return null;
             }
 
             const [lng, lat] = incident.location.coordinates;
 
-            console.log("MARKER:", lat, lng);
+            // extra validation
+            if (
+              typeof lat !== "number" ||
+              typeof lng !== "number" ||
+              isNaN(lat) ||
+              isNaN(lng)
+            ) {
+              return null;
+            }
+
+            const severityKey = (incident.severity || "low").toLowerCase();
+
+            const severity =
+              SEVERITY_CONFIG[severityKey] ?? SEVERITY_CONFIG.low;
+            const config = SEVERITY_CONFIG[severityKey] ?? SEVERITY_CONFIG.low;
+
+            const severityPriority = {
+              low: 1,
+              moderate: 2,
+              high: 3,
+              critical: 4,
+            };
 
             return (
-              <Marker
-                key={`marker-${incident._id || index}`}
-                coordinate={{
-                  latitude: lat,
-                  longitude: lng,
-                }}
-                pinColor={PIN_COLORS[incident.status] || "#DC2626"}
-                onPress={() => setSelectedIncident(incident)}
-              >
-                <Callout>
-                  <View style={{ width: 300, padding: 5 }}>
-                    <Text
+              <React.Fragment key={`incident-${incident._id || index}`}>
+                {/* Severity Glow */}
+                {/* <Circle
+                  center={{
+                    latitude: lat,
+                    longitude: lng,
+                  }}
+                  radius={config.radius}
+                  fillColor={config.color}
+                  strokeColor="transparent"
+                /> */}
+
+                {/* Status Marker */}
+                <Marker
+                  coordinate={{
+                    latitude: lat,
+                    longitude: lng,
+                  }}
+                  pinColor={PIN_COLORS[incident.status] || "#DC2626"}
+                  onPress={() => {
+                    console.log("MARKER CLICKED:", incident); // 👈 ADD THIS HERE
+                    setSelectedIncident(incident);
+                  }}
+                >
+                  {/* <Callout tooltip>
+                    <View
                       style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        marginBottom: 5,
+                        width: 260,
+                        backgroundColor: "#fff",
+                        borderRadius: 12,
+                        padding: 12,
+                        elevation: 6,
+                        shadowColor: "#000",
+                        shadowOpacity: 0.2,
+                        shadowRadius: 6,
                       }}
                     >
-                      {incident.type}
-                    </Text>
-
-                    <Text>{incident.description}</Text>
-
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: "#DC2626",
-                        padding: 10,
-                        borderRadius: 8,
-                        marginTop: 10,
-                      }}
-                      onPress={() => openGoogleMaps(lat, lng)}
-                    >
-                      <Text
-                        style={{
-                          color: "#fff",
-                          textAlign: "center",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Navigate
+                      <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                        {incident.type}
                       </Text>
-                    </TouchableOpacity>
-                  </View>
-                </Callout>
-              </Marker>
+
+                      <Text style={{ color: "#666", marginTop: 4 }}>
+                        {incident.description}
+                      </Text>
+
+                      <Text style={{ marginTop: 6, fontWeight: "600" }}>
+                        Severity: {incident.severity}
+                      </Text>
+
+                      <Text style={{ marginTop: 2 }}>
+                        Status: {incident.status}
+                      </Text>
+
+                      <TouchableOpacity
+                        style={{
+                          marginTop: 10,
+                          backgroundColor: "#DC2626",
+                          padding: 10,
+                          borderRadius: 8,
+                        }}
+                        onPress={() => openGoogleMaps(lat, lng)}
+                      >
+                        <Text style={{ color: "#fff", textAlign: "center" }}>
+                          Navigate
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Callout> */}
+                </Marker>
+              </React.Fragment>
             );
           })}
         </MapView>
 
-        {selectedIncident && (
+        <Modal
+          visible={!!selectedIncident}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setSelectedIncident(null)}
+        >
           <View
             style={{
-              position: "absolute",
-              bottom: 20,
-              left: 15,
-              right: 15,
-              backgroundColor: "#fff",
-              borderRadius: 15,
-              padding: 15,
-              elevation: 8,
-              shadowColor: "#000",
-              shadowOpacity: 0.2,
-              shadowRadius: 5,
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "flex-end",
             }}
           >
-            <Text
+            <View
               style={{
-                fontSize: 18,
-                fontWeight: "bold",
-                marginBottom: 5,
+                backgroundColor: "#fff",
+                padding: 16,
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
               }}
             >
-              {selectedIncident.type}
-            </Text>
+              <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                {selectedIncident?.type}
+              </Text>
 
-            <Text
-              style={{
-                color: "#666",
-                marginBottom: 15,
-              }}
-            >
-              {selectedIncident.description}
-            </Text>
+              <Text style={{ marginTop: 6 }}>
+                {selectedIncident?.description}
+              </Text>
 
-            {/* View Details */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#064092",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 10,
-              }}
-              onPress={() => {
-                navigation.navigate("IncidentDetails", {
-                  incident: selectedIncident,
-                });
-              }}
-            >
-              <Text
+              <Text style={{ marginTop: 6 }}>
+                Status: {selectedIncident?.status}
+              </Text>
+
+              <Text style={{ marginTop: 6 }}>
+                Severity: {selectedIncident?.severity}
+              </Text>
+
+              <TouchableOpacity
                 style={{
-                  color: "#fff",
-                  textAlign: "center",
-                  fontWeight: "bold",
+                  marginTop: 12,
+                  backgroundColor: "#DC2626",
+                  padding: 12,
+                  borderRadius: 10,
+                }}
+                onPress={() => {
+                  if (selectedIncident?.location?.coordinates) {
+                    const [lng, lat] = selectedIncident.location.coordinates;
+                    openGoogleMaps(lat, lng);
+                  }
                 }}
               >
-                View Details
-              </Text>
-            </TouchableOpacity>
+                <Text style={{ color: "#fff", textAlign: "center" }}>
+                  Navigate
+                </Text>
+              </TouchableOpacity>
 
-            {/* Navigate */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#DC2626",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 10,
-              }}
-              onPress={() => {
-                const [lng, lat] = selectedIncident.location.coordinates;
-
-                openGoogleMaps(lat, lng);
-              }}
-            >
-              <Text
+              <TouchableOpacity
                 style={{
-                  color: "#fff",
-                  textAlign: "center",
-                  fontWeight: "bold",
+                  marginTop: 12,
+                  backgroundColor: "#190297",
+                  padding: 12,
+                  borderRadius: 10,
                 }}
+                onPress={() =>
+                  navigation.navigate("IncidentDetails", {
+                    incident: selectedIncident,
+                  })
+                }
               >
-                Navigate
-              </Text>
-            </TouchableOpacity>
+                <Text style={{ color: "#fff", textAlign: "center" }}>
+                  Details
+                </Text>
+              </TouchableOpacity>
 
-            {/* Close */}
-            <TouchableOpacity onPress={() => setSelectedIncident(null)}>
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "#666",
-                  fontWeight: "600",
-                }}
+              <TouchableOpacity
+                style={{ marginTop: 10 }}
+                onPress={() => setSelectedIncident(null)}
               >
-                Close
-              </Text>
-            </TouchableOpacity>
+                <Text style={{ textAlign: "center", color: "gray" }}>
+                  Close
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
+        </Modal>
 
         {/* MAP CONTROLS */}
         <View className="absolute right-3 top-3 gap-2">
@@ -425,48 +489,89 @@ export default function LiveMapScreen({ navigation }) {
         </View>
       </View>
 
-      {/* LEGEND HEADER */}
-      <View className="flex-row justify-between items-center px-4 pt-3 pb-1 bg-white">
-        <Text className="text-base font-bold text-gray-800">Map Legend</Text>
-
-        <TouchableOpacity>
-          <Text className="text-sm font-semibold text-red-600">🔻 Filter</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* LEGEND ITEMS */}
+      {/* FIXED LEGEND */}
       <View
-        className="flex-row px-4 pb-4 gap-6 bg-white"
-        style={{ paddingBottom: 16 + insets.bottom }}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: "#fff",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          paddingHorizontal: 16,
+          paddingTop: 14,
+          paddingBottom: 12 + insets.bottom,
+          elevation: 12,
+          shadowColor: "#000",
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -3 },
+        }}
       >
-        {/* New */}
-        <View className="flex-row items-center gap-2">
-          <View className="w-3.5 h-3.5 rounded-full bg-red-600" />
-          <View>
-            <Text className="text-sm font-semibold text-gray-800">New</Text>
+        {/* STATUS LEGEND */}
+        <Text className="text-base font-bold text-gray-800 mb-3">
+          Incident Status
+        </Text>
+
+        <View className="flex-row justify-between mb-5">
+          {/* Pending */}
+          <View className="items-center flex-1">
+            <View className="w-4 h-4 rounded-full bg-red-600 mb-1" />
+            <Text className="text-sm font-semibold text-gray-800">Pending</Text>
             <Text className="text-xs text-gray-500">Unverified</Text>
           </View>
-        </View>
 
-        {/* Verified */}
-        <View className="flex-row items-center gap-2">
-          <View className="w-3.5 h-3.5 rounded-full bg-amber-500" />
-          <View>
+          {/* Verified */}
+          <View className="items-center flex-1">
+            <View className="w-4 h-4 rounded-full bg-amber-500 mb-1" />
             <Text className="text-sm font-semibold text-gray-800">
               Verified
             </Text>
             <Text className="text-xs text-gray-500">Active</Text>
           </View>
-        </View>
 
-        {/* Resolved */}
-        <View className="flex-row items-center gap-2">
-          <View className="w-3.5 h-3.5 rounded-full bg-blue-800" />
-          <View>
+          {/* Resolved */}
+          <View className="items-center flex-1">
+            <View className="w-4 h-4 rounded-full bg-blue-700 mb-1" />
             <Text className="text-sm font-semibold text-gray-800">
               Resolved
             </Text>
             <Text className="text-xs text-gray-500">Closed</Text>
+          </View>
+        </View>
+
+        {/* DIVIDER */}
+        <View className="h-[1px] bg-gray-200 mb-4" />
+
+        {/* SEVERITY LEGEND */}
+        <Text className="text-base font-bold text-gray-800 mb-3">
+          Severity Levels
+        </Text>
+
+        <View className="flex-row flex-wrap justify-between">
+          {/* Low */}
+          <View className="flex-row items-center mb-3 w-[48%]">
+            <View className="w-4 h-4 rounded-full bg-green-500 mr-2 opacity-80" />
+            <Text className="text-sm text-gray-700 font-medium">Low</Text>
+          </View>
+
+          {/* Moderate */}
+          <View className="flex-row items-center mb-3 w-[48%]">
+            <View className="w-4 h-4 rounded-full bg-yellow-500 mr-2 opacity-80" />
+            <Text className="text-sm text-gray-700 font-medium">Moderate</Text>
+          </View>
+
+          {/* High */}
+          <View className="flex-row items-center mb-3 w-[48%]">
+            <View className="w-4 h-4 rounded-full bg-orange-500 mr-2 opacity-80" />
+            <Text className="text-sm text-gray-700 font-medium">High</Text>
+          </View>
+
+          {/* Critical */}
+          <View className="flex-row items-center mb-1 w-[48%]">
+            <View className="w-4 h-4 rounded-full bg-red-800 mr-2 opacity-80" />
+            <Text className="text-sm text-gray-700 font-medium">Critical</Text>
           </View>
         </View>
       </View>
