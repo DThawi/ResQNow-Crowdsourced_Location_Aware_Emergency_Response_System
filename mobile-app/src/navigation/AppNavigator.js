@@ -11,7 +11,6 @@ import Register4 from "../screens/auth/Register4";
 import Register5 from "../screens/auth/Register5";
 import Register6 from "../screens/auth/Register6";
 import Register7 from "../screens/auth/Register7";
-import Register8 from "../screens/auth/Register8";
 import VerifyIdentity from "../screens/auth/VerifyIdentity";
 import SetPassword from "../screens/auth/SetPassword";
 import SuccessfulSetPassword from "../screens/auth/SuccessfulSetPassword";
@@ -84,7 +83,6 @@ export default function AppNavigator() {
         <Stack.Screen name="Register5" component={Register5} options={{ headerShown: false }} />
         <Stack.Screen name="Register6" component={Register6} options={{ headerShown: false }} />
         <Stack.Screen name="Register7" component={Register7} options={{ headerShown: false }} />
-        <Stack.Screen name="Register8" component={Register8} options={{ headerShown: false }} />
         <Stack.Screen name="VerifyIdentity" component={VerifyIdentity} />
         <Stack.Screen name="SetPassword" component={SetPassword} />
         <Stack.Screen name="SuccessfulSetPassword" component={SuccessfulSetPassword} />

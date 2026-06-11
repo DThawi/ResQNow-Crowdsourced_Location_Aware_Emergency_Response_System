@@ -1,22 +1,32 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-
-  email: { type: String, required: true, unique: true },
-
-  password: { type: String, required: true },
-
-  role: { 
-    type: String, 
-    enum: ['Citizen', 'Admin', 'Authority'], 
-    default: 'Citizen' 
+  name: {
+    type: String,
+    required: true
   },
 
-  district: { 
-    type: String, 
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+
+  password: {
+    type: String,
+    required: true
+  },
+
+  role: {
+    type: String,
+    enum: ['Citizen', 'Admin', 'Authority', 'Responder'], // Unified capitalization
+    default: 'Citizen'
+  },
+
+  district: {
+    type: String,
     required: function () {
-      return this.role === "Authority";
+      return this.role === 'Authority' || this.role === 'Responder';
     }
   },
 
@@ -27,26 +37,27 @@ const UserSchema = new mongoose.Schema({
       default: 'Point'
     },
     coordinates: {
-      type: [Number], 
+      type: [Number],
       required: true
     }
   },
 
-  organization: { 
-    type: String, 
+  organization: {
+    type: String,
     required: function () {
-      return this.role === "Authority";
+      return this.role === 'Authority' || this.role === 'Responder';
     }
   },
 
+  contact_number: {
+    type: String,
+    required: true
+  },
 
-  contact_number: { type: String, required: true },
-
-  registered_date: { type: Date, default: Date.now },
-
-
-  resetOTP: { type: String },
-  otpExpire: { type: Date },
+  registered_date: {
+    type: Date,
+    default: Date.now
+  },
 
   isVerified: {
     type: Boolean,
@@ -55,13 +66,22 @@ const UserSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['Active', 'Suspended'],
-    default: 'Active'
-  }
+    enum: ['Pending', 'Approved', 'Rejected', 'Active', 'Suspended'], // Included 'Pending'
+    default: 'Pending'
+  },
 
+  documents: {
+    officialIdPath: String,
+    authLetterPath: String,
+    certCardsPath: String
+  },
+
+  resetOTP: String,
+  otpExpire: Date
+}, {
+  timestamps: true
 });
 
-
-UserSchema.index({ location: "2dsphere" });
+UserSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('User', UserSchema);
