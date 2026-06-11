@@ -162,17 +162,33 @@ export default function ResponderDashboard({ navigation }) {
           )}
 
           {/* Profile Card - Standard View avoids NativeWind wrapping card layout issues */}
-          <View className="mx-4 mt-4 bg-[#1a2b3c] rounded-2xl p-4 flex-row items-center justify-between border border-slate-800 shadow-sm">
-            <View>
-              <Text className="text-white text-base font-bold">{responder.name}</Text>
-              <Text className="text-slate-400 text-xs mb-2">{responder.organization || 'Responder'}</Text>
+          <View className="mx-4 mt-4 bg-[#1a2b3c] rounded-2xl p-4 border border-slate-800 shadow-sm flex-col">
+            {/* Top row: Name & Settings Icon */}
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-white text-lg font-bold flex-1">{responder.name}</Text>
+              <TouchableOpacity onPress={() => navigation?.navigate('SettingsScreen')} className="p-1">
+                <Ionicons name="settings-outline" size={22} color="white" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Verified badge */}
+            <View className="flex-row items-center bg-[#28a745]/10 border border-[#28a745]/20 px-2.5 py-1 rounded-full self-start mb-2">
+              <Ionicons name="shield" size={12} color="#4ADE80" />
+              <Text className="text-green-400 text-xs font-medium ml-1">Verified Responder</Text>
+            </View>
+
+            {/* Organization */}
+            <Text className="text-slate-400 text-xs mb-1">{responder.organization || 'Responder'}</Text>
+
+            {/* Bottom row: Active indicator & Shield badge */}
+            <View className="flex-row justify-between items-end">
               <View className="flex-row items-center gap-1.5">
                 <View className="w-2.5 h-2.5 rounded-full bg-green-400" />
                 <Text className="text-green-400 text-xs font-semibold">Active</Text>
               </View>
-            </View>
-            <View className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 items-center justify-center">
-              <Ionicons name="shield-checkmark" size={24} color="white" />
+              <View className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 items-center justify-center">
+                <Ionicons name="shield-outline" size={24} color="white" />
+              </View>
             </View>
           </View>
 
