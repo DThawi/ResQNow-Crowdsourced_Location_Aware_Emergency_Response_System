@@ -4,6 +4,7 @@ import {
   LayoutDashboard, AlertCircle, CheckCircle, Users, 
   ShieldAlert, BarChart2, Settings, LogOut, X 
 } from 'lucide-react';
+import { Bell } from "lucide-react";
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const AdminSidebar = () => {
     { icon: <BarChart2 size={20} />, label: "Analytics & Reports", path: "/analytics" },
     { icon: <Users size={20} />, label: "User Management", path: "/users" },
     { icon: <Settings size={20} />, label: "System Settings", path: "/settings" },
+    { icon: <Bell size={20} />, label: "Alerts Center", path: "/alerts-hub" },
   ];
 
   const handleLogout = () => {
