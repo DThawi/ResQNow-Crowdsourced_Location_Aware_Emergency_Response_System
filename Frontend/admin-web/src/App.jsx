@@ -12,6 +12,7 @@ import AdminAnalyticsScreen from "./screens/adminAnalyticsScreen.jsx";
 import AdminUserManagementScreen from "./screens/adminUserManagementScreen.jsx";
 import AdminSettingsScreen from "./screens/adminSettingsScreen.jsx";
 import AdminProfileScreen from "./screens/adminProfileScreen.jsx";
+import AdminAlertsHubScreen from "./screens/adminAlertsHubScreen.jsx";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/users" element={<AdminLayout title="User Management"><AdminUserManagementScreen /></AdminLayout>} />
         <Route path="/settings" element={<AdminLayout title="System Settings"><AdminSettingsScreen /></AdminLayout>} />
         <Route path="/profile" element={<AdminLayout title="Profile"><AdminProfileScreen /></AdminLayout>} />
+        <Route path="/alerts-hub" element={ <AdminLayout title="System Alerts Hub"><AdminAlertsHubScreen /></AdminLayout>}/>
 
         {/* Redirect base URL to login or dashboard */}
         <Route path="/" element={<Navigate to="/login" replace />} />
