@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, Alert, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
 import GradientHeader from '../../components/layout/header';
 import API from '../../services/api';
 
@@ -25,6 +26,7 @@ export default function ReportIncident() {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationStatus, setLocationStatus] = useState('detecting'); // 'detecting', 'success', 'denied', 'error'
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState(null);
   const [urgency, setUrgency] = useState('High');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -91,6 +93,52 @@ export default function ReportIncident() {
     detectLocation();
   }, []);
 
+  const handleImagePick = async () => {
+    Alert.alert(
+      "Incident Photo",
+      "Choose an option",
+      [
+        {
+          text: "Camera",
+          onPress: async () => {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('Permission Denied', 'Please grant camera access to take a photo.');
+              return;
+            }
+            let result = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 0.7,
+            });
+            if (!result.canceled) {
+              setImage(result.assets[0].uri);
+            }
+          }
+        },
+        {
+          text: "Gallery",
+          onPress: async () => {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('Permission Denied', 'Please grant media library access to pick a photo.');
+              return;
+            }
+            let result = await ImagePicker.launchImageLibraryAsync({
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 0.7,
+            });
+            if (!result.canceled) {
+              setImage(result.assets[0].uri);
+            }
+          }
+        },
+        { text: "Cancel", style: "cancel" }
+      ]
+    );
+  };
+
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
@@ -139,6 +187,14 @@ export default function ReportIncident() {
       formData.append('longitude', lng.toString()); 
       formData.append('latitude', lat.toString());
       formData.append('severity', urgency);
+
+      if (image) {
+        formData.append('image', {
+          uri: image,
+          name: 'incident.jpg',
+          type: 'image/jpeg',
+        });
+      }
 
       console.log('Sending formData...', formData);
 
@@ -268,11 +324,26 @@ export default function ReportIncident() {
         {/* Photos */}
         <View className="mb-6">
           <Text className="text-[#2B2D42] font-bold text-base mb-3">Photos (Optional)</Text>
-          <TouchableOpacity className="border border-[#E5E5E5] rounded-xl h-28 justify-center items-center bg-white" style={{ borderStyle: 'solid' }}>
-            {/* Note: Figma looks solid but standard is dotted. I will use solid but we can add dash if needed. */}
-            <Ionicons name="camera-outline" size={32} color="#8D99AE" />
-            <Text className="text-[#8D99AE] text-sm mt-2">Tap to add photos</Text>
-          </TouchableOpacity>
+          {image ? (
+            <View className="relative border border-[#E5E5E5] rounded-xl overflow-hidden h-44 bg-slate-100">
+              <Image source={{ uri: image }} className="w-full h-full" resizeMode="cover" />
+              <TouchableOpacity
+                onPress={() => setImage(null)}
+                className="absolute top-2 right-2 bg-black/60 rounded-full p-2"
+              >
+                <Ionicons name="close-outline" size={20} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              onPress={handleImagePick}
+              className="border border-[#E5E5E5] rounded-xl h-28 justify-center items-center bg-white" 
+              style={{ borderStyle: 'solid' }}
+            >
+              <Ionicons name="camera-outline" size={32} color="#8D99AE" />
+              <Text className="text-[#8D99AE] text-sm mt-2">Tap to add photos</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Urgency Level */}
