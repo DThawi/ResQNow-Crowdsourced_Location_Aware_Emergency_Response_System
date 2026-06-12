@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import GradientHeader from '../../components/layout/header';
 import API from '../../services/api';
 
@@ -19,20 +20,124 @@ export default function ReportIncident() {
   const navigation = useNavigation();
   const [incidentType, setIncidentType] = useState('Fire'); // Defaulting one just to show selected state, or we can leave it null
   const [location, setLocation] = useState('');
+  const [coords, setCoords] = useState(null);
+  const [detectedAddress, setDetectedAddress] = useState('');
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState('detecting'); // 'detecting', 'success', 'denied', 'error'
   const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState('High');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const detectLocation = async () => {
+    try {
+      setIsDetectingLocation(true);
+      setLocationStatus('detecting');
+      
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationStatus('denied');
+        Alert.alert(
+          'Location Permission Denied',
+          'Please grant location permissions in your settings, or enter the location manually.'
+        );
+        setIsDetectingLocation(false);
+        return;
+      }
+
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const currentCoords = {
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      };
+      setCoords(currentCoords);
+
+      // Perform reverse geocoding to get a readable address
+      const geocode = await Location.reverseGeocodeAsync(currentCoords);
+      if (geocode.length > 0) {
+        const addr = geocode[0];
+        const formattedAddress = [
+          addr.name,
+          addr.street,
+          addr.city,
+          addr.region,
+          addr.country,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        setLocation(formattedAddress);
+        setDetectedAddress(formattedAddress);
+      } else {
+        const fallbackAddress = `Lat: ${currentCoords.latitude.toFixed(4)}, Lng: ${currentCoords.longitude.toFixed(4)}`;
+        setLocation(fallbackAddress);
+        setDetectedAddress(fallbackAddress);
+      }
+      setLocationStatus('success');
+    } catch (error) {
+      console.error('Error detecting location:', error);
+      setLocationStatus('error');
+      Alert.alert(
+        'Location Detection Error',
+        'Could not detect your current location automatically. Please type the location manually.'
+      );
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
+  useEffect(() => {
+    detectLocation();
+  }, []);
 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
       const token = await AsyncStorage.getItem('token');
       
+      let lat = coords?.latitude;
+      let lng = coords?.longitude;
+
+      // If user manually changed or typed the address, geocode it
+      if (location && location !== detectedAddress) {
+        try {
+          const geocoded = await Location.geocodeAsync(location);
+          if (geocoded.length > 0) {
+            lat = geocoded[0].latitude;
+            lng = geocoded[0].longitude;
+          } else {
+            Alert.alert(
+              'Invalid Location',
+              'Could not resolve the entered address to coordinates. Please enter a valid address or use your current GPS location.'
+            );
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (error) {
+          Alert.alert(
+            'Geocoding Error',
+            'Failed to resolve the location address. Please check your internet connection or enter a valid address.'
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      if (!lat || !lng) {
+        Alert.alert(
+          'Location Required',
+          'A valid location is required to submit a report. Please wait for GPS detection or type a valid address.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      
       const formData = new FormData();
       formData.append('type', incidentType);
       formData.append('description', description || 'No description provided');
-      formData.append('longitude', '79.8612'); 
-      formData.append('latitude', '6.9271');
+      formData.append('longitude', lng.toString()); 
+      formData.append('latitude', lat.toString());
       formData.append('severity', urgency);
 
       console.log('Sending formData...', formData);
@@ -97,20 +202,50 @@ export default function ReportIncident() {
           <View className="flex-row items-center mb-2">
             <View className="flex-1 border border-[#E5E5E5] rounded-xl px-4 py-3 bg-white">
               <TextInput
-                placeholder="Detecting location..."
+                placeholder={isDetectingLocation ? "Detecting location..." : "Enter location address..."}
                 placeholderTextColor="#8D99AE"
                 value={location}
                 onChangeText={setLocation}
                 className="text-[#2B2D42] text-sm p-0 m-0"
               />
             </View>
-            <TouchableOpacity className="bg-[#003049] rounded-xl w-12 h-12 justify-center items-center ml-3">
-              <Ionicons name="send-outline" size={20} color="#FFF" />
+            <TouchableOpacity 
+              onPress={detectLocation}
+              disabled={isDetectingLocation}
+              className={`bg-[#003049] rounded-xl w-12 h-12 justify-center items-center ml-3 ${isDetectingLocation ? 'opacity-70' : ''}`}
+            >
+              {isDetectingLocation ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Ionicons name="locate-outline" size={22} color="#FFF" />
+              )}
             </TouchableOpacity>
           </View>
           <View className="flex-row items-center">
-            <Ionicons name="location-outline" size={14} color="#2ECC71" />
-            <Text className="text-[#2ECC71] text-xs ml-1">GPS location detected</Text>
+            {locationStatus === 'detecting' && (
+              <>
+                <Ionicons name="time-outline" size={14} color="#FFA000" />
+                <Text className="text-[#FFA000] text-xs ml-1">Detecting GPS location...</Text>
+              </>
+            )}
+            {locationStatus === 'success' && (
+              <>
+                <Ionicons name="checkmark-circle-outline" size={14} color="#2ECC71" />
+                <Text className="text-[#2ECC71] text-xs ml-1">GPS location detected</Text>
+              </>
+            )}
+            {locationStatus === 'denied' && (
+              <>
+                <Ionicons name="close-circle-outline" size={14} color="#D62828" />
+                <Text className="text-[#D62828] text-xs ml-1">Location permission denied - enter manually</Text>
+              </>
+            )}
+            {locationStatus === 'error' && (
+              <>
+                <Ionicons name="alert-circle-outline" size={14} color="#D62828" />
+                <Text className="text-[#D62828] text-xs ml-1">GPS location failed - enter manually</Text>
+              </>
+            )}
           </View>
         </View>
 
