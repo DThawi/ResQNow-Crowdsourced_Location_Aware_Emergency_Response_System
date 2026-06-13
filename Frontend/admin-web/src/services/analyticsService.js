@@ -42,6 +42,11 @@ export const getAnalyticsMonthly = async () => {
   return res.data;
 };
 
+export const getResolvedToday = async () => {
+  const res = await API.get("/analytics/resolved-today");
+  return res.data;
+};
+
 // ================= INCIDENTS =================
 
 export const getIncidents = async (page = 1, limit = 20) => {
