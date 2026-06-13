@@ -14,7 +14,8 @@ exports.register = async (req, res) => {
       longitude,
       latitude,
       organization,
-      contact_number
+      contact_number,
+      role
     } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -32,11 +33,15 @@ exports.register = async (req, res) => {
     const lat = parseFloat(latitude || 0);
     const lng = parseFloat(longitude || 0);
 
+    const userRole = role || "Responder";
+    const status = userRole === "Citizen" ? "Active" : "Pending";
+    const isVerified = userRole === "Citizen" ? true : false;
+
     const user = new User({
       name,
       email,
       password: hashedPassword,
-      role: "Responder", 
+      role: userRole, 
       district,
       organization,
       contact_number,
@@ -44,8 +49,8 @@ exports.register = async (req, res) => {
         type: "Point",
         coordinates: [lng, lat]
       },
-      status: "Pending", 
-      isVerified: false,
+      status, 
+      isVerified,
       documents: {
         officialIdPath: officialId || "",
         authLetterPath: authLetter || "",
@@ -55,10 +60,11 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    await sendEmail(
-      "admin@resqnow.com",
-      "New Responder Registration",
-      `
+    if (userRole !== "Citizen") {
+      await sendEmail(
+        "admin@resqnow.com",
+        "New Responder Registration",
+        `
 New responder registration received.
 
 Name: ${name}
@@ -68,10 +74,13 @@ District: ${district}
 
 Please review and approve.
 `
-    );
+      );
+    }
 
     res.status(201).json({
-      message: "Registration submitted successfully. Waiting for verification."
+      message: userRole === "Citizen"
+        ? "Registration successful. You can now login."
+        : "Registration submitted successfully. Waiting for verification."
     });
 
   } catch (error) {
