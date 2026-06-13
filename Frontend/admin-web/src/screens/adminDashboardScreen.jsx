@@ -15,6 +15,8 @@ import {
   getAnalyticsResponseTime,
   getAnalyticsStatus,
   getIncidents,
+  getResolvedToday,
+  getResponders,
 } from "../services/analyticsService";
 
 const AdminDashboardScreen = () => {
@@ -124,26 +126,15 @@ const AdminDashboardScreen = () => {
         id: idx,
       }));
 
-    const buildStats = (incidents = [], avgResponse = 0) => {
-      const activeIncidents = incidents.filter(
-        (incident) => incident.status !== "Resolved",
-      ).length;
-      const activeResponders = new Set(
-        incidents.flatMap((incident) =>
-          (incident.assignedAuthorities || []).map(
-            (authority) => authority._id || authority,
-          ),
-        ),
-      ).size;
-      const resolvedToday = incidents.filter((incident) => {
-        if (!incident.timestamp) return false;
-        const created = new Date(incident.timestamp);
-        const today = new Date();
-        return (
-          created.toDateString() === today.toDateString() &&
-          incident.status === "Resolved"
-        );
+    const buildStats = (statusData = [], avgResponse = 0, responders = [], resolvedTodayCount = 0) => {
+      const activeIncidents = statusData
+        .filter((item) => item._id !== "Resolved")
+        .reduce((sum, item) => sum + item.count, 0);
+      const activeResponders = responders.filter((r) => {
+        const stat = r.status ? String(r.status).toLowerCase() : "";
+        return stat === "approved";
       }).length;
+      const resolvedToday = resolvedTodayCount;
       return {
         activeIncidents,
         activeResponders,
@@ -153,21 +144,24 @@ const AdminDashboardScreen = () => {
     };
 
     const loadDashboard = async (showLoader = false) => {
+      let incidents = [];
       try {
         if (showLoader) {
           setLoading(true);
         }
         setError(null);
-        const [categoriesRes, responseRes, incidentsRes, statusRes] =
+        const [categoriesRes, responseRes, incidentsRes, statusRes, respondersRes, resolvedTodayRes] =
           await Promise.all([
             getAnalyticsCategories(),
             getAnalyticsResponseTime(),
             getIncidents(1, 20),
             getAnalyticsStatus(),
+            getResponders().catch(() => []),
+            getResolvedToday().catch(() => ({ count: 0 })),
           ]);
-        const incidents = Array.isArray(incidentsRes)
-      ? incidentsRes
-      : incidentsRes?.incidents || [];
+        incidents = Array.isArray(incidentsRes)
+          ? incidentsRes
+          : incidentsRes?.incidents || [];
         setIncidentTrends7d(buildWeeklyTrend(incidents));
         setIncidentsByType(buildTypeCounts(categoriesRes || []));
         setStatusData(statusRes || []);
@@ -185,7 +179,12 @@ const AdminDashboardScreen = () => {
         );
         setLiveFeedItems(buildFeed(incidents));
         setStats(
-          buildStats(incidents, responseRes?.averageResponseTime_minutes || 0),
+          buildStats(
+            statusRes || [],
+            responseRes?.averageResponseTime_minutes || 0,
+            respondersRes || [],
+            resolvedTodayRes?.count || 0
+          ),
         );
         setStatusData(statusRes || []);
       } catch (err) {

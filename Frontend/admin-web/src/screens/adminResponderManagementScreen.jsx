@@ -512,6 +512,148 @@ const AdminResponderManagementScreen = () => {
           </div>
         </div>
       )}
+
+      {/* VIEW MODAL */}
+      {viewModalOpen && selectedResponder && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex justify-center items-center z-[10000] animate-[fadeIn_0.15s_ease-out]">
+          <div className="bg-white w-[500px] rounded-[32px] overflow-hidden shadow-2xl border border-[#E2E8F0]">
+            <div className="p-6 border-b flex justify-between items-center bg-[#F8FAFC]">
+              <h3 className="m-0 font-bold text-slate-800 flex items-center gap-2"><Eye size={18} className="text-[#D62828]" /> Responder Profile Details</h3>
+              <X onClick={() => setViewModalOpen(false)} className="cursor-pointer" size={20} />
+            </div>
+            <div className="p-6 flex flex-col gap-4 bg-white">
+              <div className="bg-slate-50 p-4 rounded-xl border">
+                <div className="text-xs font-bold text-slate-400 uppercase">Responder Details</div>
+                <div className="text-base font-bold text-slate-800 mt-1">{selectedResponder.name}</div>
+                <div className="text-sm font-semibold text-slate-500 mt-0.5">{selectedResponder.email}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Contact Phone</label>
+                  <div className="text-sm font-semibold text-slate-700 mt-1">{selectedResponder.phone || '—'}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase">District</label>
+                  <div className="text-sm font-semibold text-slate-700 mt-1">{selectedResponder.district || '—'}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Organization</label>
+                  <div className="text-sm font-semibold text-slate-700 mt-1">{selectedResponder.department || '—'}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase">Current Status</label>
+                  <div className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      selectedResponder.status === 'Approved' || selectedResponder.status === 'Active' ? 'bg-green-100 text-green-700' :
+                      selectedResponder.status === 'Suspended' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                    }`}>{selectedResponder.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 pl-0.5">Verification Evidence Documents</div>
+                <div className="flex flex-col gap-2">
+                  <div className="border rounded-xl p-3 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <div className="p-2 bg-red-50 text-[#D62828] rounded-lg"><FileText size={18} /></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-slate-400 uppercase">Official ID / Employee Badge</div>
+                        <div className="text-sm font-medium text-slate-700 truncate mt-0.5">{selectedResponder.documents.officialIdPath ? "Official_ID_Attachment" : "No file attached"}</div>
+                      </div>
+                    </div>
+                    {selectedResponder.documents.officialIdPath && (
+                      <button onClick={() => openDocumentSecurely(selectedResponder.documents.officialIdPath)} className="p-2 border bg-white rounded-lg cursor-pointer text-slate-500 hover:text-[#D62828]" title="Open Link"><ExternalLink size={14} /></button>
+                    )}
+                  </div>
+
+                  <div className="border rounded-xl p-3 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <div className="p-2 bg-red-50 text-[#D62828] rounded-lg"><FileText size={18} /></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-slate-400 uppercase">Organization Authorization Letter</div>
+                        <div className="text-sm font-medium text-slate-700 truncate mt-0.5">{selectedResponder.documents.authLetterPath ? "Authorization_Letter" : "No file attached"}</div>
+                      </div>
+                    </div>
+                    {selectedResponder.documents.authLetterPath && (
+                      <button onClick={() => openDocumentSecurely(selectedResponder.documents.authLetterPath)} className="p-2 border bg-white rounded-lg cursor-pointer text-slate-500 hover:text-[#D62828]" title="Open Link"><ExternalLink size={14} /></button>
+                    )}
+                  </div>
+
+                  <div className="border rounded-xl p-3 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <div className="p-2 bg-red-50 text-[#D62828] rounded-lg"><FileText size={18} /></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-slate-400 uppercase">Certificates / License Cards</div>
+                        <div className="text-sm font-medium text-slate-700 truncate mt-0.5">{selectedResponder.documents.certCardsPath ? "Certificates_Licenses" : "No file attached"}</div>
+                      </div>
+                    </div>
+                    {selectedResponder.documents.certCardsPath && (
+                      <button onClick={() => openDocumentSecurely(selectedResponder.documents.certCardsPath)} className="p-2 border bg-white rounded-lg cursor-pointer text-slate-500 hover:text-[#D62828]" title="Open Link"><ExternalLink size={14} /></button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <button onClick={() => setViewModalOpen(false)} className="w-full py-2.5 bg-slate-800 text-white font-bold rounded-xl cursor-pointer hover:bg-slate-700 transition-colors">Close Profile</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {editModalOpen && selectedResponder && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex justify-center items-center z-[10000] animate-[fadeIn_0.15s_ease-out]">
+          <div className="bg-white w-[450px] rounded-[32px] overflow-hidden border border-[#E2E8F0] shadow-2xl">
+            <div className="p-6 border-b flex justify-between items-center bg-[#F8FAFC]">
+              <div>
+                <h3 className="m-0 font-bold text-slate-800">Edit Responder Settings</h3>
+                <p className="m-0 text-xs text-slate-400 mt-1">ID: {selectedResponder.id}</p>
+              </div>
+              <X onClick={() => setEditModalOpen(false)} className="cursor-pointer" />
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Full Name</label>
+                <input type="text" value={selectedResponder.name} onChange={e => setSelectedResponder({...selectedResponder, name: e.target.value})} className="w-full p-2.5 border rounded-xl outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Email (Read Only)</label>
+                <input type="email" value={selectedResponder.email} className="w-full p-2.5 border rounded-xl outline-none bg-slate-50 text-slate-400" readOnly />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Contact Phone</label>
+                <input type="text" value={selectedResponder.phone} onChange={e => setSelectedResponder({...selectedResponder, phone: e.target.value})} className="w-full p-2.5 border rounded-xl outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">District Location</label>
+                <input type="text" value={selectedResponder.district} onChange={e => setSelectedResponder({...selectedResponder, district: e.target.value})} className="w-full p-2.5 border rounded-xl outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Organization Affiliation</label>
+                <input type="text" value={selectedResponder.department} onChange={e => setSelectedResponder({...selectedResponder, department: e.target.value})} className="w-full p-2.5 border rounded-xl outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Account Operational Status</label>
+                <select value={selectedResponder.status} onChange={e => setSelectedResponder({...selectedResponder, status: e.target.value})} className="w-full p-2.5 border rounded-xl outline-none bg-white cursor-pointer">
+                  <option value="Active">Active</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Suspended">Suspended</option>
+                </select>
+              </div>
+              <div className="flex gap-3 mt-2">
+                <button onClick={() => setEditModalOpen(false)} className="flex-1 py-3 border rounded-xl font-bold bg-white text-slate-500 cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
+                <button onClick={handleUpdateResponder} className="flex-1 py-3 bg-[#D62828] font-bold text-white border-none rounded-xl cursor-pointer hover:bg-red-700 transition-colors">Save Configurations</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
