@@ -3,6 +3,7 @@ const { findCluster } = require("../utils/clustering");
 const User = require('../models/User');
 const Incident = require('../models/Incident');
 const { notifyAssignment, notifyStatusChange } = require('../utils/notificationHelper');
+const { autoAssignResponder } = require('../utils/autoAssignment');
 
 // Fetch user-specific reports
 exports.getMyReports = async (req, res) => {
@@ -52,6 +53,9 @@ exports.createIncident = async (req, res) => {
         const savedIncident = await newIncident.save();
 
         console.log("SAVED INCIDENT:", savedIncident);
+
+        // Attempt automated assignment
+        await autoAssignResponder(savedIncident);
 
         res.status(201).json(savedIncident);
 
@@ -249,6 +253,9 @@ exports.adminVerifyIncident = async (req, res) => {
     await incident.save();
     await notifyStatusChange(incident);
  
+    // Attempt automated assignment
+    await autoAssignResponder(incident);
+
     res.status(200).json({ message: "Incident verified", incident });
   } catch (err) {
     res.status(500).json({ message: "Error verifying incident", error: err.message });
