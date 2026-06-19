@@ -4,11 +4,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import GradientHeader from '../../components/layout/header';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API from '../../services/api';
 
 export default function IncidentDetailsScreen2({ route, navigation }) {
   const [notes, setNotes] = useState('');
   const [readableAddress, setReadableAddress] = useState('Resolving precise incident address landmark...');
   const incident = route?.params?.incident || {};
+  const [isTransiting, setIsTransiting] = useState(false);
+
+  const handleStartTransit = async () => {
+    try {
+      setIsTransiting(true);
+      const token = await AsyncStorage.getItem('token');
+      if (incident._id) {
+        await API.put(`/incidents/${incident._id}/status`, { status: 'En Route' }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      navigation.navigate('ResponderIncidentDetails3', { incident: { ...incident, status: 'En Route' } });
+    } catch (error) {
+      console.log('Failed to start transit:', error.message);
+      Alert.alert(
+        'Transit Error',
+        error.response?.data?.message || 'Failed to update transit status. Please check your connection and try again.'
+      );
+    } finally {
+      setIsTransiting(false);
+    }
+  };
 
   const typeText = incident.type || 'Accident';
   const descriptionText = incident.description || 'Multi-vehicle collision on highway, traffic blocked';
@@ -105,10 +129,13 @@ export default function IncidentDetailsScreen2({ route, navigation }) {
           <View className="mx-4 mb-4 flex-col gap-2.5">
             <TouchableOpacity 
               className="bg-[#3498DB] py-3.5 rounded-2xl items-center flex-row justify-center shadow-md"
-              onPress={() => navigation.navigate('ResponderIncidentDetails3', { incident: { ...incident, status: 'En Route' } })}
+              onPress={handleStartTransit}
+              disabled={isTransiting}
             >
               <Feather name="navigation" size={16} color="white" />
-              <Text className="text-white font-black text-sm uppercase tracking-wider ml-2">Start Transit (En Route)</Text>
+              <Text className="text-white font-black text-sm uppercase tracking-wider ml-2">
+                {isTransiting ? 'Updating...' : 'Start Transit (En Route)'}
+              </Text>
             </TouchableOpacity>
 
             <View className="flex-row justify-between gap-2">

@@ -28,7 +28,7 @@ const IncidentSchema = new mongoose.Schema({
 },
   status: {
     type: String,
-    enum: ['Pending', 'Verified', 'Assigned', 'Resolved'],
+    enum: ['Pending', 'Verified', 'Assigned', 'En Route', 'In Progress', 'Resolved'],
     default: 'Pending'
   },
 
@@ -45,7 +45,7 @@ const IncidentSchema = new mongoose.Schema({
   status_history: [{
     status: {
       type: String,
-      enum: ['Pending', 'Verified', 'Assigned', 'Resolved']
+      enum: ['Pending', 'Verified', 'Assigned', 'En Route', 'In Progress', 'Resolved']
     },
     timestamp: { type: Date, default: Date.now },
     changed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }

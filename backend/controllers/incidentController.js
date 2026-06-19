@@ -174,7 +174,7 @@ exports.getAssignedIncidents = async (req, res) => {
 exports.updateResponseStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['Assigned', 'Resolved'];
+    const validStatuses = ['Assigned', 'En Route', 'In Progress', 'Resolved'];
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
@@ -187,10 +187,18 @@ exports.updateResponseStatus = async (req, res) => {
     }
 
     if (!incident.assignedAuthorities.includes(req.user.id)) {
-      return res.status(403).json({ message: "Not authorized to update this incident" });
+      if (status === 'Assigned') {
+        incident.assignedAuthorities.push(req.user.id);
+      } else {
+        return res.status(403).json({ message: "Not authorized to update this incident" });
+      }
     }
 
     incident.status = status;
+    if (status === 'Assigned' && !incident.assigned_at) {
+      incident.assigned_at = new Date();
+    }
+
     incident.status_history.push({
       status,
       changed_by: req.user.id
