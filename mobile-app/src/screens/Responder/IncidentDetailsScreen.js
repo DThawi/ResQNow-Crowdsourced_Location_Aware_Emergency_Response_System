@@ -4,12 +4,41 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import GradientHeader from '../../components/layout/header';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API from '../../services/api';
 
 export default function IncidentDetailsScreen1({ route, navigation }) {
   const [notes, setNotes] = useState('');
   const [readableAddress, setReadableAddress] = useState('Resolving precise incident address landmark...');
   const incident = route?.params?.incident || {};
   const isResolved = incident.status?.toLowerCase() === 'resolved';
+  const [isAccepting, setIsAccepting] = useState(false);
+
+  const handleAcceptAssignment = async () => {
+    try {
+      setIsAccepting(true);
+      const token = await AsyncStorage.getItem('token');
+      let updatedIncident = { ...incident };
+
+      const response = await API.put(`/incidents/${incident._id}/status`, { status: 'Assigned' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data && response.data.incident) {
+        updatedIncident = response.data.incident;
+      }
+      
+      navigation.navigate('ResponderIncidentDetails2', { incident: updatedIncident });
+    } catch (error) {
+      console.log('Failed to accept assignment:', error.message);
+      Alert.alert(
+        'Assignment Error',
+        error.response?.data?.message || 'Failed to accept assignment. Please check your connection and try again.'
+      );
+    } finally {
+      setIsAccepting(false);
+    }
+  };
 
   const typeText = incident.type || 'Accident';
   const descriptionText = incident.description || 'Multi-vehicle collision on highway, traffic blocked';
@@ -143,10 +172,12 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
           <View className="mx-4 mb-4 flex-col gap-2">
             <TouchableOpacity 
               className={`${isResolved ? 'bg-gray-300' : 'bg-[#D62828]'} py-3.5 rounded-2xl items-center ${isResolved ? '' : 'shadow-sm'}`}
-              onPress={() => navigation.navigate('ResponderIncidentDetails2', { incident })}
-              disabled={isResolved}
+              onPress={handleAcceptAssignment}
+              disabled={isResolved || isAccepting}
             >
-              <Text className={`${isResolved ? 'text-gray-500' : 'text-white'} font-black text-sm uppercase tracking-wider`}>Accept Assignment</Text>
+              <Text className={`${isResolved ? 'text-gray-500' : 'text-white'} font-black text-sm uppercase tracking-wider`}>
+                {isAccepting ? 'Accepting...' : 'Accept Assignment'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 

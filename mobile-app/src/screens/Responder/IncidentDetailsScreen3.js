@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import GradientHeader from '../../components/layout/header';
@@ -25,7 +25,11 @@ export default function IncidentDetailsScreen3({ route, navigation }) {
       }
       navigation.navigate('ResponderIncidentDetails4', { incident: { ...incident, status: 'Resolved' } });
     } catch (error) {
-      navigation.navigate('ResponderIncidentDetails4', { incident: { ...incident, status: 'Resolved' } });
+      console.log('Failed to resolve incident:', error.message);
+      Alert.alert(
+        'Resolution Error',
+        error.response?.data?.message || 'Failed to resolve incident. Please check your connection and try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
