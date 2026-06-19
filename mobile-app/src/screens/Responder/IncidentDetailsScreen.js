@@ -9,6 +9,7 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
   const [notes, setNotes] = useState('');
   const [readableAddress, setReadableAddress] = useState('Resolving precise incident address landmark...');
   const incident = route?.params?.incident || {};
+  const isResolved = incident.status?.toLowerCase() === 'resolved';
 
   const typeText = incident.type || 'Accident';
   const descriptionText = incident.description || 'Multi-vehicle collision on highway, traffic blocked';
@@ -141,10 +142,11 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
           {/* Action Buttons */}
           <View className="mx-4 mb-4 flex-col gap-2">
             <TouchableOpacity 
-              className="bg-[#D62828] py-3.5 rounded-2xl items-center shadow-sm"
+              className={`${isResolved ? 'bg-gray-300' : 'bg-[#D62828]'} py-3.5 rounded-2xl items-center ${isResolved ? '' : 'shadow-sm'}`}
               onPress={() => navigation.navigate('ResponderIncidentDetails2', { incident })}
+              disabled={isResolved}
             >
-              <Text className="text-white font-black text-sm uppercase tracking-wider">Accept Assignment</Text>
+              <Text className={`${isResolved ? 'text-gray-500' : 'text-white'} font-black text-sm uppercase tracking-wider`}>Accept Assignment</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
