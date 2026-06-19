@@ -1,177 +1,49 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import GradientHeader from '../../components/layout/header';
 
-export default function IncidentDetailsScreen({ route, navigation }) {
-    const [notes, setNotes] = useState('');
-    const incident = route?.params?.incident || {};
+export default function IncidentDetailsScreen4({ route, navigation }) {
+  const incident = route?.params?.incident || {};
 
-    // Formatted Coordinates
-    const coordinatesText = incident.location?.coordinates
-        ? `Lng: ${incident.location.coordinates[0].toFixed(4)}, Lat: ${incident.location.coordinates[1].toFixed(4)}`
-        : 'Southern Expressway - Kottawa Interchange';
+  return (
+    <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <GradientHeader title="Operation Summary" type="back" />
 
-    // Incident Title/Type
-    const typeText = incident.type || 'Car Accident';
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        
+        <View className="m-4 rounded-3xl overflow-hidden shadow-sm bg-slate-900">
+          <LinearGradient colors={['#10B981', '#064E3B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="p-6 items-center justify-center h-40">
+            <MaterialCommunityIcons name="check-circle-double" size={44} color="white" className="mb-2" />
+            <Text className="text-white text-xl font-black uppercase tracking-wider">Mission Accomplished</Text>
+            <Text className="text-emerald-100 text-xs mt-1">Incident channel closed successfully.</Text>
+          </LinearGradient>
+        </View>
 
-    // Description
-    const descriptionText = incident.description || 'Multi-vehicle collision on highway, traffic blocked';
+        {/* Status Confirmation Card */}
+        <View className="mx-4 mb-4 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 items-center">
+          <View className="bg-emerald-50 border border-emerald-200 rounded-full px-4 py-1 mb-2">
+            <Text className="text-emerald-600 text-xs font-black uppercase">Archived Log</Text>
+          </View>
+          <Text className="text-slate-800 text-base font-black mb-1">{incident.type || 'Emergency'}</Text>
+          <Text className="text-slate-400 text-xs text-center px-4">{incident.description || 'Task closed out cleanly.'}</Text>
+        </View>
 
-    // Time
-    const timestampText = incident.timestamp
-        ? `Reported ${new Date(incident.timestamp).toLocaleString()}`
-        : 'Reported Dec 9, 3:15 PM';
+        {/* Dashboard Return Trigger */}
+        <View className="mx-4 mb-4">
+          <TouchableOpacity 
+            activeOpacity={0.8} 
+            className="bg-slate-800 py-3.5 rounded-2xl items-center flex-row justify-center shadow-md"
+            onPress={() => navigation.navigate('ResponderDashboard')}
+          >
+            <Feather name="home" size={16} color="white" className="mr-2" />
+            <Text className="text-white font-black text-sm uppercase tracking-wider">Return to Command Dashboard</Text>
+          </TouchableOpacity>
+        </View>
 
-    // Reporter
-    const reporterText = incident.user_id?.name || (incident.user_id ? `Citizen ${String(incident.user_id).slice(-4)}` : 'Sahan Madawela');
-
-    // Verifications
-    const verifiedCount = incident.verified_by?.length !== undefined ? incident.verified_by.length : 15;
-
-    // Flagged
-    const flaggedCount = incident.reported_inaccurate_by?.length !== undefined ? incident.reported_inaccurate_by.length : 0;
-
-    const handleSaveNotes = () => {
-        Alert.alert("Success", "Notes saved successfully!");
-    };
-
-    return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1 }}
-        >
-            <View className="flex-1 bg-[#F7F7F7]">
-                <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-                <GradientHeader title="Incident Details" type="back" />
-
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                    {/* Top Banner */}
-                    <View className="m-4 rounded-xl overflow-hidden shadow-sm">
-                        <LinearGradient
-                            colors={['#D62828', '#2B2D42']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 1 }}
-                            className="h-44 flex-row justify-between items-center px-6"
-                        >
-                            {/* Distance Card */}
-                            <View className="bg-white rounded-2xl px-3 py-3 items-center justify-center shadow-md min-w-[70px]">
-                                <Text className="text-[#003049] text-[11px] font-medium mb-1">Distance</Text>
-                                <Text className="text-[#003049] text-[15px] font-bold">0.8 mi</Text>
-                            </View>
-
-                            {/* Center Icon */}
-                            <Text style={{ fontSize: 50 }}>🚗</Text>
-
-                            {/* ETA Card */}
-                            <View className="bg-white rounded-2xl px-3 py-3 items-center justify-center shadow-md min-w-[70px]">
-                                <Text className="text-[#003049] text-[11px] font-medium mb-1">ETA</Text>
-                                <Text className="text-[#003049] text-[15px] font-bold">4 min</Text>
-                            </View>
-                        </LinearGradient>
-                    </View>
-
-                    {/* Details Card */}
-                    <View className="mx-4 mb-6 bg-white rounded-2xl p-5 shadow-sm">
-                        <View className="flex-row justify-between items-center mb-2">
-                            <Text className="text-[#2B2D42] text-[22px] font-extrabold">{typeText}</Text>
-                            <View className="border border-[#2ECC71] rounded-full px-3 py-1">
-                                <Text className="text-[#2ECC71] text-xs font-semibold">Resolved</Text>
-                            </View>
-                        </View>
-
-                        <Text className="text-[#8D99AE] text-[15px] mb-5 leading-6">
-                            {descriptionText}
-                        </Text>
-
-                        {/* Info Rows */}
-                        <View>
-                            <View className="flex-row items-start mb-3.5">
-                                <Feather name="map-pin" size={18} color="#8D99AE" className="mt-1" />
-                                <View className="ml-3.5 flex-1">
-                                    <Text className="text-[#8D99AE] text-[14px]">{coordinatesText}</Text>
-                                    <Text className="text-[#8D99AE] text-[14px]">Sri Lanka, SL</Text>
-                                </View>
-                            </View>
-
-                            <View className="flex-row items-center mb-3.5">
-                                <Feather name="clock" size={18} color="#8D99AE" />
-                                <Text className="text-[#8D99AE] text-[14px] ml-3.5">{timestampText}</Text>
-                            </View>
-
-                            <View className="flex-row items-center mb-4">
-                                <Feather name="user" size={18} color="#8D99AE" />
-                                <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported by {reporterText}</Text>
-                            </View>
-
-                            <View className="flex-row items-center mb-2.5">
-                                <Feather name="check-circle" size={18} color="#2ECC71" />
-                                <Text className="text-[#2ECC71] text-[14px] font-semibold ml-3.5">{verifiedCount} community verifications</Text>
-                            </View>
-
-                            <View className="flex-row items-center">
-                                <Feather name="alert-circle" size={18} color="#F6AA1C" />
-                                <Text className="text-[#F6AA1C] text-[14px] font-semibold ml-3.5">{flaggedCount} flagged</Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View className="mx-4 mb-6">
-                        <TouchableOpacity 
-                            activeOpacity={0.7} 
-                            className="bg-[#E8F8F5] py-4 rounded-xl items-center flex-row justify-center border border-[#2ECC71]"
-                            onPress={() => navigation.navigate('ResponderDashboard')}
-                        >
-                            <Feather name="check-circle" size={18} color="#2ECC71" className="mr-2.5" />
-                            <Text className="text-[#2ECC71] font-medium text-[16px]">Incident resolved successfully</Text>
-                        </TouchableOpacity>
-                    </View>
-
-
-                    {/* Responder Notes */}
-                    <View className="mx-4 mb-6 bg-white rounded-2xl p-5 shadow-sm">
-                        <Text className="text-[#2B2D42] text-[16px] font-bold mb-4">Responder Notes</Text>
-                        <TextInput
-                            className="border border-[#EBEBEB] rounded-xl p-4 h-32 text-[#2B2D42] text-[14px] bg-white"
-                            placeholder="Add notes about this incident..."
-                            placeholderTextColor="#8D99AE"
-                            multiline
-                            textAlignVertical="top"
-                            value={notes}
-                            onChangeText={setNotes}
-                        />
-                        <View className="items-center mt-4">
-                            <TouchableOpacity className="border border-[#D62828] px-8 py-2 rounded-xl" onPress={handleSaveNotes}>
-                                <Text className="text-[#D62828] font-semibold text-[14px]">Save Notes</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    {/* Contact Information */}
-                    <View className="mx-4 bg-white rounded-2xl p-5 shadow-sm mb-4">
-                        <Text className="text-[#2B2D42] text-[16px] font-bold mb-5">Contact Information</Text>
-
-                        <View className="flex-row justify-between items-center mb-4">
-                            <Text className="text-[#8D99AE] text-[15px] font-medium">Reporter</Text>
-                            <TouchableOpacity className="flex-row items-center border border-[#D62828] px-4 py-2 rounded-xl">
-                                <Feather name="phone-call" size={14} color="#D62828" />
-                                <Text className="text-[#D62828] font-bold ml-2 text-[13px]">Call</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View className="flex-row justify-between items-center">
-                            <Text className="text-[#8D99AE] text-[15px] font-medium">Dispatch</Text>
-                            <TouchableOpacity className="flex-row items-center border border-[#D62828] px-4 py-2 rounded-xl">
-                                <Feather name="phone-call" size={14} color="#D62828" />
-                                <Text className="text-[#D62828] font-bold ml-2 text-[13px]">Call</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                </ScrollView>
-            </View>
-        </KeyboardAvoidingView>
-    );
+      </ScrollView>
+    </View>
+  );
 }

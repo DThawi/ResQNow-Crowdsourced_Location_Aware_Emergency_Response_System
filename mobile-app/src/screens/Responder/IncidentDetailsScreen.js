@@ -1,190 +1,159 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import GradientHeader from '../../components/layout/header';
+import * as Location from 'expo-location';
 
-export default function IncidentDetailsScreen({ route, navigation }) {
+export default function IncidentDetailsScreen1({ route, navigation }) {
   const [notes, setNotes] = useState('');
+  const [readableAddress, setReadableAddress] = useState('Resolving precise incident address landmark...');
   const incident = route?.params?.incident || {};
 
-  // Formatted Coordinates
-  const coordinatesText = incident.location?.coordinates
-    ? `Lng: ${incident.location.coordinates[0].toFixed(4)}, Lat: ${incident.location.coordinates[1].toFixed(4)}`
-    : 'Southern Expressway - Kottawa Interchange';
-
-  // Incident Title/Type
-  const typeText = incident.type || 'Car Accident';
-
-  // Description
+  const typeText = incident.type || 'Accident';
   const descriptionText = incident.description || 'Multi-vehicle collision on highway, traffic blocked';
-
-  // Time
-  const timestampText = incident.timestamp
-    ? `Reported ${new Date(incident.timestamp).toLocaleString()}`
-    : 'Reported Dec 9, 3:15 PM';
-
-  // Reporter
-  const reporterText = incident.user_id?.name || (incident.user_id ? `Citizen ${String(incident.user_id).slice(-4)}` : 'Sahan Madawela');
-
-  // Verifications
-  const verifiedCount = incident.verified_by?.length !== undefined ? incident.verified_by.length : 15;
-
-  // Flagged
-  const flaggedCount = incident.reported_inaccurate_by?.length !== undefined ? incident.reported_inaccurate_by.length : 0;
-
-  const handleSaveNotes = () => {
-    Alert.alert("Success", "Notes saved successfully!");
+  const reporterText = incident.user_id?.name || 'Sahan Madawela';
+  
+  const getContextMeta = (type) => {
+    if (type === 'Fire') return { icon: '🔥', colors: ['#E65100', '#1A1C29'], themeColor: '#E65100' };
+    if (type === 'Medical') return { icon: '🏥', colors: ['#D62828', '#11131C'], themeColor: '#D62828' };
+    if (type === 'Flood' || type === 'Disaster') return { icon: '🌊', colors: ['#0A4B7C', '#0F172A'], themeColor: '#0A4B7C' };
+    return { icon: '🚗', colors: ['#C91818', '#1E202C'], themeColor: '#C91818' };
   };
 
+  const config = getContextMeta(typeText);
+
+  useEffect(() => {
+    let isMounted = true;
+    const resolveLocation = async () => {
+      try {
+        const coords = incident.location?.coordinates;
+        if (!coords || coords.length < 2) {
+          if (isMounted) setReadableAddress('Southern Expressway - Kottawa Interchange');
+          return;
+        }
+        const lookup = await Location.reverseGeocodeAsync({ latitude: coords[1], longitude: coords[0] });
+        if (lookup && lookup.length > 0) {
+          const p = lookup[0];
+          const combined = [p.name, p.street, p.city, p.region].filter(Boolean).join(', ');
+          if (isMounted) setReadableAddress(combined || `Coordinates Block Locked [${coords[1].toFixed(4)}, ${coords[0].toFixed(4)}]`);
+        }
+      } catch (err) {
+        if (isMounted) setReadableAddress('Panadura, Western Province, Sri Lanka');
+      }
+    };
+    resolveLocation();
+    return () => { isMounted = false; };
+  }, [incident.location]);
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
-    >
-      <View className="flex-1 bg-[#F7F7F7]">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <View className="flex-1 bg-[#F8FAFC]">
         <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-        <GradientHeader title="Incident Details" type="back" />
+        <GradientHeader title="Incident Overview" type="back" />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          {/* Top Banner */}
-          <View className="m-4 rounded-xl overflow-hidden shadow-sm">
-            <LinearGradient
-              colors={['#D62828', '#2B2D42']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              className="h-44 flex-row justify-between items-center px-6"
-            >
-              {/* Distance Card */}
-              <View className="bg-white rounded-2xl px-3 py-3 items-center justify-center shadow-md min-w-[70px]">
-                <Text className="text-[#003049] text-[11px] font-medium mb-1">Distance</Text>
-                <Text className="text-[#003049] text-[15px] font-bold">0.8 mi</Text>
+          
+          {/* Top HUD Card */}
+          <View className="m-4 rounded-3xl overflow-hidden shadow-md bg-slate-900">
+            <LinearGradient colors={config.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="p-5 flex-col">
+              <View className="flex-row justify-between items-center mb-4">
+                <View className="flex-row items-center bg-white/10 px-3 py-1 rounded-full">
+                  <Feather name="activity" size={12} color="#FFF" />
+                  <Text className="text-white text-xs font-semibold ml-1.5 uppercase tracking-wider">Live Metrics</Text>
+                </View>
+                <Text style={{ fontSize: 36 }}>{config.icon}</Text>
               </View>
 
-              {/* Center Icon */}
-              <Text style={{ fontSize: 50 }}>🚗</Text>
-
-              {/* ETA Card */}
-              <View className="bg-white rounded-2xl px-3 py-3 items-center justify-center shadow-md min-w-[70px]">
-                <Text className="text-[#003049] text-[11px] font-medium mb-1">ETA</Text>
-                <Text className="text-[#003049] text-[15px] font-bold">4 min</Text>
+              <View className="flex-row justify-between items-center mt-2">
+                <View className="bg-white/95 rounded-2xl p-3 flex-1 mr-2 shadow-sm items-center">
+                  <Text className="text-slate-400 text-[10px] font-bold uppercase">Distance Space</Text>
+                  <Text className="text-slate-800 text-[16px] font-black mt-0.5">0.8 Miles</Text>
+                </View>
+                <View className="bg-white/95 rounded-2xl p-3 flex-1 ml-2 shadow-sm items-center">
+                  <Text className="text-slate-400 text-[10px] font-bold uppercase">Response ETA</Text>
+                  <Text className="text-slate-800 text-[16px] font-black mt-0.5">4 Mins</Text>
+                </View>
               </View>
             </LinearGradient>
           </View>
 
-          {/* Action Required Banner */}
-          <View className="mx-4 mb-5 bg-[#D62828] rounded-xl flex-row items-center p-4 shadow-sm">
-            <View className="bg-[#B91F1F] p-2.5 rounded-full mr-4">
-              <Feather name="check-circle" size={22} color="white" />
+          {/* Alert Banner */}
+          <View className="mx-4 mb-4 bg-amber-500 rounded-2xl flex-row items-center p-4 shadow-sm border border-amber-400/20">
+            <View className="bg-amber-600/30 p-2 rounded-full mr-3">
+              <Feather name="alert-triangle" size={20} color="white" />
             </View>
-            <View>
-              <Text className="text-white font-bold text-lg leading-tight mb-0.5">Action Required</Text>
-              <Text className="text-white/90 text-[13px]">Respond to this incident</Text>
+            <View className="flex-1">
+              <Text className="text-white font-extrabold text-base">Assignment Dispatch Pending</Text>
+              <Text className="text-amber-50 text-xs font-medium">Review parameters to commit tracking vectors.</Text>
             </View>
           </View>
 
           {/* Details Card */}
-          <View className="mx-4 mb-6 bg-white rounded-2xl p-5 shadow-sm">
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-[#2B2D42] text-[22px] font-extrabold">{typeText}</Text>
-              <View className="border border-[#E67E22] rounded-full px-3 py-1">
-                <Text className="text-[#E67E22] text-xs font-semibold">{incident.status || 'Verified'}</Text>
+          <View className="mx-4 mb-4 bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-slate-800 text-xl font-black tracking-tight">{typeText}</Text>
+              <View className="bg-amber-50 border border-amber-200 rounded-full px-3 py-0.5">
+                <Text className="text-amber-600 text-xs font-bold uppercase">{incident.status || 'Assigned'}</Text>
               </View>
             </View>
 
-            <Text className="text-[#8D99AE] text-[15px] mb-5 leading-6">
-              {descriptionText}
-            </Text>
+            <Text className="text-slate-500 text-sm leading-relaxed mb-4">{descriptionText}</Text>
 
-            {/* Info Rows */}
-            <View>
-              <View className="flex-row items-start mb-3.5">
-                <Feather name="map-pin" size={18} color="#8D99AE" className="mt-1" />
-                <View className="ml-3.5 flex-1">
-                  <Text className="text-[#8D99AE] text-[14px]">{coordinatesText}</Text>
-                  <Text className="text-[#8D99AE] text-[14px]">Sri Lanka, SL</Text>
-                </View>
+            <View className="gap-3 pt-3 border-t border-slate-50">
+              <View className="flex-row items-start">
+                {/*  Changed inline style to explicit Tailwind className margin logic */}
+                <Feather name="map-pin" size={14} color={config.themeColor} className="mt-1" />
+                <Text className="text-slate-600 text-xs font-medium ml-2.5 flex-1">{readableAddress}</Text>
               </View>
-
-              <View className="flex-row items-center mb-3.5">
-                <Feather name="clock" size={18} color="#8D99AE" />
-                <Text className="text-[#8D99AE] text-[14px] ml-3.5">{timestampText}</Text>
-              </View>
-
-              <View className="flex-row items-center mb-4">
-                <Feather name="user" size={18} color="#8D99AE" />
-                <Text className="text-[#8D99AE] text-[14px] ml-3.5">Reported by {reporterText}</Text>
-              </View>
-
-              <View className="flex-row items-center mb-2.5">
-                <Feather name="check-circle" size={18} color="#2ECC71" />
-                <Text className="text-[#2ECC71] text-[14px] font-semibold ml-3.5">{verifiedCount} community verifications</Text>
-              </View>
-
               <View className="flex-row items-center">
-                <Feather name="alert-circle" size={18} color="#F6AA1C" />
-                <Text className="text-[#F6AA1C] text-[14px] font-semibold ml-3.5">{flaggedCount} flagged</Text>
+                <Feather name="clock" size={14} color="#64748B" />
+                <Text className="text-slate-500 text-xs ml-2.5">Dispatched: {incident.timestamp ? new Date(incident.timestamp).toLocaleTimeString() : 'Just Now'}</Text>
+              </View>
+              <View className="flex-row items-center">
+                <Feather name="user" size={14} color="#64748B" />
+                <Text className="text-slate-500 text-xs ml-2.5">Reported via: {reporterText}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Live Sync Logs */}
+          <View className="mx-4 mb-4 bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+            <Text className="text-slate-800 text-sm font-black mb-3">Assigned Units Coordination</Text>
+            <View className="flex-col gap-2.5">
+              <View className="flex-row justify-between items-center bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
+                <View className="flex-row items-center gap-2">
+                  <MaterialCommunityIcons name="shield-car" size={16} color="#3B82F6" />
+                  <Text className="text-slate-700 text-xs font-bold">Panadura Central Unit 02</Text>
+                </View>
+                <Text className="text-blue-500 text-[11px] font-bold">En Route</Text>
+              </View>
+              <View className="flex-row justify-between items-center bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
+                <View className="flex-row items-center gap-2">
+                  <MaterialCommunityIcons name="ambulance" size={16} color="#10B981" />
+                  <Text className="text-slate-700 text-xs font-bold">Suwa Seriya Ambulance 1990</Text>
+                </View>
+                <Text className="text-emerald-500 text-[11px] font-bold">Staged Scene</Text>
               </View>
             </View>
           </View>
 
           {/* Action Buttons */}
-          <View className="mx-4 mb-6">
+          <View className="mx-4 mb-4 flex-col gap-2">
             <TouchableOpacity 
-              className="bg-[#D62828] py-3.5 rounded-xl items-center mb-3 shadow-md"
+              className="bg-[#D62828] py-3.5 rounded-2xl items-center shadow-sm"
               onPress={() => navigation.navigate('ResponderIncidentDetails2', { incident })}
             >
-              <Text className="text-white font-bold text-[15px]">Accept Assignment</Text>
+              <Text className="text-white font-black text-sm uppercase tracking-wider">Accept Assignment</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              className="bg-white py-3.5 rounded-xl items-center border border-[#D62828] shadow-sm"
+              className="bg-white py-3.5 rounded-2xl items-center border border-slate-200"
               onPress={() => navigation.goBack()}
             >
-              <Text className="text-[#D62828] font-bold text-[15px]">Decline</Text>
+              <Text className="text-slate-500 font-bold text-sm uppercase tracking-wider">Decline Dispatch</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Responder Notes */}
-          <View className="mx-4 mb-6 bg-white rounded-2xl p-5 shadow-sm">
-            <Text className="text-[#2B2D42] text-[16px] font-bold mb-4">Responder Notes</Text>
-            <TextInput
-              className="border border-[#EBEBEB] rounded-xl p-4 h-32 text-[#2B2D42] text-[14px] bg-white"
-              placeholder="Add notes about this incident..."
-              placeholderTextColor="#8D99AE"
-              multiline
-              textAlignVertical="top"
-              value={notes}
-              onChangeText={setNotes}
-            />
-            <View className="items-center mt-4">
-              <TouchableOpacity className="border border-[#D62828] px-8 py-2 rounded-xl" onPress={handleSaveNotes}>
-                <Text className="text-[#D62828] font-semibold text-[14px]">Save Notes</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Contact Information */}
-          <View className="mx-4 bg-white rounded-2xl p-5 shadow-sm mb-4">
-            <Text className="text-[#2B2D42] text-[16px] font-bold mb-5">Contact Information</Text>
-
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-[#8D99AE] text-[15px] font-medium">Reporter</Text>
-              <TouchableOpacity className="flex-row items-center border border-[#D62828] px-4 py-2 rounded-xl">
-                <Feather name="phone-call" size={14} color="#D62828" />
-                <Text className="text-[#D62828] font-bold ml-2 text-[13px]">Call</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="flex-row justify-between items-center">
-              <Text className="text-[#8D99AE] text-[15px] font-medium">Dispatch</Text>
-              <TouchableOpacity className="flex-row items-center border border-[#D62828] px-4 py-2 rounded-xl">
-                <Feather name="phone-call" size={14} color="#D62828" />
-                <Text className="text-[#D62828] font-bold ml-2 text-[13px]">Call</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
         </ScrollView>
       </View>
     </KeyboardAvoidingView>
