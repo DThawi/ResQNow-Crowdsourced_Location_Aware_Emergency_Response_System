@@ -54,6 +54,13 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
   const config = getContextMeta(typeText);
 
   useEffect(() => {
+    const statusLower = incident.status?.toLowerCase();
+    if (statusLower === 'en route' || statusLower === 'in progress') {
+      navigation.replace('ResponderIncidentDetails3', { incident });
+    }
+  }, [incident.status]);
+
+  useEffect(() => {
     let isMounted = true;
     const resolveLocation = async () => {
       try {
