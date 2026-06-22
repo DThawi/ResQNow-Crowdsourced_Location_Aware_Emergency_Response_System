@@ -33,6 +33,10 @@ router.put(
 router.get('/profile-stats', verifyToken, userController.getProfileStats);
 router.get('/profile', verifyToken, userController.getProfile);
 router.put('/profile-update', verifyToken, userController.updateProfile);
+router.get('/notification-settings', verifyToken, userController.getNotificationSettings);
+router.put('/notification-settings', verifyToken, userController.updateNotificationSettings);
+router.get('/download-data', verifyToken, userController.downloadUserData);
+router.delete('/account', verifyToken, userController.deleteAccount);
 
 
 router.post(

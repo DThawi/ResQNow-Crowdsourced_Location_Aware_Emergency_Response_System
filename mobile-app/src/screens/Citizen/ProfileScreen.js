@@ -55,7 +55,14 @@ const ProfileScreen = () => {
       ]);
 
       setUser(profileRes.data);
-      setStats(statsRes.data);
+      // Map backend stats keys to the UI-friendly keys
+      const s = statsRes.data || {};
+      setStats({
+        all: s.all || 0,
+        verified: s.verifications || 0,
+        flagged: s.flagged || 0,
+        heroBadge: s.heroBadge || 0,
+      });
     } catch (error) {
       console.log("Profile Error:", error.response?.data || error.message);
       // Fallback for user name/email if profile endpoint is pending
@@ -143,9 +150,9 @@ const ProfileScreen = () => {
           <PerformanceCard
             label="Hero"
             icon="medal-outline"
+            value={stats.heroBadge || 0}
             valueColor="#2ECC71"
             onPress={() => setIsBadgeListVisible(true)}
-            // Removed the 'value' prop entirely to clear the '0'
           />
         </View>
 
