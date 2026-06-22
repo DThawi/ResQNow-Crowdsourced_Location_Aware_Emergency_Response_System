@@ -8,7 +8,7 @@ const TermsConditions_Citizen = ({ navigation }) => {
   return (
     <View className="flex-1 bg-gray-100">
       {/* Header */}
-      // <GradientHeader title="Terms & Conditions" type="close" />
+      // <GradientHeader title="Terms & Conditions" type="back" />
       {/* Content */}
       <ScrollView showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}

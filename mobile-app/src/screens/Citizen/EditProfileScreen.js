@@ -51,9 +51,9 @@ const EditProfileScreen = ({ navigation }) => {
         address: user.address || "",
       });
 
-      if (user.image) {
-        setImage(user.image);
-      }
+      if (user.profileImage) {
+  setImage(user.profileImage);
+}
     } catch (error) {
       console.log("Fetch Profile Error:", error);
       Alert.alert("Error", "Could not load existing profile data.");
@@ -69,29 +69,62 @@ const EditProfileScreen = ({ navigation }) => {
       "Choose an option",
       [
         {
-          text: "Camera",
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') return;
-            let result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.5,
-            });
-            if (!result.canceled) uploadImage(result.assets[0].uri);
-          }
-        },
+  text: "Camera",
+  onPress: async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Camera permission is required.");
+        return;
+      }
+
+      let result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      console.log("Camera Result:", result);
+
+      if (!result.canceled && result.assets?.length > 0) {
+        uploadImage(result.assets[0].uri);
+      }
+
+    } catch (error) {
+      console.log("Camera Error:", error);
+      Alert.alert(
+        "Error",
+        "Failed to open camera."
+      );
+    }
+  }
+},
         {
           text: "Gallery",
           onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') return;
-            let result = await ImagePicker.launchImageLibraryAsync({
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.5,
-            });
-            if (!result.canceled) uploadImage(result.assets[0].uri);
+            try {
+              const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Media library permission is required.');
+                return;
+              }
+
+              let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.5,
+              });
+
+              if (!result.canceled && result.assets?.length > 0) {
+                uploadImage(result.assets[0].uri);
+              }
+            } catch (error) {
+              console.log('Gallery Error:', error);
+              Alert.alert('Error', 'Failed to open gallery.');
+            }
           }
         },
         { text: "Cancel", style: "cancel" }
@@ -135,7 +168,7 @@ const EditProfileScreen = ({ navigation }) => {
         name: form.fullName,
         contact_number: form.phone,
         address: form.address,
-        image: image
+        profileImage: image
       };
 
       await API.put("/auth/profile-update", updateData, {
@@ -144,6 +177,8 @@ const EditProfileScreen = ({ navigation }) => {
 
       // Update local storage so Profile Screen updates immediately
       await AsyncStorage.setItem('userName', form.fullName);
+      await AsyncStorage.setItem('userEmail', form.email || '');
+      if (image) await AsyncStorage.setItem('userProfileImage', image);
 
       Alert.alert("Success", "Profile updated successfully");
       navigation.goBack();

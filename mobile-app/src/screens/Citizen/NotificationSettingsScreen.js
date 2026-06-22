@@ -10,7 +10,6 @@ import { Ionicons } from "@expo/vector-icons";
 import GradientHeader from "../../components/layout/header";
 import CustomToggle from "../../components/symbols/CustomeToggle";
 import API from "../../services/api"; // axios instance
-// import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const NotificationSettings = () => {
   const [loading, setLoading] = useState(true);
@@ -39,15 +38,28 @@ const NotificationSettings = () => {
     try {
       setLoading(true);
 
-      // if token manually needed:
-      // const token = await AsyncStorage.getItem("token");
-
-      const res = await API.get("/notification-settings");
+      const res = await API.get("/auth/notification-settings");
 
       setSettings(res.data);
     } catch (error) {
-      console.log("Fetch settings error:", error);
-      Alert.alert("Error", "Failed to load notification settings.");
+      console.log("Fetch settings error:", error.response?.data || error.message);
+      // Use default settings if fetch fails
+      setSettings({
+        sms: false,
+        vibration: true,
+        sound: true,
+        notification: true,
+        emailNotification: true,
+        criticalAlert: true,
+        fireIncidents: true,
+        trafficAccidents: true,
+        medicalEmergencies: true,
+        crimeReports: true,
+        reportVerification: true,
+        reportUpdates: true,
+        commentReplies: false,
+      });
+      Alert.alert("Info", "Using default notification settings.");
     } finally {
       setLoading(false);
     }
@@ -70,11 +82,11 @@ const NotificationSettings = () => {
         [key]: value,
       }));
 
-      await API.put("/notification-settings", {
+      await API.put("/auth/notification-settings", {
         [key]: value,
       });
     } catch (error) {
-      console.log("Update error:", error);
+      console.log("Update error:", error.response?.data || error.message);
 
       // rollback if failed
       setSettings((prev) => ({
