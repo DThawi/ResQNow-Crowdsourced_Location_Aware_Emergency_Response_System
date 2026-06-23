@@ -17,6 +17,7 @@ import {
   getAnalyticsMonthly,
   getIncidents,
 } from "../services/analyticsService";
+import { exportAnalyticsReportPdf } from "../utils/exportAnalyticsReportPdf";
 
 const AdminAnalyticsScreen = () => {
   const [dateRange, setDateRange] = useState("Last 30 Days");
@@ -59,6 +60,24 @@ const AdminAnalyticsScreen = () => {
     setReportMessage(
       `Custom report generated for ${dateRange}. Download is ready.`
     );
+  };
+
+  const handleExportPdfReport = () => {
+    try {
+      exportAnalyticsReportPdf({
+        dateRange,
+        customStartDate,
+        customEndDate,
+        stats,
+        incidentsByCategory,
+        severityDistribution,
+        avgResponseTime,
+        reportData,
+      });
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("Failed to export PDF report: " + error.message);
+    }
   };
 
   const buildChartTicks = (max) => {
@@ -347,7 +366,10 @@ const AdminAnalyticsScreen = () => {
           )}
         </div>
 
-        <button className="bg-[#D62828] text-white border-none px-[20px] py-[10px] rounded-[10px] font-bold text-[13px] flex items-center gap-[8px]">
+        <button
+          onClick={handleExportPdfReport}
+          className="bg-[#D62828] text-white border-none px-[20px] py-[10px] rounded-[10px] font-bold text-[13px] flex items-center gap-[8px] cursor-pointer hover:bg-red-700 transition-colors"
+        >
           <Download size={16} />
           Export PDF Report
         </button>
