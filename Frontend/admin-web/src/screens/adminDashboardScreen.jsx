@@ -344,9 +344,6 @@ const AdminDashboardScreen = () => {
             <h3 className="m-0 text-[16px] text-[#2B2D42] font-bold">
               Recent Incidents
             </h3>
-            <span className="text-[12px] text-[#D62828] font-bold cursor-pointer hover:underline">
-              View All
-            </span>
           </div>
           <table className="w-full border-collapse text-left">
             <thead>

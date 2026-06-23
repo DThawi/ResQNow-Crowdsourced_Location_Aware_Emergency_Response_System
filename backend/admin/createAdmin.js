@@ -9,16 +9,24 @@ require("dotenv").config({ path: path.join(__dirname, "../.env") });
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB ✅");
 
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      console.error("❌ Error: ADMIN_EMAIL and ADMIN_PASSWORD must be defined in the environment variables (.env file).");
+      process.exit(1);
+    }
+
     // Delete old admin if exists
-    await User.deleteOne({ email: "superadmin@test.com" });
+    await User.deleteOne({ email: adminEmail });
 
     // Hash password
-    const passwordHash = await bcrypt.hash("SuperAdmin@2026", 10);
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
 
     // Create new admin
     const admin = new User({
       name: "Super Admin",
-      email: "superadmin@test.com",
+      email: adminEmail,
       password: passwordHash,
       role: "Admin",             // <-- MUST be exact
       contact_number: "0770000000",
