@@ -54,6 +54,34 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
 
+  profileImage: {
+    type: String,
+    default: null
+  },
+
+  notificationSettings: {
+    sms: { type: Boolean, default: false },
+    vibration: { type: Boolean, default: true },
+    sound: { type: Boolean, default: true },
+    notification: { type: Boolean, default: true },
+    emailNotification: { type: Boolean, default: true },
+    criticalAlert: { type: Boolean, default: true },
+    fireIncidents: { type: Boolean, default: true },
+    trafficAccidents: { type: Boolean, default: true },
+    medicalEmergencies: { type: Boolean, default: true },
+    crimeReports: { type: Boolean, default: true },
+    reportVerification: { type: Boolean, default: true },
+    reportUpdates: { type: Boolean, default: true },
+    commentReplies: { type: Boolean, default: false }
+  },
+
+  privacySettings: {
+    twoFactorEnabled: { type: Boolean, default: false },
+    shareLocation: { type: Boolean, default: true },
+    shareReports: { type: Boolean, default: true },
+    profileVisibility: { type: String, enum: ['public', 'private'], default: 'public' }
+  },
+
   registered_date: {
     type: Date,
     default: Date.now
