@@ -41,7 +41,7 @@ const AdminAnalyticsScreen = () => {
   const [error, setError] = useState("");
   const [reportMessage, setReportMessage] = useState("");
 
-  const handleGenerateReport = () => {
+  const handleExportPdfReport = () => {
     if (dateRange === "Custom Period") {
       if (!customStartDate || !customEndDate) {
         setReportMessage("Please select both a start and end date for the custom report.");
@@ -51,18 +51,8 @@ const AdminAnalyticsScreen = () => {
         setReportMessage("End date must be after the start date.");
         return;
       }
-      setReportMessage(
-        `Custom report generated for ${customStartDate} through ${customEndDate}. Download is ready.`
-      );
-      return;
     }
 
-    setReportMessage(
-      `Custom report generated for ${dateRange}. Download is ready.`
-    );
-  };
-
-  const handleExportPdfReport = () => {
     try {
       exportAnalyticsReportPdf({
         dateRange,
@@ -74,9 +64,16 @@ const AdminAnalyticsScreen = () => {
         avgResponseTime,
         reportData,
       });
+
+      const periodLabel =
+        dateRange === "Custom Period"
+          ? `${customStartDate} through ${customEndDate}`
+          : dateRange;
+
+      setReportMessage(`PDF report downloaded for ${periodLabel}.`);
     } catch (error) {
       console.error("PDF export failed:", error);
-      alert("Failed to export PDF report: " + error.message);
+      setReportMessage("Failed to export PDF report. Please try again.");
     }
   };
 
@@ -329,9 +326,9 @@ const AdminAnalyticsScreen = () => {
   return (
     <div className="animate-[fadeIn_0.3s_ease-out]">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-[25px]">
-        <div className="flex items-center gap-[15px]">
-          <div className="flex items-center gap-[8px] bg-white px-[15px] py-[8px] rounded-[10px] border border-[#E5E7EB]">
+      <div className="flex flex-col gap-[14px] lg:flex-row lg:justify-between lg:items-start mb-[25px]">
+        <div className="flex flex-col gap-[10px]">
+          <div className="flex items-center gap-[8px] bg-white px-[15px] py-[8px] rounded-[10px] border border-[#E5E7EB] w-fit">
             <Calendar size={14} color="#6B7280" />
 
             <select
@@ -346,8 +343,9 @@ const AdminAnalyticsScreen = () => {
               <option>Custom Period</option>
             </select>
           </div>
+
           {dateRange === "Custom Period" && (
-            <div className="flex items-center gap-[10px] bg-white px-[15px] py-[8px] rounded-[10px] border border-[#E5E7EB]">
+            <div className="flex flex-wrap items-center gap-[10px] rounded-[14px] border border-[#E5E7EB] bg-white px-[12px] py-[10px] shadow-sm w-fit">
               <label className="text-[#4B5563] text-[13px] font-semibold">From</label>
               <input
                 type="date"
@@ -365,6 +363,7 @@ const AdminAnalyticsScreen = () => {
             </div>
           )}
         </div>
+        
 
         <button
           onClick={handleExportPdfReport}
@@ -374,6 +373,12 @@ const AdminAnalyticsScreen = () => {
           Export PDF Report
         </button>
       </div>
+
+      {reportMessage && (
+          <div className="mb-[18px] rounded-[16px] border border-[#D1FAE5] bg-[#ECFDF5] p-[16px] text-[#14532d]">
+            {reportMessage}
+          </div>
+        )}
 
       {/* STATS */}
       <div className="grid grid-cols-4 gap-[20px] mb-[25px]">
@@ -415,7 +420,7 @@ const AdminAnalyticsScreen = () => {
       </div>
 
       <div className="mb-[25px]">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-[14px] mb-[18px]">
+        <div className="flex flex-col gap-[14px] sm:flex-row sm:justify-between sm:items-start mb-[18px]">
           <div>
             <h3 className="text-[18px] font-extrabold text-[#1E293B] mb-[6px]">
               Analytics Charts
@@ -424,20 +429,9 @@ const AdminAnalyticsScreen = () => {
               Visual summaries for incident trends and response performance.
             </p>
           </div>
-          <button
-            onClick={handleGenerateReport}
-            className="inline-flex items-center gap-[8px] rounded-[14px] bg-[#1D4ED8] px-[18px] py-[12px] text-white font-bold text-[13px] transition-colors hover:bg-[#2563eb]"
-          >
-            <Download size={16} />
-            Generate Custom Report
-          </button>
         </div>
 
-        {reportMessage && (
-          <div className="mb-[18px] rounded-[16px] border border-[#D1FAE5] bg-[#ECFDF5] p-[16px] text-[#14532d]">
-            {reportMessage}
-          </div>
-        )}
+        
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-[20px]">
           <ChartCard title="Incident Trends (Monthly)">
