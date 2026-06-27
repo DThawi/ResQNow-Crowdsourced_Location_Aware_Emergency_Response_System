@@ -107,11 +107,12 @@ export default function ReportIncident() {
               return;
             }
             let result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
               allowsEditing: true,
               aspect: [4, 3],
               quality: 0.7,
             });
-            if (!result.canceled) {
+            if (!result.canceled && result.assets?.length > 0) {
               setImage(result.assets[0].uri);
             }
           }
@@ -125,11 +126,12 @@ export default function ReportIncident() {
               return;
             }
             let result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
               allowsEditing: true,
               aspect: [4, 3],
               quality: 0.7,
             });
-            if (!result.canceled) {
+            if (!result.canceled && result.assets?.length > 0) {
               setImage(result.assets[0].uri);
             }
           }

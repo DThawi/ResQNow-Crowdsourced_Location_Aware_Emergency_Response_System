@@ -3,6 +3,7 @@ const { findCluster } = require("../utils/clustering");
 const User = require('../models/User');
 const Incident = require('../models/Incident');
 const { notifyAssignment, notifyStatusChange } = require('../utils/notificationHelper');
+const { autoAssignResponder } = require('../utils/autoAssignment');
 
 // Fetch user-specific reports
 exports.getMyReports = async (req, res) => {
@@ -52,6 +53,9 @@ exports.createIncident = async (req, res) => {
         const savedIncident = await newIncident.save();
 
         console.log("SAVED INCIDENT:", savedIncident);
+
+        // Attempt automated assignment
+        await autoAssignResponder(savedIncident);
 
         res.status(201).json(savedIncident);
 
@@ -170,7 +174,7 @@ exports.getAssignedIncidents = async (req, res) => {
 exports.updateResponseStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['Assigned', 'Resolved'];
+    const validStatuses = ['Assigned', 'En Route', 'In Progress', 'Resolved'];
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
@@ -183,10 +187,18 @@ exports.updateResponseStatus = async (req, res) => {
     }
 
     if (!incident.assignedAuthorities.includes(req.user.id)) {
-      return res.status(403).json({ message: "Not authorized to update this incident" });
+      if (status === 'Assigned') {
+        incident.assignedAuthorities.push(req.user.id);
+      } else {
+        return res.status(403).json({ message: "Not authorized to update this incident" });
+      }
     }
 
     incident.status = status;
+    if (status === 'Assigned' && !incident.assigned_at) {
+      incident.assigned_at = new Date();
+    }
+
     incident.status_history.push({
       status,
       changed_by: req.user.id
@@ -249,6 +261,9 @@ exports.adminVerifyIncident = async (req, res) => {
     await incident.save();
     await notifyStatusChange(incident);
  
+    // Attempt automated assignment
+    await autoAssignResponder(incident);
+
     res.status(200).json({ message: "Incident verified", incident });
   } catch (err) {
     res.status(500).json({ message: "Error verifying incident", error: err.message });
