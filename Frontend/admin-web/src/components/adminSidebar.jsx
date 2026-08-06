@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
+import {
   LayoutDashboard, AlertCircle, CheckCircle, Users, 
-  ShieldAlert, BarChart2, Settings, LogOut, X 
+  BarChart2, LogOut, X
 } from 'lucide-react';
 import { Bell } from "lucide-react";
 
@@ -16,10 +16,8 @@ const AdminSidebar = () => {
     { icon: <AlertCircle size={20} />, label: "Incident Management", path: "/incident" },
     { icon: <CheckCircle size={20} />, label: "Verification Center", path: "/verification" },
     { icon: <Users size={20} />, label: "Responder Management", path: "/responder" },
-    { icon: <ShieldAlert size={20} />, label: "Danger Zone Management", path: "/dangerzone" },
     { icon: <BarChart2 size={20} />, label: "Analytics & Reports", path: "/analytics" },
     { icon: <Users size={20} />, label: "User Management", path: "/users" },
-    { icon: <Settings size={20} />, label: "System Settings", path: "/settings" },
     { icon: <Bell size={20} />, label: "Alerts Center", path: "/alerts-hub" },
   ];
 
