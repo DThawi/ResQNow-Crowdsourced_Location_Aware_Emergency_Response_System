@@ -3,7 +3,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// ── A. REGISTER FUNCTION ─────────────────────────────────────────────
+// ── A. REGISTER FUNCTION ─────────────────────────────────────────────────────
 exports.register = async (req, res) => {
   try {
     const {
@@ -142,7 +142,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// ── 🎯 CRITICAL FIX: ADDED MISSING SETUP APPROVED PASSWORD FUNCTION ──
+// ── C. SETUP APPROVED PASSWORD FUNCTION ──────────────────────────────────────
 exports.setupApprovedPassword = async (req, res) => {
   try {
     const { email, token, password } = req.body;
@@ -170,7 +170,7 @@ exports.setupApprovedPassword = async (req, res) => {
   }
 };
 
-// ── C. ADMIN APPROVAL CONTROLLER ENDPOINT ────────────────────────────────────
+// ── D. ADMIN APPROVAL CONTROLLER ENDPOINT ────────────────────────────────────
 exports.approveResponder = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -209,7 +209,7 @@ You can now login to the mobile application.
   }
 };
 
-// ── D. AUXILIARY PROFILE METHODS ────────────────────────────────────
+// ── E. STANDARD FORGOT PASSWORD (CITIZEN / RESPONDER) ───────────────────────
 exports.forgotPassword = async (req, res) => {
   try {
     const { email, phone } = req.body;
@@ -219,8 +219,10 @@ exports.forgotPassword = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetOTP = otp;
-    user.otpExpire = Date.now() + 5 * 60 * 1000;
+    user.otpExpire = Date.now() + 5 * 60 * 1000; // Expires in 5 minutes
     await user.save();
+
+    console.log(`📧 [OTP SERVICE]: Generated OTP ${otp} for target user: ${user.email}`);
 
     if (email) await sendEmail(user.email, "Password Reset OTP", `Your OTP is: ${otp}`);
     if (phone) await sendSMS(user.contact_number, `Your OTP is: ${otp}`);
@@ -231,7 +233,62 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// VERIFY OTP
+// ── F. SECURE ADMIN FORGOT PASSWORD CONTROLLER ───────────────────────────────
+exports.adminForgotPassword = async (req, res) => {
+  try {
+    const { email, adminSecretKey } = req.body;
+
+    if (!email || !adminSecretKey) {
+      return res.status(400).json({ 
+        message: "Both Admin Email and Master Recovery Key are required." 
+      });
+    }
+
+    const user = await User.findOne({ email, role: "Admin" });
+    if (!user) {
+      return res.status(403).json({ 
+        message: "Access Denied: Invalid Admin Account Credentials." 
+      });
+    }
+
+    if (adminSecretKey !== process.env.ADMIN_RECOVERY_SECRET) {
+      console.warn(`\n==================================================`);
+      console.warn(`⚠️ [SECURITY ALERT]: Unauthorized Admin Reset Attempt!`);
+      console.warn(`Target Email: ${email} | Attempted Key: ${adminSecretKey}`);
+      console.warn(`==================================================\n`);
+
+      return res.status(401).json({ 
+        status: "error",
+        message: "Security Challenge Failed: Invalid Admin Master Key." 
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetOTP = otp;
+    user.otpExpire = Date.now() + 3 * 60 * 1000; // 3-minute tight expiration window
+    await user.save();
+
+    console.log(`\n🔐 [ADMIN SECURITY]: Master Key Verified!`);
+    console.log(`📧 [OTP SERVICE]: Admin Reset OTP ${otp} issued for ${email}`);
+
+    await sendEmail(
+      user.email, 
+      "CRITICAL: Admin Password Reset OTP", 
+      `High-Security Action Requested. Your Secure Admin OTP is: ${otp}. This code expires in 3 minutes.`
+    );
+
+    res.status(200).json({ 
+      status: "success",
+      message: "Admin Master Key verified. Secure OTP dispatched successfully." 
+    });
+
+  } catch (error) {
+    console.error("Admin Reset Error:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ── G. VERIFY OTP ───────────────────────────────────────────────────────────
 exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -246,11 +303,14 @@ exports.verifyOTP = async (req, res) => {
   }
 };
 
-// RESET PASSWORD
+// ── H. RESET PASSWORD ───────────────────────────────────────────────────────
 exports.resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
     const user = await User.findOne({ email });
+
+    if (!user) return res.status(400).json({ message: "User not found" });
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.password = hashedPassword;
@@ -264,7 +324,7 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// GET PROFILE
+// ── I. GET PROFILE ──────────────────────────────────────────────────────────
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
