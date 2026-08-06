@@ -27,7 +27,7 @@ function App() {
         <Route path="/analytics" element={<AdminLayout title="Analytics & Reports"><AdminAnalyticsScreen /></AdminLayout>} />
         <Route path="/users" element={<AdminLayout title="User Management"><AdminUserManagementScreen /></AdminLayout>} />
         <Route path="/profile" element={<AdminLayout title="Profile"><AdminProfileScreen /></AdminLayout>} />
-        <Route path="/alerts-hub" element={ <AdminLayout title="System Alerts Hub"><AdminAlertsHubScreen /></AdminLayout>}/>
+        <Route path="/alerts-hub" element={<AdminLayout title="System Alerts Hub"><AdminAlertsHubScreen /></AdminLayout>} />
 
         {/* Redirect base URL to login or dashboard */}
         <Route path="/" element={<Navigate to="/login" replace />} />
