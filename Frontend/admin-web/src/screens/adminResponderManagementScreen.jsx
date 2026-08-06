@@ -3,6 +3,7 @@ import {
   Plus, Search, Eye, Edit2, UserX, X, Check, AlertCircle, Building, Clock, FileText, CheckCircle, ExternalLink
 } from 'lucide-react';
 import API from '../services/api';
+import { formatIncidentDateTime } from '../utils/incidentPresentation';
 
 const AdminResponderManagementScreen = () => {
   // --- NAVIGATION & VIEW TABS ---
@@ -27,15 +28,7 @@ const AdminResponderManagementScreen = () => {
   const [selectedResponder, setSelectedResponder] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
-  // --- RESPONSIVE DYNAMIC RELATIVE TIME HELPER ---
-  const formatRelativeTime = (timestamp) => {
-    if (!timestamp) return 'Just now';
-    const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return `${diff} mins ago`;
-    if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
-    return `${Math.floor(diff / 1440)} days ago`;
-  };
+  const formatRelativeTime = formatIncidentDateTime;
 
   // --- AUTO-CLOSE EFFECT FOR SUCCESS DIALOG ---
   useEffect(() => {

@@ -186,14 +186,32 @@ exports.updateResponseStatus = async (req, res) => {
       return res.status(404).json({ message: "Incident not found" });
     }
 
-    if (!incident.assignedAuthorities.includes(req.user.id)) {
-      if (status === 'Assigned') {
-        incident.assignedAuthorities.push(req.user.id);
-      } else {
-        return res.status(403).json({ message: "Not authorized to update this incident" });
-      }
-    }
+    // if (!incident.assignedAuthorities.includes(req.user.id)) {
+    //   if (status === 'Assigned') {
+    //     incident.assignedAuthorities.push(req.user.id);
+    //   } else {
+    //     return res.status(403).json({ message: "Not authorized to update this incident" });
+    //   }
+    // }
 
+    // Check if the current user is an Admin
+const isAdmin = req.user.role === "Admin";
+
+// Check if the current user is one of the assigned responders/authorities
+const isAssignedResponder = incident.assignedAuthorities.some(
+  (id) => id.toString() === req.user.id.toString()
+);
+
+// Allow Admin OR assigned responder to update the incident
+if (!isAdmin && !isAssignedResponder) {
+  if (status === "Assigned") {
+    incident.assignedAuthorities.push(req.user.id);
+  } else {
+    return res.status(403).json({
+      message: "Not authorized to update this incident"
+    });
+  }
+}
     incident.status = status;
     if (status === 'Assigned' && !incident.assigned_at) {
       incident.assigned_at = new Date();
