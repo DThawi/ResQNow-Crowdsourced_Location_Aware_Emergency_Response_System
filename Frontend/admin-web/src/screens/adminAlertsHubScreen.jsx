@@ -5,14 +5,7 @@ import {
   Bell, Filter, Search, ChevronRight, CheckCircle,
   AlertTriangle, Info, ExternalLink, X, ShieldCheck, Navigation, FileText
 } from 'lucide-react';
-
-const getTimeAgo = (timestamp) => {
-  if (!timestamp) return "Just now";
-  const diff = Math.floor((new Date() - new Date(timestamp)) / 60000);
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-  return `${Math.floor(diff / 1440)}d ago`;
-};
+import { formatIncidentDateTime } from '../utils/incidentPresentation';
 
 const AdminAlertsHubScreen = () => {
   const navigate = useNavigate();
@@ -44,7 +37,7 @@ const AdminAlertsHubScreen = () => {
           id: incident._id,
           type: incident.severity ? incident.severity.toUpperCase() : 'INFO',
           text: incident.description || `${incident.type} Emergency reported`,
-          time: getTimeAgo(incident.timestamp),
+          time: formatIncidentDateTime(incident.timestamp),
           status: mappedStatus,
           category: incident.type || 'General',
           raw: incident

@@ -22,6 +22,7 @@ import {
   getResponders,
   assignResponder,
 } from "../services/analyticsService";
+import { formatIncidentDateTime, getIncidentAddress } from "../utils/incidentPresentation";
 
 const NEARBY_CLUSTER_RADIUS_KM = 10;
 
@@ -106,32 +107,45 @@ const AdminIncidentManagementScreen = () => {
     }
   };
 
-  // --- RESOLVE & REMOVE LOGIC ---
+  // --- RESOLVE INCIDENT ---
   const [resolveModalOpen, setResolveModalOpen] = useState(false);
 
   const handleResolveSequence = async () => {
     if (!selectedIncidentId) return;
-    setResolveModalOpen(true);
-    try {
-      await updateIncidentStatus(selectedIncidentId, "Resolved");
-    } catch (err) {
-      console.warn("Unable to update incident status", err);
-    }
-    setIncidents((prev) =>
-      prev.map((inc) =>
-        inc.id === selectedIncidentId ? { ...inc, status: "Resolved" } : inc,
-      ),
-    );
 
-    setTimeout(() => {
-      setIncidents((prev) => {
-        const remaining = prev.filter((i) => i.id !== selectedIncidentId);
-        if (remaining.length > 0) setSelectedIncidentId(remaining[0].id);
-        else setSelectedIncidentId(null);
-        return remaining;
-      });
-      setResolveModalOpen(false);
-    }, 3000);
+    try {
+      const result = await updateIncidentStatus(selectedIncidentId, "Resolved");
+      const updatedIncident = result?.incident;
+
+      if (updatedIncident?.status !== "Resolved") {
+        throw new Error("The server did not confirm that the incident was resolved.");
+      }
+
+      setResolveModalOpen(true);
+      setIncidents((prev) =>
+        prev.map((inc) =>
+          inc.id === selectedIncidentId
+            ? { ...inc, status: updatedIncident.status }
+            : inc,
+        ),
+      );
+
+      setTimeout(() => {
+        setIncidents((prev) => {
+          const remaining = prev.filter((i) => i.id !== selectedIncidentId);
+          if (remaining.length > 0) setSelectedIncidentId(remaining[0].id);
+          else setSelectedIncidentId(null);
+          return remaining;
+        });
+        setResolveModalOpen(false);
+      }, 3000);
+    } catch (err) {
+      console.error("Unable to resolve incident", err);
+      alert(
+        "Failed to resolve incident: " +
+          (err.response?.data?.message || err.message),
+      );
+    }
   };
 
   useEffect(() => {
@@ -139,20 +153,12 @@ const AdminIncidentManagementScreen = () => {
 
     const formatIncident = (incident) => {
       const coords = incident.location?.coordinates;
-      const location = coords
-        ? `${coords[1].toFixed(3)}, ${coords[0].toFixed(3)}`
-        : "Unknown location";
-      const reportTime = incident.timestamp
-        ? new Date(incident.timestamp)
-        : null;
-      const timeLabel = reportTime
-        ? `${Math.max(1, Math.floor((Date.now() - reportTime.getTime()) / 60000))}m ago`
-        : "Unknown";
       return {
         id: incident._id,
         title: incident.type || incident.description || "Incident Reported",
         type: incident.type || "Unknown",
-        location,
+        location: coords ? "Finding address..." : "Location unavailable",
+        locationData: incident.location,
         latitude: coords ? coords[1] : null,
         longitude: coords ? coords[0] : null,
         status:
@@ -162,7 +168,7 @@ const AdminIncidentManagementScreen = () => {
               ? "Reported"
               : incident.status,
         rawStatus: incident.status,
-        time: timeLabel,
+        time: formatIncidentDateTime(incident.timestamp),
         assigned: Array.isArray(incident.assignedAuthorities)
           ? incident.assignedAuthorities.map((item) => String(item))
           : [],
@@ -179,6 +185,19 @@ const AdminIncidentManagementScreen = () => {
           ? incidentRecords.map(formatIncident)
           : [];
         setIncidents(transformed);
+        Promise.all(
+          transformed.map(async (incident) => ({
+            id: incident.id,
+            address: await getIncidentAddress(incident.locationData),
+          })),
+        ).then((addresses) => {
+          if (cancelled) return;
+          const addressById = new Map(addresses.map(({ id, address }) => [id, address]));
+          setIncidents((current) => current.map((incident) => ({
+            ...incident,
+            location: addressById.get(incident.id) || incident.location,
+          })));
+        });
         if (transformed.length > 0) {
           setSelectedIncidentId(transformed[0].id);
         }

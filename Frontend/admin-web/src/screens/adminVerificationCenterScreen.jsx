@@ -3,6 +3,7 @@ import {
   AlertCircle, CheckCircle, MapPin, Clock, ShieldCheck, XCircle, Image as ImageIcon, X, RefreshCw
 } from 'lucide-react';
 import API from '../services/api'; // adjust path if needed
+import { formatIncidentDateTime, getIncidentAddress } from '../utils/incidentPresentation';
 
 const AdminVerificationCenterScreen = () => {
 
@@ -12,6 +13,7 @@ const AdminVerificationCenterScreen = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [addresses, setAddresses] = useState({});
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState('verify');
@@ -29,6 +31,12 @@ const AdminVerificationCenterScreen = () => {
       const pending = (Array.isArray(res.data) ? res.data : [])
         .filter(i => i.status === 'Pending');
       setReports(pending);
+      Promise.all(pending.map(async (incident) => ([
+        incident._id,
+        await getIncidentAddress(incident.location),
+      ]))).then((resolvedAddresses) => {
+        setAddresses(Object.fromEntries(resolvedAddresses));
+      });
       if (pending.length > 0) setSelectedReportId(pending[0]._id);
       else setSelectedReportId(null);
     } catch (err) {
@@ -81,21 +89,11 @@ const AdminVerificationCenterScreen = () => {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const formatCoords = (incident) => {
-    if (incident?.location?.coordinates) {
-      const [lng, lat] = incident.location.coordinates;
-      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    }
-    return 'Location unavailable';
+    if (!incident?.location?.coordinates) return 'Location unavailable';
+    return addresses[incident._id] || 'Finding address...';
   };
 
-  const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return `${diff} min${diff > 1 ? 's' : ''} ago`;
-    const hrs = Math.floor(diff / 60);
-    return `${hrs} hr${hrs > 1 ? 's' : ''} ago`;
-  };
+  const formatTime = formatIncidentDateTime;
 
   const getVerificationProgress = (incident) => {
     const verifications = incident.verified_by?.length || 0;
