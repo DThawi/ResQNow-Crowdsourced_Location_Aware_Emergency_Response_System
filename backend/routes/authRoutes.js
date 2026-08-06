@@ -4,10 +4,9 @@ const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { uploadDocumentsToCloudinary } = require("../middleware/upload");
-
 const { upload } = require('../middleware/uploadMiddleware');
 
-// ── Multi-part registration handler ─────────────────────────────────────────
+// ── Multi-part Registration Handler ─────────────────────────────────────────
 router.post(
   '/register', 
   upload.fields([
@@ -23,7 +22,15 @@ router.post(
 router.post('/login', authController.login);
 router.post('/setup-approved-password', authController.setupApprovedPassword);
 
-// Administrative Approvals 
+// ── Citizen & Standard OTP Recovery ─────────────────────────────────────────
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/verify-otp', authController.verifyOTP);
+router.post('/reset-password', authController.resetPassword);
+
+// ── Secure Admin Recovery Endpoint ──────────────────────────────────────────
+router.post('/admin-forgot-password', authController.adminForgotPassword);
+
+// ── Administrative Approvals ────────────────────────────────────────────────
 router.put(
   "/approve-responder/:userId",
   authController.approveResponder
@@ -38,7 +45,7 @@ router.put('/notification-settings', verifyToken, userController.updateNotificat
 router.get('/download-data', verifyToken, userController.downloadUserData);
 router.delete('/account', verifyToken, userController.deleteAccount);
 
-
+// ── Responder Document Registration ─────────────────────────────────────────
 router.post(
   "/register-documents",
   verifyToken,

@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const morgan = require("morgan"); // 1. Added HTTP request logging middleware
 const connectDB = require("./db");
 const User = require("./models/User");
 const heatmapRoutes = require("./routes/heatmapRoutes");
@@ -18,6 +19,18 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// 2. Add Morgan Middleware for clean terminal logs
+app.use(morgan(":method :url :status :res[content-length] - :response-time ms"));
+
+// 3. Custom Request Tracker for high visibility in terminal screenshots
+app.use((req, res, next) => {
+  console.log(`\n--------------------------------------------------`);
+  console.log(`📥 Incoming API Request: [${req.method}] ${req.originalUrl}`);
+  console.log(`⏰ Time: ${new Date().toLocaleTimeString()}`);
+  console.log(`--------------------------------------------------`);
+  next();
+});
 
 // UNIFIED HTTP CONTEXT CONTAINER FOR SOCKET.IO
 const http = require("http");
@@ -54,7 +67,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/heatmap", heatmapRoutes);
-app.use("/api/notifications", notificationRoutes); // 🎯 Bound perfectly to /api/notifications
+app.use("/api/notifications", notificationRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
