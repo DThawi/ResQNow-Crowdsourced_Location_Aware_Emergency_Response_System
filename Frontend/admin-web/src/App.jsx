@@ -9,7 +9,6 @@ import AdminVerificationCenterScreen from "./screens/adminVerificationCenterScre
 import AdminResponderManagementScreen from "./screens/adminResponderManagementScreen.jsx";
 import AdminAnalyticsScreen from "./screens/adminAnalyticsScreen.jsx";
 import AdminUserManagementScreen from "./screens/adminUserManagementScreen.jsx";
-import AdminSettingsScreen from "./screens/adminSettingsScreen.jsx";
 import AdminProfileScreen from "./screens/adminProfileScreen.jsx";
 import AdminAlertsHubScreen from "./screens/adminAlertsHubScreen.jsx";
 
@@ -27,7 +26,6 @@ function App() {
         <Route path="/responder" element={<AdminLayout title="Responder Management"><AdminResponderManagementScreen /></AdminLayout>} />
         <Route path="/analytics" element={<AdminLayout title="Analytics & Reports"><AdminAnalyticsScreen /></AdminLayout>} />
         <Route path="/users" element={<AdminLayout title="User Management"><AdminUserManagementScreen /></AdminLayout>} />
-        <Route path="/settings" element={<AdminLayout title="System Settings"><AdminSettingsScreen /></AdminLayout>} />
         <Route path="/profile" element={<AdminLayout title="Profile"><AdminProfileScreen /></AdminLayout>} />
         <Route path="/alerts-hub" element={<AdminLayout title="System Alerts Hub"><AdminAlertsHubScreen /></AdminLayout>} />
 
