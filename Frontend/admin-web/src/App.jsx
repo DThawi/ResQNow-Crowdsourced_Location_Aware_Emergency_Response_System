@@ -7,7 +7,6 @@ import AdminDashboardScreen from "./screens/adminDashboardScreen.jsx";
 import AdminIncidentManagementScreen from "./screens/adminIncidentManagementScreen.jsx";
 import AdminVerificationCenterScreen from "./screens/adminVerificationCenterScreen.jsx";
 import AdminResponderManagementScreen from "./screens/adminResponderManagementScreen.jsx";
-import AdminDangerZoneScreen from "./screens/adminDangerZoneScreen.jsx";
 import AdminAnalyticsScreen from "./screens/adminAnalyticsScreen.jsx";
 import AdminUserManagementScreen from "./screens/adminUserManagementScreen.jsx";
 import AdminSettingsScreen from "./screens/adminSettingsScreen.jsx";
@@ -26,12 +25,11 @@ function App() {
         <Route path="/incident" element={<AdminLayout title="Incident Management"><AdminIncidentManagementScreen /></AdminLayout>} />
         <Route path="/verification" element={<AdminLayout title="Verification Center"><AdminVerificationCenterScreen /></AdminLayout>} />
         <Route path="/responder" element={<AdminLayout title="Responder Management"><AdminResponderManagementScreen /></AdminLayout>} />
-        <Route path="/dangerzone" element={<AdminLayout title="Danger Zone Management"><AdminDangerZoneScreen /></AdminLayout>} />
         <Route path="/analytics" element={<AdminLayout title="Analytics & Reports"><AdminAnalyticsScreen /></AdminLayout>} />
         <Route path="/users" element={<AdminLayout title="User Management"><AdminUserManagementScreen /></AdminLayout>} />
         <Route path="/settings" element={<AdminLayout title="System Settings"><AdminSettingsScreen /></AdminLayout>} />
         <Route path="/profile" element={<AdminLayout title="Profile"><AdminProfileScreen /></AdminLayout>} />
-        <Route path="/alerts-hub" element={ <AdminLayout title="System Alerts Hub"><AdminAlertsHubScreen /></AdminLayout>}/>
+        <Route path="/alerts-hub" element={<AdminLayout title="System Alerts Hub"><AdminAlertsHubScreen /></AdminLayout>} />
 
         {/* Redirect base URL to login or dashboard */}
         <Route path="/" element={<Navigate to="/login" replace />} />
