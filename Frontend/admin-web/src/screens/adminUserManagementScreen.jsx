@@ -316,7 +316,7 @@ const AdminUserManagementScreen = () => {
                             {user.role === 'Responder' ? (
                               /*  MANAGEMENT COMPONENT BOUNDS RESTRICTION */
                               <span className="text-[11px] font-black tracking-wide text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
-                                Pending Fleet Action
+                                Fleet Action
                               </span>
                             ) : (
                               <div className="flex justify-end gap-[10px]">

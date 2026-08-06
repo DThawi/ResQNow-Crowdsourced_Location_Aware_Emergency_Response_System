@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
+import {
   LayoutDashboard, AlertCircle, CheckCircle, Users, 
-  BarChart2, LogOut, X 
+
+  BarChart2, LogOut, X
+
 } from 'lucide-react';
 import { Bell } from "lucide-react";
 

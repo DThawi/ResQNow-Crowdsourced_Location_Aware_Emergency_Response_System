@@ -100,7 +100,7 @@ const AdminHeader = ({ title }) => {
   };
 
   const markAllAsRead = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
@@ -215,6 +215,7 @@ const AdminHeader = ({ title }) => {
         onClose={() => setIsModalOpen(false)}
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
+        onMarkAllAsRead={markAllAsRead}
       />
     </header>
   );
