@@ -9,15 +9,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import AdminAlertsModal from "./adminAlertsModal.jsx";
-
-// Helper function to map time differences matching the mobile screens
-const getTimeAgo = (timestamp) => {
-  if (!timestamp) return "Just now";
-  const diff = Math.floor((new Date() - new Date(timestamp)) / 60000);
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-  return `${Math.floor(diff / 1440)}d ago`;
-};
+import { formatIncidentDateTime } from "../utils/incidentPresentation";
 
 const AdminHeader = ({ title }) => {
   const navigate = useNavigate();
@@ -59,7 +51,7 @@ const AdminHeader = ({ title }) => {
           id: item._id,
           type: item.severity ? item.severity.toUpperCase() : "INFO",
           text: item.description || `${item.type} Emergency Alert`,
-          time: getTimeAgo(item.timestamp),
+          time: formatIncidentDateTime(item.timestamp),
           read: item.status === "Resolved",
           targetPath: path,
           icon: iconElement,
@@ -108,7 +100,7 @@ const AdminHeader = ({ title }) => {
   };
 
   const markAllAsRead = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
@@ -223,6 +215,7 @@ const AdminHeader = ({ title }) => {
         onClose={() => setIsModalOpen(false)}
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
+        onMarkAllAsRead={markAllAsRead}
       />
     </header>
   );

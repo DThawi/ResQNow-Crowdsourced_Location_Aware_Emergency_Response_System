@@ -18,6 +18,7 @@ import {
   getResolvedToday,
   getResponders,
 } from "../services/analyticsService";
+import { formatIncidentDateTime, getIncidentAddress } from "../utils/incidentPresentation";
 
 const AdminDashboardScreen = () => {
   const [incidentTrends7d, setIncidentTrends7d] = useState([]);
@@ -115,10 +116,7 @@ const AdminDashboardScreen = () => {
 
     const buildFeed = (incidents = []) =>
       incidents.slice(0, 4).map((incident, idx) => ({
-        time: new Date(incident.timestamp).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
+        time: formatIncidentDateTime(incident.timestamp),
         title: incident.type || "Incident Reported",
         desc: incident.description
           ? incident.description.slice(0, 60)
@@ -167,16 +165,25 @@ const AdminDashboardScreen = () => {
         setStatusData(statusRes || []);
 
         setIncidentsByStatus(buildStatusCounts(statusRes || []));
-        setRecentIncidents(
-          incidents.slice(0, 5).map((incident) => ({
+        const recent = incidents.slice(0, 5).map((incident) => ({
             id: incident._id,
             title: incident.type || incident.description || "Incident",
             status: mapStatus(incident.status),
-            loc: incident.location?.coordinates
-              ? `${incident.location.coordinates[1].toFixed(3)}, ${incident.location.coordinates[0].toFixed(3)}`
-              : "Unknown",
-          })),
-        );
+            loc: incident.location?.coordinates ? "Finding address..." : "Location unavailable",
+            locationData: incident.location,
+          }));
+        setRecentIncidents(recent);
+        Promise.all(recent.map(async (incident) => ({
+          id: incident.id,
+          address: await getIncidentAddress(incident.locationData),
+        }))).then((addresses) => {
+          if (cancelled) return;
+          const addressById = new Map(addresses.map(({ id, address }) => [id, address]));
+          setRecentIncidents((current) => current.map((incident) => ({
+            ...incident,
+            loc: addressById.get(incident.id) || incident.loc,
+          })));
+        });
         setLiveFeedItems(buildFeed(incidents));
         setStats(
           buildStats(
