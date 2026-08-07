@@ -25,6 +25,8 @@ const AdminSidebar = () => {
 
   const handleLogout = () => {
     setShowLogoutPopup(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("read_incidents");
     navigate('/login'); 
   };
 

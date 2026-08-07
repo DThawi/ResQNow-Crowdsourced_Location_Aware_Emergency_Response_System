@@ -30,6 +30,9 @@ const AdminHeader = ({ title }) => {
       const response = await axios.get("http://localhost:5000/api/incidents", config);
       const fetchedData = Array.isArray(response.data) ? response.data : response.data.incidents || [];
 
+      // Retrieve read incident IDs from localStorage
+      const readIncidentIds = JSON.parse(localStorage.getItem("read_incidents") || "[]");
+
       // Transform db entries to match frontend view requirements
       const formatted = fetchedData.map((item) => {
         let path = "/dashboard";
@@ -52,7 +55,7 @@ const AdminHeader = ({ title }) => {
           type: item.severity ? item.severity.toUpperCase() : "INFO",
           text: item.description || `${item.type} Emergency Alert`,
           time: formatIncidentDateTime(item.timestamp),
-          read: item.status === "Resolved",
+          read: item.status === "Resolved" || readIncidentIds.includes(item._id),
           targetPath: path,
           icon: iconElement,
         };
@@ -91,6 +94,13 @@ const AdminHeader = ({ title }) => {
         prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
       );
 
+      // Persist in localStorage
+      const readIncidentIds = JSON.parse(localStorage.getItem("read_incidents") || "[]");
+      if (!readIncidentIds.includes(notif.id)) {
+        readIncidentIds.push(notif.id);
+        localStorage.setItem("read_incidents", JSON.stringify(readIncidentIds));
+      }
+
       navigate(notif.targetPath);
       setShowNotif(false);
       setIsModalOpen(false);
@@ -102,6 +112,15 @@ const AdminHeader = ({ title }) => {
   const markAllAsRead = (e) => {
     e?.stopPropagation();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+
+    // Persist in localStorage
+    const readIncidentIds = JSON.parse(localStorage.getItem("read_incidents") || "[]");
+    notifications.forEach((n) => {
+      if (!readIncidentIds.includes(n.id)) {
+        readIncidentIds.push(n.id);
+      }
+    });
+    localStorage.setItem("read_incidents", JSON.stringify(readIncidentIds));
   };
 
   return (
