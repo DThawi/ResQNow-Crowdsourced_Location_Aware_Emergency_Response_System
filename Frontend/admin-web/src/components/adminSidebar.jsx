@@ -1,33 +1,47 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import {
+import { 
   LayoutDashboard, AlertCircle, CheckCircle, Users, 
-
-  BarChart2, LogOut, X
-
+  ShieldAlert, BarChart2, Settings, LogOut, X, Bell 
 } from 'lucide-react';
-import { Bell } from "lucide-react";
+import API from '../services/api'; // Adjust relative path to services/api if needed
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/dashboard" },
     { icon: <AlertCircle size={20} />, label: "Incident Management", path: "/incident" },
     { icon: <CheckCircle size={20} />, label: "Verification Center", path: "/verification" },
     { icon: <Users size={20} />, label: "Responder Management", path: "/responder" },
+    { icon: <ShieldAlert size={20} />, label: "Danger Zone Management", path: "/dangerzone" },
     { icon: <BarChart2 size={20} />, label: "Analytics & Reports", path: "/analytics" },
     { icon: <Users size={20} />, label: "User Management", path: "/users" },
+    { icon: <Settings size={20} />, label: "System Settings", path: "/settings" },
     { icon: <Bell size={20} />, label: "Alerts Center", path: "/alerts-hub" },
   ];
 
-  const handleLogout = () => {
-    setShowLogoutPopup(false);
-    localStorage.removeItem("token");
-    localStorage.removeItem("read_incidents");
-    navigate('/login'); 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // 🔒 Send logout API request so Express logs the event
+      await API.post('/auth/logout');
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      // Clear token / local session data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      setShowLogoutPopup(false);
+      setIsLoggingOut(false);
+      
+      // Redirect to login screen
+      navigate('/login');
+    }
   };
 
   return (
@@ -73,15 +87,17 @@ const AdminSidebar = () => {
             <div className="flex gap-4 justify-center">
               <button 
                 onClick={() => setShowLogoutPopup(false)} 
-                className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white font-bold cursor-pointer hover:bg-slate-50 transition-colors"
+                disabled={isLoggingOut}
+                className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white font-bold cursor-pointer hover:bg-slate-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleLogout} 
-                className="px-6 py-2.5 rounded-xl border-none bg-[#D62828] text-white font-bold cursor-pointer hover:bg-red-700 transition-colors"
+                disabled={isLoggingOut}
+                className="px-6 py-2.5 rounded-xl border-none bg-[#D62828] text-white font-bold cursor-pointer hover:bg-red-700 transition-colors disabled:opacity-50"
               >
-                Logout
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
               </button>
             </div>
           </div>
