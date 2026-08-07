@@ -29,12 +29,15 @@ const AdminUserManagementScreen = () => {
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'Citizen', contact_number: '', district: '', organization: '' });
   const [countdown, setCountdown] = useState(3);
 
-  // --- DATA FETCHING ---
-  const fetchUsers = async () => {
+  // --- DATA FETCHING WITH SERVER-SIDE SEARCH QUERY ---
+  const fetchUsers = async (query = '') => {
     try {
       setLoading(true);
       setError(null);
-      const res = await API.get('/admin/users');
+      // 🟢 Dispatches ?search= parameter to trigger terminal logging
+      const endpoint = query ? `/admin/users?search=${encodeURIComponent(query)}` : '/admin/users';
+      const res = await API.get(endpoint);
+      
       const formatted = res.data.map(u => ({
         id: u._id,
         name: u.name,
@@ -55,9 +58,14 @@ const AdminUserManagementScreen = () => {
     }
   };
 
+  // Debounced search effect
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const delayDebounce = setTimeout(() => {
+      fetchUsers(searchTerm);
+    }, 400); // Debounces API requests by 400ms
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
 
   // --- TIMER FOR SUCCESS POPUP ---
   useEffect(() => {
@@ -156,7 +164,6 @@ const AdminUserManagementScreen = () => {
     const userToToggle = users.find(u => u.id === id);
     if (!userToToggle) return;
 
-    // 🎯 ARRANGEMENT RULES: Denies modification access for Responders on this generic panel
     if (userToToggle.role === 'Responder') {
       alert("Verification controls are restricted. Please manage Responders inside the Responder Fleet panel.");
       return;
@@ -192,17 +199,13 @@ const AdminUserManagementScreen = () => {
 
   // --- FILTERING & PAGINATION ---
   const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'All Roles' || user.role === roleFilter;
-    return matchesSearch && matchesRole;
+    return roleFilter === 'All Roles' || user.role === roleFilter;
   });
 
-  const totalPages = Math.ceil(filteredUsers.length / entriesPerPage);
+  const totalPages = Math.ceil(filteredUsers.length / entriesPerPage) || 1;
   const currentUsers = filteredUsers.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage);
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-150px)] text-slate-400">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D62828] mb-4"></div>
@@ -217,7 +220,7 @@ const AdminUserManagementScreen = () => {
         <AlertCircle size={48} className="text-red-400 mb-4" />
         <p className="text-[16px] font-semibold text-slate-600 mb-4">{error}</p>
         <button
-          onClick={fetchUsers}
+          onClick={() => fetchUsers(searchTerm)}
           className="px-6 py-2 bg-[#D62828] text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors"
         >
           Retry
@@ -314,9 +317,8 @@ const AdminUserManagementScreen = () => {
                         <td className="p-[15px_10px] text-[13px] text-[#64748B]">{user.date}</td>
                         <td className="p-[15px_25px] text-right">
                             {user.role === 'Responder' ? (
-                              /*  MANAGEMENT COMPONENT BOUNDS RESTRICTION */
                               <span className="text-[11px] font-black tracking-wide text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
-                                Fleet Action
+                                Pending Fleet Action
                               </span>
                             ) : (
                               <div className="flex justify-end gap-[10px]">
