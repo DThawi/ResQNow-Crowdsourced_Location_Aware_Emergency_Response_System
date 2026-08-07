@@ -8,7 +8,7 @@ import {
   Alert, 
   ActivityIndicator 
 } from "react-native";
-import API from "../../api"; // Adjust relative path to your api.js file
+import API from "../../services/api";
 
 const ForgotPasswordModal = ({ visible, onClose }) => {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password, 4: Success
