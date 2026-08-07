@@ -15,6 +15,7 @@ import {
   Ionicons,
 } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import { formatDateTime } from "../../utils/displayFormatters";
 
 const SEVERITY_COLORS = {
   CRITICAL: "#D62828",
@@ -131,8 +132,7 @@ export default function ResponderDangerZoneDetails({ route, navigation }) {
   const createdAt = zone?.timestamp || zone?.created_at || null;
   const updatedAt = zone?.updated_at || zone?.timestamp || null;
 
-  const formatDate = (date) =>
-    date ? new Date(date).toLocaleDateString("en-US") : "N/A";
+  const formatDate = (date) => formatDateTime(date, "N/A");
 
   const handleShare = async () => {
     try {

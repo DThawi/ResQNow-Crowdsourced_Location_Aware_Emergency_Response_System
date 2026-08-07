@@ -16,6 +16,7 @@ import {
 } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Linking } from "react-native";
+import { formatDateTime } from "../../utils/displayFormatters";
 
 /* ---------- Severity Colors ---------- */
 const SEVERITY_COLORS = {
@@ -216,8 +217,7 @@ const updatedAt = zone?.updated_at || zone?.timestamp || null;
 
   //
 
-  const formatDate = (date) =>
-    date ? new Date(date).toLocaleString() : "N/A";
+  const formatDate = (date) => formatDateTime(date, "N/A");
 
   const handleShare = async () => {
   try {

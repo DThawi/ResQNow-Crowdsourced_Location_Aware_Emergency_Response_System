@@ -6,6 +6,7 @@ import GradientHeader from '../../components/layout/header';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
+import { formatDateTime } from '../../utils/displayFormatters';
 
 export default function IncidentDetailsScreen1({ route, navigation }) {
   const [notes, setNotes] = useState('');
@@ -73,7 +74,7 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
         if (lookup && lookup.length > 0) {
           const p = lookup[0];
           const combined = [p.name, p.street, p.city, p.region].filter(Boolean).join(', ');
-          if (isMounted) setReadableAddress(combined || `Coordinates Block Locked [${coords[1].toFixed(4)}, ${coords[0].toFixed(4)}]`);
+          if (isMounted) setReadableAddress(combined || 'Address unavailable');
         }
       } catch (err) {
         if (isMounted) setReadableAddress('Panadura, Western Province, Sri Lanka');
@@ -145,7 +146,7 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
               </View>
               <View className="flex-row items-center">
                 <Feather name="clock" size={14} color="#64748B" />
-                <Text className="text-slate-500 text-xs ml-2.5">Dispatched: {incident.timestamp ? new Date(incident.timestamp).toLocaleTimeString() : 'Just Now'}</Text>
+                <Text className="text-slate-500 text-xs ml-2.5">Dispatched: {formatDateTime(incident.timestamp)}</Text>
               </View>
               <View className="flex-row items-center">
                 <Feather name="user" size={14} color="#64748B" />

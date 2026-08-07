@@ -8,6 +8,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import API from '../../services/api';
+import { formatDateTime } from '../../utils/displayFormatters';
 
 const FILTER_CHIPS = ["All", "Alerts", "Updates", "Assignments"];
 
@@ -68,15 +69,6 @@ export default function ResponderAlertsScreen({ navigation }) {
     return "Fire";
   };
 
-  const formatRelativeTime = (timestamp) => {
-    if (!timestamp) return 'Just now';
-    const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
-    if (diff < 1) return 'Just now';
-    if (diff < 60) return `${diff}m ago`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-    return `${Math.floor(diff / 1440)}d ago`;
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: '#F3F4F6', paddingTop: insets.top }}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
@@ -101,7 +93,7 @@ export default function ResponderAlertsScreen({ navigation }) {
               alert={{
                 title: item.title,
                 description: item.description,
-                time: formatRelativeTime(item.timestamp || item.createdAt),
+                time: formatDateTime(item.timestamp || item.createdAt),
                 unread: !item.is_read,
                 location: item.location || "Sri Lanka",
                 type: mapCategoryToType(item),

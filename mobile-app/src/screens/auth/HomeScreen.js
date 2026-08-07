@@ -7,6 +7,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import IncidentCard from '../../components/cards/incidentCards';
 import API from '../../services/api';
 import HomeHeader from '../../components/HomeHeader';
+import { formatDateTime, useReadableAddress } from '../../utils/displayFormatters';
+
+const RecentIncidentCard = ({ incident, navigation }) => {
+  const address = useReadableAddress(incident.location);
+
+  return (
+    <IncidentCard
+      type={incident.type}
+      status={incident.status}
+      description={incident.description}
+      location={address}
+      timeAgo={formatDateTime(incident.timestamp)}
+      verifications={incident.verified_by ? incident.verified_by.length : 0}
+      reports={incident.reported_inaccurate_by ? incident.reported_inaccurate_by.length : 0}
+      onPress={() => navigation.navigate("IncidentDetails", { incident })}
+    />
+  );
+};
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -68,14 +86,6 @@ const HomeScreen = () => {
     }, [])
   );
 
-  const getTimeAgo = (timestamp) => {
-    if (!timestamp) return "Just now";
-    const diff = Math.floor((new Date() - new Date(timestamp)) / 60000);
-    if (diff < 60) return `${diff}m ago`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-    return `${Math.floor(diff / 1440)}d ago`;
-  };
-
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
@@ -105,18 +115,7 @@ const HomeScreen = () => {
           data={incidents}
           keyExtractor={(item) => item._id}
           contentContainerStyle={{ padding: 16 }}
-          renderItem={({ item: incident }) => (
-            <IncidentCard
-              type={incident.type}
-              status={incident.status}
-              description={incident.description}
-              location={incident.location?.coordinates ? `Lng: ${incident.location.coordinates[0].toFixed(2)}, Lat: ${incident.location.coordinates[1].toFixed(2)}` : "Unknown"}
-              timeAgo={getTimeAgo(incident.timestamp)}
-              verifications={incident.verified_by ? incident.verified_by.length : 0}
-              reports={incident.reported_inaccurate_by ? incident.reported_inaccurate_by.length : 0}
-              onPress={() => navigation.navigate("IncidentDetails", { incident })}
-            />
-          )}
+          renderItem={({ item: incident }) => <RecentIncidentCard incident={incident} navigation={navigation} />}
           refreshControl={
             <RefreshControl 
               refreshing={refreshing} 
