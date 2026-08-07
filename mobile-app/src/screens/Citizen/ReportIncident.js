@@ -72,7 +72,7 @@ export default function ReportIncident() {
         setLocation(formattedAddress);
         setDetectedAddress(formattedAddress);
       } else {
-        const fallbackAddress = `Lat: ${currentCoords.latitude.toFixed(4)}, Lng: ${currentCoords.longitude.toFixed(4)}`;
+        const fallbackAddress = 'Address unavailable';
         setLocation(fallbackAddress);
         setDetectedAddress(fallbackAddress);
       }

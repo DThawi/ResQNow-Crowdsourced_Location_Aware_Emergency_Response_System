@@ -13,6 +13,7 @@ import DangerZoneCard from "../../components/cards/DangerZoneCards";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import API from "../../services/api";
+import { formatDateTime } from "../../utils/displayFormatters";
 
 const SEVERITY_FILTERS = ["All", "Critical", "High", "Medium", "Low"];
 const NEARBY_RADIUS_KM = 10;
@@ -107,9 +108,7 @@ export default function DangerZones({ navigation }) {
               "Multiple incidents reported in this area.",
             radius: `${cluster.count * 100} m`,
             affected: `~${cluster.count * 50}`,
-            date: center.timestamp
-              ? new Date(center.timestamp).toLocaleDateString()
-              : "N/A",
+            date: formatDateTime(center.timestamp, "N/A"),
             coordinates,
             latitude: coordinates ? coordinates[1] : null,
             longitude: coordinates ? coordinates[0] : null,

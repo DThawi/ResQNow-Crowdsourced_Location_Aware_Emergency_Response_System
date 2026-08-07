@@ -54,12 +54,12 @@ const ReportCard = ({ item, onPress }) => {
 
           <View className="flex-row items-center gap-3">
             <View className="flex-row items-center">
-              <Feather name="eye" size={14} color="#8D99AE" />
-              <Text className="text-[13px] text-[#8D99AE] ml-1">{item.views}</Text>
-            </View>
-            <View className="flex-row items-center">
               <Feather name="thumbs-up" size={14} color="#2ECC71" />
               <Text className="text-[13px] text-[#2ECC71] ml-1">{item.likes}</Text>
+            </View>
+            <View className="flex-row items-center">
+              <Feather name="thumbs-down" size={14} color="#cc2e2e" />
+              <Text className="text-[13px] text-[#cc2e2e] ml-1">{item.dislikes}</Text>
             </View>
           </View>
         </View>

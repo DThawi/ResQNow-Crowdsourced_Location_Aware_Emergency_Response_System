@@ -6,6 +6,47 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
 import ReportCard from '../../components/cards/ReportCard';
+import { formatDateTime, useReadableAddress } from '../../utils/displayFormatters';
+
+const countUniqueFeedback = (feedback) =>
+  Array.isArray(feedback)
+    ? new Set(feedback.map((user) => String(user?._id || user))).size
+    : 0;
+
+const getReportGroup = (status) => {
+  const normalizedStatus = String(status || '').trim().toLowerCase();
+  if (normalizedStatus === 'pending') return 'Pending';
+  if (normalizedStatus === 'resolved') return 'Resolved';
+
+  // The screen has no separate active-response tile, so approved and active
+  // reports belong to the verified group.
+  if (['verified', 'assigned', 'en route', 'in progress'].includes(normalizedStatus)) {
+    return 'Verified';
+  }
+
+  return 'Other';
+};
+
+const ReportListItem = ({ item, navigation }) => {
+  const address = useReadableAddress(item.location);
+  const formattedItem = {
+    ...item,
+    title: `${item.type} Emergency`,
+    location: address,
+    date: formatDateTime(item.timestamp),
+    statusColor: item.status === 'Pending' ? '#F6AA1C' : item.status === 'Resolved' ? '#2B2D42' : '#2ECC71',
+    typeBgHex: item.type === 'Fire' ? '#D62828' : item.type === 'Medical' ? '#2ECC71' : '#F6AA1C',
+    typeIcon: item.type === 'Fire' ? 'fire' : item.type === 'Medical' ? 'medical-bag' : 'alert',
+    likes: Number.isFinite(item.likes_count)
+      ? item.likes_count
+      : countUniqueFeedback(item.verified_by),
+    dislikes: Number.isFinite(item.dislikes_count)
+      ? item.dislikes_count
+      : countUniqueFeedback(item.reported_inaccurate_by),
+  };
+
+  return <ReportCard item={formattedItem} onPress={() => navigation.navigate("IncidentDetails", { incident: item })} />;
+};
 
 const MyReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
@@ -33,15 +74,20 @@ const MyReportsScreen = ({ navigation }) => {
   useFocusEffect(useCallback(() => { fetchData(); }, []));
 
   // Dynamic Stats Calculation
-  const stats = {
-    total: reports.length,
-    pending: reports.filter(r => r.status === 'Pending').length,
-    verified: reports.filter(r => r.status === 'Verified' || r.status === 'Assigned').length,
-    resolved: reports.filter(r => r.status === 'Resolved').length,
-  };
+  const stats = reports.reduce(
+    (totals, report) => {
+      totals.total += 1;
+      const group = getReportGroup(report.status);
+      if (group === 'Pending') totals.pending += 1;
+      if (group === 'Verified') totals.verified += 1;
+      if (group === 'Resolved') totals.resolved += 1;
+      return totals;
+    },
+    { total: 0, pending: 0, verified: 0, resolved: 0 }
+  );
 
   const filteredData = reports.filter(item => 
-    activeFilter === 'All Reports' ? true : item.status === activeFilter
+    activeFilter === 'All Reports' ? true : getReportGroup(item.status) === activeFilter
   );
 
   return (
@@ -95,27 +141,7 @@ const MyReportsScreen = ({ navigation }) => {
           ListEmptyComponent={
             <Text className="text-center text-[#8D99AE] mt-10">You haven't reported any incidents yet.</Text>
           }
-          renderItem={({ item }) => {
-            const formattedItem = {
-              ...item,
-              title: `${item.type} Emergency`,
-              status: item.status,
-              location: item.location?.coordinates ? `Lng: ${item.location.coordinates[0].toFixed(2)}, Lat: ${item.location.coordinates[1].toFixed(2)}` : 'Unknown',
-              date: new Date(item.timestamp).toLocaleDateString(),
-              statusColor: item.status === 'Pending' ? '#F6AA1C' : item.status === 'Resolved' ? '#2B2D42' : '#2ECC71',
-              typeBgHex: item.type === 'Fire' ? '#D62828' : item.type === 'Medical' ? '#2ECC71' : '#F6AA1C',
-              typeIcon: item.type === 'Fire' ? 'fire' : item.type === 'Medical' ? 'medical-bag' : 'alert',
-              views: 0,
-              likes: item.verified_by?.length || 0
-            };
-            
-            return (
-              <ReportCard 
-                  item={formattedItem} 
-                  onPress={() => navigation.navigate("IncidentDetails", { incident: item })} 
-              />
-            );
-          }}
+          renderItem={({ item }) => <ReportListItem item={item} navigation={navigation} />}
         />
       )}
     </View>

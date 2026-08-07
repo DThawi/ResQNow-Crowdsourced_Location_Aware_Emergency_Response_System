@@ -12,21 +12,13 @@ import GradientHeader from '../../components/layout/header';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
+import { formatDateTime } from '../../utils/displayFormatters';
 
 const getNotificationStyle = (type) => {
   if (type === 'alert') return { icon: 'alert-circle-outline', iconColor: '#D62828', borderColor: '#D62828' };
   if (type === 'update') return { icon: 'information-circle-outline', iconColor: '#F59E0B', borderColor: '#F59E0B' };
   if (type === 'assignment') return { icon: 'checkmark-circle-outline', iconColor: '#10B981', borderColor: '#10B981' };
   return { icon: 'notifications-outline', iconColor: '#6B7280', borderColor: '#6B7280' };
-};
-
-const getTimeAgo = (timestamp) => {
-  if (!timestamp) return 'Just now';
-  const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
-  if (diff < 1) return 'Just now';
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-  return `${Math.floor(diff / 1440)}d ago`;
 };
 
 const filters = ['All', 'Alerts', 'Updates', 'Assignments'];
@@ -157,7 +149,7 @@ export default function AlertsNotifications({ navigation }) {
                     <View className="flex-1 pr-1">
                       <Text className={`text-sm text-black mb-0.5 ${!item.is_read ? 'font-bold' : 'font-medium'}`}>{item.title}</Text>
                       <Text className="text-xs text-gray-500 mb-1" numberOfLines={2}>{item.description}</Text>
-                      <Text className="text-slate-400 text-[10px] font-medium">{getTimeAgo(item.timestamp)}</Text>
+                      <Text className="text-slate-400 text-[10px] font-medium">{formatDateTime(item.timestamp)}</Text>
                     </View>
                     <View className="items-center justify-center">
                       {!item.is_read && (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import API from '../../services/api';
 import IncidentFeedbackModal from '../../components/modals/incidentFeedbackModal';
 import { getIncidentTypeAssets, getStatusDetails } from '../../utils/incidentHelpers';
+import { formatDateTime, useReadableAddress } from '../../utils/displayFormatters';
 
 const IncidentDetailsScreen = () => {
   const navigation = useNavigation();
@@ -15,14 +16,32 @@ const IncidentDetailsScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isInaccuracyModalVisible, setInaccuracyModalVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const address = useReadableAddress(incident.location);
+  const reporterId = incident.user_id?._id || incident.user_id;
+  const isReporter = currentUserId && String(reporterId) === String(currentUserId);
+
+  useEffect(() => {
+    AsyncStorage.getItem('userId').then(setCurrentUserId);
+  }, []);
 
   const typeAssets = getIncidentTypeAssets(incident.type);
   const statusInfo = getStatusDetails(incident.status);
 
   const handleFeedback = async (type) => {
     try {
+      if (!incident._id) {
+        Alert.alert("Unable to submit feedback", "This incident is missing its report ID.");
+        return;
+      }
+
       setIsSubmitting(true);
       const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert("Sign in required", "Please sign in again before submitting feedback.");
+        return;
+      }
+
       const backendType = type === 'verify' ? 'verify' : 'inaccurate';
 
       const response = await API.post(`/incidents/${incident._id}/feedback`, {
@@ -77,7 +96,7 @@ const IncidentDetailsScreen = () => {
               <View className="flex-1">
                 <Text className="text-[#2B2D42] font-bold text-[15px]">Location</Text>
                 <Text className="text-[#8D99AE] text-sm">
-                   {incident.location?.coordinates ? `Lng: ${incident.location.coordinates[0].toFixed(2)}, Lat: ${incident.location.coordinates[1].toFixed(2)}` : "Location Hidden"}
+                   {address}
                 </Text>
               </View>
             </View>
@@ -85,7 +104,7 @@ const IncidentDetailsScreen = () => {
               <Ionicons name="time-outline" size={22} color="#D62828" />
               <View className="flex-1">
                 <Text className="text-[#2B2D42] font-bold text-[15px]">Reported</Text>
-                <Text className="text-[#8D99AE] text-sm">{new Date(incident.timestamp).toLocaleString()}</Text>
+                <Text className="text-[#8D99AE] text-sm">{formatDateTime(incident.timestamp)}</Text>
               </View>
             </View>
           </View>
@@ -151,24 +170,35 @@ const IncidentDetailsScreen = () => {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 bg-[#F7F7F7] px-5 pt-4 pb-10 border-t border-[#EEEEEE]">
-        <TouchableOpacity 
-          className={`bg-[#2ECC71] h-[52px] rounded-xl flex-row items-center justify-center mb-3 ${isSubmitting ? 'opacity-70' : ''}`} 
-          onPress={() => handleFeedback('verify')} 
-          disabled={isSubmitting}
-        >
-          {isSubmitting && <ActivityIndicator color="white" style={{marginRight: 8}}/>}
-          <Ionicons name="checkmark-circle-outline" size={22} color="white" style={{ marginRight: 8 }} />
-          <Text className="text-white font-bold text-base">Verify This Incident</Text>
-        </TouchableOpacity>
+        {isReporter ? (
+          <View className="bg-[#FFF4E5] border border-[#F6AA1C] rounded-xl px-4 py-3 mb-3 flex-row items-start">
+            <Feather name="info" size={18} color="#B45309" style={{ marginTop: 1, marginRight: 8 }} />
+            <Text className="text-[#92400E] text-sm flex-1">
+              You can't verify or report inaccuracy because you created this incident report.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity
+              className={`bg-[#2ECC71] h-[52px] rounded-xl flex-row items-center justify-center mb-3 ${isSubmitting ? 'opacity-70' : ''}`}
+              onPress={() => handleFeedback('verify')}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <ActivityIndicator color="white" style={{marginRight: 8}}/>}
+              <Ionicons name="checkmark-circle-outline" size={22} color="white" style={{ marginRight: 8 }} />
+              <Text className="text-white font-bold text-base">Verify This Incident</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity 
-          className={`bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border mb-3 border-[#D62828] ${isSubmitting ? 'opacity-70' : ''}`} 
-          onPress={() => handleFeedback('inaccurate')} 
-          disabled={isSubmitting}
-        >
-          <Feather name="alert-triangle" size={18} color="#D62828" style={{ marginRight: 8 }} />
-          <Text className="text-[#D62828] font-bold text-base">Report Inaccuracy</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              className={`bg-transparent h-[52px] flex-row items-center justify-center rounded-xl border mb-3 border-[#D62828] ${isSubmitting ? 'opacity-70' : ''}`}
+              onPress={() => handleFeedback('inaccurate')}
+              disabled={isSubmitting}
+            >
+              <Feather name="alert-triangle" size={18} color="#D62828" style={{ marginRight: 8 }} />
+              <Text className="text-[#D62828] font-bold text-base">Report Inaccuracy</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <TouchableOpacity className="h-[52px] flex-row items-center justify-center rounded-xl border border-[#2B2D42]" onPress={() => navigation.goBack()}>
           <Text className="text-[#2B2D42] font-bold text-base">Close</Text>

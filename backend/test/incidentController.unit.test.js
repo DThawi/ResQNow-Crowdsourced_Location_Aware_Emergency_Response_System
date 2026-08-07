@@ -81,6 +81,52 @@ describe("Incident controller unit tests", () => {
     expect(res.json).toHaveBeenCalledWith({ message: "You have already provided feedback." });
   });
 
+  test("addIncidentFeedback rejects feedback from the report creator", async () => {
+    Incident.findById.mockResolvedValue({
+      user_id: "citizen-1",
+      verified_by: [],
+      reported_inaccurate_by: [],
+    });
+    const res = mockResponse();
+
+    await incidentController.addIncidentFeedback({
+      params: { id: "incident-1" },
+      user: { id: "citizen-1" },
+      body: { feedback_type: "verify" },
+    }, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "You can't verify or report inaccuracy because you created this incident report.",
+    });
+  });
+
+  test("addIncidentFeedback saves a verification and returns updated counts", async () => {
+    const save = jest.fn();
+    const incident = {
+      verified_by: [],
+      reported_inaccurate_by: ["citizen-2"],
+      save,
+    };
+    save.mockResolvedValue(incident);
+    Incident.findById.mockResolvedValue(incident);
+    const res = mockResponse();
+
+    await incidentController.addIncidentFeedback({
+      params: { id: "incident-1" },
+      user: { id: "citizen-1" },
+      body: { feedback_type: "verify" },
+    }, res);
+
+    expect(incident.verified_by).toEqual(["citizen-1"]);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      likes_count: 1,
+      dislikes_count: 1,
+    }));
+  });
+
   test("updateResponseStatus rejects statuses outside the responder workflow", async () => {
     const res = mockResponse();
 
