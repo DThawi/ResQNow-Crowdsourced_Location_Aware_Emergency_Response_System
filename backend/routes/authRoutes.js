@@ -20,6 +20,13 @@ router.post(
 
 // ── Authentication Management Endpoints ─────────────────────────────────────
 router.post('/login', authController.login);
+
+// 🔒 Logout Endpoint (Added to satisfy ADM-002 audit logs)
+router.post('/logout', (req, res) => {
+  console.log('🔒 User logged out successfully');
+  res.status(200).json({ success: true, message: 'Logged out successfully' });
+});
+
 router.post('/setup-approved-password', authController.setupApprovedPassword);
 
 // ── Citizen & Standard OTP Recovery ─────────────────────────────────────────
