@@ -19,6 +19,7 @@ router.post('/', verifyToken, upload.single("image"), uploadToCloudinary, incide
 
 // --- 3. PARAMETERIZED ROUTES LAST ---
 router.post('/:id/feedback', verifyToken, incidentController.addIncidentFeedback);
+router.patch('/:id/decline', verifyToken, allowRoles("Authority", "Responder"), incidentController.declineAssignment);
 router.put('/:id/status', verifyToken, allowRoles("Admin", "Authority", "Responder"), incidentController.updateResponseStatus);
 router.get('/:id/progress', verifyToken, incidentController.getResponseProgress);
 router.put('/:id/assign', verifyToken, allowRoles("Admin"), incidentController.assignResponder);

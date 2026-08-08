@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StatusBar, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { CommonActions } from '@react-navigation/native';
 import GradientHeader from '../../components/layout/header';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +15,7 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
   const incident = route?.params?.incident || {};
   const isResolved = incident.status?.toLowerCase() === 'resolved';
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
 
   const handleAcceptAssignment = async () => {
     try {
@@ -39,6 +41,39 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
     } finally {
       setIsAccepting(false);
     }
+  };
+
+  const handleDeclineAssignment = () => {
+    Alert.alert(
+      'Decline dispatch?',
+      'This incident will be removed from your assigned incidents.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Decline',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeclining(true);
+              const token = await AsyncStorage.getItem('token');
+              await API.patch(`/incidents/${incident._id}/decline`, {}, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+
+              navigation.goBack();
+            } catch (error) {
+              console.log('Failed to decline assignment:', error.message);
+              Alert.alert(
+                'Unable to decline dispatch',
+                error.response?.data?.message || 'Please check your connection and try again.'
+              );
+            } finally {
+              setIsDeclining(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const typeText = incident.type || 'Accident';
@@ -189,10 +224,13 @@ export default function IncidentDetailsScreen1({ route, navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              className="bg-white py-3.5 rounded-2xl items-center border border-slate-200"
-              onPress={() => navigation.goBack()}
+              className={`bg-white py-3.5 rounded-2xl items-center border border-slate-200 ${isDeclining ? 'opacity-60' : ''}`}
+              onPress={handleDeclineAssignment}
+              disabled={isDeclining || isAccepting}
             >
-              <Text className="text-slate-500 font-bold text-sm uppercase tracking-wider">Decline Dispatch</Text>
+              <Text className="text-slate-500 font-bold text-sm uppercase tracking-wider">
+                {isDeclining ? 'Declining...' : 'Decline Dispatch'}
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

@@ -1,4 +1,5 @@
 const Incident = require("../models/Incident");
+const User = require("../models/User");
 const { findCluster } = require("../utils/clustering");
 const { autoAssignResponder } = require("../utils/autoAssignment");
 const incidentController = require("../controllers/incidentController");
@@ -10,6 +11,7 @@ jest.mock("../models/Incident", () => {
 });
 
 jest.mock("../utils/clustering", () => ({ findCluster: jest.fn() }));
+jest.mock("../models/User", () => ({ findById: jest.fn() }));
 jest.mock("../utils/autoAssignment", () => ({ autoAssignResponder: jest.fn() }));
 jest.mock("../utils/notificationHelper", () => ({
   notifyAssignment: jest.fn(),
@@ -139,5 +141,56 @@ describe("Incident controller unit tests", () => {
     expect(Incident.findById).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ message: "Invalid status" });
+  });
+
+  test("assignResponder creates an alert notification for a newly assigned responder", async () => {
+    const save = jest.fn().mockResolvedValue();
+    const incident = {
+      _id: "incident-1",
+      type: "Flood",
+      status: "Verified",
+      assignedAuthorities: [],
+      status_history: [],
+      save,
+    };
+    const responder = { _id: "responder-1", role: "Responder" };
+    Incident.findById.mockResolvedValue(incident);
+    User.findById.mockResolvedValue(responder);
+    const res = mockResponse();
+
+    await incidentController.assignResponder({
+      params: { id: "incident-1" },
+      body: { responderId: "responder-1" },
+      user: { id: "admin-1" },
+    }, res);
+
+    expect(incident.assignedAuthorities).toEqual(["responder-1"]);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(require("../utils/notificationHelper").notifyAssignment).toHaveBeenCalledWith(
+      expect.objectContaining({ assignedAuthorities: ["responder-1"] })
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test("declineAssignment removes only the current responder from the incident", async () => {
+    const save = jest.fn().mockResolvedValue();
+    const incident = {
+      status: "Assigned",
+      assignedAuthorities: ["responder-1", "responder-2"],
+      status_history: [],
+      save,
+    };
+    Incident.findById.mockResolvedValue(incident);
+    const res = mockResponse();
+
+    await incidentController.declineAssignment({
+      params: { id: "incident-1" },
+      user: { id: "responder-1" },
+    }, res);
+
+    expect(incident.assignedAuthorities).toEqual(["responder-2"]);
+    expect(incident.status).toBe("Assigned");
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
