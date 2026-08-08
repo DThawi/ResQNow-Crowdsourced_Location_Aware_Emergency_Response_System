@@ -5,12 +5,17 @@ const { verifyToken } = require('../middleware/authMiddleware');
 const allowRoles = require("../middleware/roleMiddleware");
 const { upload, uploadToCloudinary } = require("../middleware/upload");
 
-// --- 1. SPECIFIC ROUTES FIRST (The Fix for 404) ---
+// --- 1. SPECIFIC & CLUSTERING ROUTES FIRST (Prevents 404 / Route Collision) ---
 router.get('/my-reports', verifyToken, incidentController.getMyReports);
 router.get('/assigned', verifyToken, allowRoles("Admin", "Authority", "Responder"), incidentController.getAssignedIncidents);
 
-
+// 📍 CLS-007: Proximity Clustering (Supports both endpoint aliases for backward compatibility)
 router.get('/clusters', incidentController.getNearbyClusters);
+router.get('/nearby-clusters', incidentController.getNearbyClusters);
+
+// 📊 CLS-008: Cluster Statistics Aggregation
+router.get('/statistics', incidentController.getClusterStatistics);
+
 router.get('/all', incidentController.getAllIncidents);
 
 // --- 2. GENERAL ROUTES ---
