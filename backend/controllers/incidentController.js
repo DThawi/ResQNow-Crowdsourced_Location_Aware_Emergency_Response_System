@@ -210,6 +210,48 @@ exports.getAssignedIncidents = async (req, res) => {
   }
 };
 
+// Responder declines an assigned dispatch. This removes only the current
+// responder, so any other units assigned to the incident remain unaffected.
+exports.declineAssignment = async (req, res) => {
+  try {
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    const wasAssigned = incident.assignedAuthorities.some(
+      (id) => id.toString() === req.user.id.toString()
+    );
+
+    if (!wasAssigned) {
+      return res.status(403).json({ message: "You are not assigned to this incident" });
+    }
+
+    incident.assignedAuthorities = incident.assignedAuthorities.filter(
+      (id) => id.toString() !== req.user.id.toString()
+    );
+
+    // If this was the only assigned unit, return the incident to the verified
+    // queue so it can be assigned to another responder.
+    if (incident.assignedAuthorities.length === 0 && incident.status === 'Assigned') {
+      incident.status = 'Verified';
+      incident.status_history.push({
+        status: 'Verified',
+        changed_by: req.user.id,
+      });
+    }
+
+    await incident.save();
+    res.status(200).json({ message: "Dispatch declined", incident });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error declining dispatch",
+      error: err.message,
+    });
+  }
+};
+
 // Responder updates response status
 exports.updateResponseStatus = async (req, res) => {
   try {
@@ -356,9 +398,14 @@ exports.assignResponder = async (req, res) => {
       return res.status(400).json({ message: "Invalid responder" });
     }
 
-    // Add responder to assignedAuthorities if not already there
-    if (!incident.assignedAuthorities.includes(responderId)) {
-      incident.assignedAuthorities.push(responderId);
+    // Add the responder only once. ObjectId instances do not compare reliably
+    // with request-body strings when using Array#includes.
+    const isAlreadyAssigned = incident.assignedAuthorities.some(
+      (id) => id.toString() === responder._id.toString()
+    );
+
+    if (!isAlreadyAssigned) {
+      incident.assignedAuthorities.push(responder._id);
     }
 
     // Transition status to Assigned if currently Pending or Verified
@@ -373,6 +420,18 @@ exports.assignResponder = async (req, res) => {
     });
 
     await incident.save();
+
+    // The responder dashboard can detect assigned incidents directly, but the
+    // alerts screen reads Notification records. Create one for a new manual
+    // assignment so both views stay in sync. Limit the recipients to the newly
+    // assigned responder to avoid duplicating existing responders' alerts.
+    if (!isAlreadyAssigned) {
+      await notifyAssignment({
+        ...(typeof incident.toObject === 'function' ? incident.toObject() : incident),
+        assignedAuthorities: [responder._id],
+      });
+    }
+
     res.status(200).json({ message: "Responder assigned successfully", incident });
   } catch (err) {
     res.status(500).json({ message: "Error assigning responder", error: err.message });

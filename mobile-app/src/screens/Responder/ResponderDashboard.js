@@ -140,7 +140,7 @@ const IncidentCard = ({ item, onPress }) => {
   );
 };
 
-export default function ResponderDashboard({ navigation }) {
+export default function ResponderDashboard({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const scrollRef = useRef(null);
 
@@ -223,6 +223,12 @@ export default function ResponderDashboard({ navigation }) {
       return () => clearInterval(interval);
     }, [])
   );
+
+  useEffect(() => {
+    if (route?.params?.refreshAssigned) {
+      fetchData();
+    }
+  }, [route?.params?.refreshAssigned]);
 
   const handleDismissAlert = async () => {
     if (newIncident) {
