@@ -32,7 +32,7 @@ exports.getMyReports = async (req, res) => {
     }
 };
 
-// Create new incident report
+// Create new incident report (CLS-001, CLS-002, CLS-005, CLS-006)
 exports.createIncident = async (req, res) => {
     try {
         console.log("BODY:", req.body);
@@ -44,10 +44,12 @@ exports.createIncident = async (req, res) => {
         const lat = parseFloat(latitude);
         const lng = parseFloat(longitude);
 
-        const existingCluster = await findCluster(lat, lng);
+        // 1. Search for existing cluster
+        const clusterResult = await findCluster(lat, lng);
 
-        let clusterId = existingCluster
-            ? (existingCluster.cluster_id || existingCluster._id)
+        // 2. Assign matched clusterId OR generate a fresh ObjectId
+        const clusterId = (clusterResult && !clusterResult.isNewCluster && clusterResult.clusterId)
+            ? clusterResult.clusterId
             : new mongoose.Types.ObjectId();
 
         const newIncident = new Incident({
@@ -134,7 +136,7 @@ exports.addIncidentFeedback = async (req, res) => {
 
 const NEARBY_CLUSTER_RADIUS_METERS = 10 * 1000; // 10 km
 
-// Cluster incidents near the user's live GPS location
+// Cluster incidents near the user's live GPS location (CLS-007)
 exports.getNearbyClusters = async (req, res) => {
     try {
         const latitude = parseFloat(req.query.latitude);
@@ -193,7 +195,6 @@ exports.getAllIncidents = async (req, res) => {
     }
 };
 
-
 // Get incidents assigned to this responder
 exports.getAssignedIncidents = async (req, res) => {
   try {
@@ -210,8 +211,7 @@ exports.getAssignedIncidents = async (req, res) => {
   }
 };
 
-// Responder declines an assigned dispatch. This removes only the current
-// responder, so any other units assigned to the incident remain unaffected.
+// Responder declines an assigned dispatch
 exports.declineAssignment = async (req, res) => {
   try {
     const incident = await Incident.findById(req.params.id);
@@ -232,8 +232,7 @@ exports.declineAssignment = async (req, res) => {
       (id) => id.toString() !== req.user.id.toString()
     );
 
-    // If this was the only assigned unit, return the incident to the verified
-    // queue so it can be assigned to another responder.
+    // If this was the only assigned unit, return the incident to the verified queue
     if (incident.assignedAuthorities.length === 0 && incident.status === 'Assigned') {
       incident.status = 'Verified';
       incident.status_history.push({
@@ -268,32 +267,22 @@ exports.updateResponseStatus = async (req, res) => {
       return res.status(404).json({ message: "Incident not found" });
     }
 
-    // if (!incident.assignedAuthorities.includes(req.user.id)) {
-    //   if (status === 'Assigned') {
-    //     incident.assignedAuthorities.push(req.user.id);
-    //   } else {
-    //     return res.status(403).json({ message: "Not authorized to update this incident" });
-    //   }
-    // }
+    const isAdmin = req.user.role === "Admin";
 
-    // Check if the current user is an Admin
-const isAdmin = req.user.role === "Admin";
+    const isAssignedResponder = incident.assignedAuthorities.some(
+      (id) => id.toString() === req.user.id.toString()
+    );
 
-// Check if the current user is one of the assigned responders/authorities
-const isAssignedResponder = incident.assignedAuthorities.some(
-  (id) => id.toString() === req.user.id.toString()
-);
+    if (!isAdmin && !isAssignedResponder) {
+      if (status === "Assigned") {
+        incident.assignedAuthorities.push(req.user.id);
+      } else {
+        return res.status(403).json({
+          message: "Not authorized to update this incident"
+        });
+      }
+    }
 
-// Allow Admin OR assigned responder to update the incident
-if (!isAdmin && !isAssignedResponder) {
-  if (status === "Assigned") {
-    incident.assignedAuthorities.push(req.user.id);
-  } else {
-    return res.status(403).json({
-      message: "Not authorized to update this incident"
-    });
-  }
-}
     incident.status = status;
     if (status === 'Assigned' && !incident.assigned_at) {
       incident.assigned_at = new Date();
@@ -347,6 +336,7 @@ exports.getResponseProgress = async (req, res) => {
   }
 };
 
+// Admin verifies incident
 exports.adminVerifyIncident = async (req, res) => {
   try {
     const incident = await Incident.findById(req.params.id);
@@ -383,6 +373,7 @@ exports.adminRejectIncident = async (req, res) => {
     res.status(500).json({ message: "Error rejecting incident", error: err.message });
   }
 };
+
 // Admin assigns responder to an incident
 exports.assignResponder = async (req, res) => {
   try {
@@ -398,8 +389,6 @@ exports.assignResponder = async (req, res) => {
       return res.status(400).json({ message: "Invalid responder" });
     }
 
-    // Add the responder only once. ObjectId instances do not compare reliably
-    // with request-body strings when using Array#includes.
     const isAlreadyAssigned = incident.assignedAuthorities.some(
       (id) => id.toString() === responder._id.toString()
     );
@@ -408,12 +397,10 @@ exports.assignResponder = async (req, res) => {
       incident.assignedAuthorities.push(responder._id);
     }
 
-    // Transition status to Assigned if currently Pending or Verified
     if (incident.status === 'Pending' || incident.status === 'Verified') {
       incident.status = 'Assigned';
     }
 
-    // Log status history
     incident.status_history.push({
       status: incident.status,
       changed_by: req.user.id
@@ -421,10 +408,6 @@ exports.assignResponder = async (req, res) => {
 
     await incident.save();
 
-    // The responder dashboard can detect assigned incidents directly, but the
-    // alerts screen reads Notification records. Create one for a new manual
-    // assignment so both views stay in sync. Limit the recipients to the newly
-    // assigned responder to avoid duplicating existing responders' alerts.
     if (!isAlreadyAssigned) {
       await notifyAssignment({
         ...(typeof incident.toObject === 'function' ? incident.toObject() : incident),
@@ -438,3 +421,41 @@ exports.assignResponder = async (req, res) => {
   }
 };
 
+// ── CLS-008: GET CLUSTER STATISTICS ──────────────────────────────────────────
+exports.getClusterStatistics = async (req, res) => {
+  try {
+    const stats = await Incident.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ["$cluster_id", "$_id"] },
+          type: { $first: "$type" },
+          totalReports: { $sum: 1 },
+          firstReported: { $min: "$timestamp" },
+          lastReported: { $max: "$timestamp" },
+          statuses: { $addToSet: "$status" }
+        }
+      },
+      {
+        $project: {
+          cluster_id: "$_id",
+          type: 1,
+          totalReports: 1,
+          firstReported: 1,
+          lastReported: 1,
+          activeStatuses: "$statuses"
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      totalClusters: stats.length,
+      clusters: stats
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching cluster statistics",
+      error: err.message
+    });
+  }
+};
