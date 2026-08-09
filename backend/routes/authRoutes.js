@@ -1,10 +1,32 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator'); // Import express-validator
 const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { uploadDocumentsToCloudinary } = require("../middleware/upload");
 const { upload } = require('../middleware/uploadMiddleware');
+
+// ── Validation Middleware Callback ──────────────────────────────────────────
+const validateRegistration = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: errors.array() 
+      });
+    }
+    next();
+  }
+];
 
 // ── Multi-part Registration Handler ─────────────────────────────────────────
 router.post(
@@ -15,6 +37,7 @@ router.post(
     { name: 'certCards', maxCount: 1 }
   ]), 
   uploadDocumentsToCloudinary,
+  validateRegistration, // Placed after body parsing, before controller execution
   authController.register
 );
 
