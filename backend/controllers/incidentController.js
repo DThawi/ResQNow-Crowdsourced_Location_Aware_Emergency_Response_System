@@ -8,15 +8,31 @@ const { autoAssignResponder } = require('../utils/autoAssignment');
 // Fetch user-specific reports
 exports.getMyReports = async (req, res) => {
     try {
-        // req.user.id is populated by the verifyToken middleware 
-        const reports = await Incident.find({ user_id: req.user.id }).sort({ timestamp: -1 });
-        res.status(200).json({ reports });
+        // req.user.id is populated by the verifyToken middleware
+        const reports = await Incident.find({ user_id: req.user.id })
+            .sort({ timestamp: -1 })
+            .lean();
+
+        const countUniqueUsers = (feedback = []) =>
+            new Set(
+                feedback
+                    .filter(Boolean)
+                    .map((user) => String(user._id || user))
+            ).size;
+
+        const reportsWithFeedbackCounts = reports.map((report) => ({
+            ...report,
+            likes_count: countUniqueUsers(report.verified_by),
+            dislikes_count: countUniqueUsers(report.reported_inaccurate_by),
+        }));
+
+        res.status(200).json({ reports: reportsWithFeedbackCounts });
     } catch (err) {
         res.status(500).json({ message: "Error fetching reports", error: err.message });
     }
 };
 
-// Create new incident report
+// Create new incident report (CLS-001, CLS-002, CLS-005, CLS-006)
 exports.createIncident = async (req, res) => {
     try {
         console.log("BODY:", req.body);
@@ -28,10 +44,12 @@ exports.createIncident = async (req, res) => {
         const lat = parseFloat(latitude);
         const lng = parseFloat(longitude);
 
-        const existingCluster = await findCluster(lat, lng);
+        // 1. Search for existing cluster
+        const clusterResult = await findCluster(lat, lng);
 
-        let clusterId = existingCluster
-            ? (existingCluster.cluster_id || existingCluster._id)
+        // 2. Assign matched clusterId OR generate a fresh ObjectId
+        const clusterId = (clusterResult && !clusterResult.isNewCluster && clusterResult.clusterId)
+            ? clusterResult.clusterId
             : new mongoose.Types.ObjectId();
 
         const newIncident = new Incident({
@@ -74,19 +92,43 @@ exports.addIncidentFeedback = async (req, res) => {
     try {
         const { feedback_type } = req.body;
         const userId = req.user.id;
+
+        if (!['verify', 'inaccurate'].includes(feedback_type)) {
+            return res.status(400).json({ message: 'Feedback type must be verify or inaccurate.' });
+        }
+
         const incident = await Incident.findById(req.params.id);
 
         if (!incident) return res.status(404).json({ message: "Incident not found" });
 
-        if (incident.verified_by.includes(userId) || incident.reported_inaccurate_by.includes(userId)) {
+        if (String(incident.user_id?._id || incident.user_id) === String(userId)) {
+            return res.status(403).json({
+                message: "You can't verify or report inaccuracy because you created this incident report.",
+            });
+        }
+
+        incident.verified_by = incident.verified_by || [];
+        incident.reported_inaccurate_by = incident.reported_inaccurate_by || [];
+
+        const hasAlreadyGivenFeedback = [
+            ...incident.verified_by,
+            ...incident.reported_inaccurate_by,
+        ].some((id) => String(id?._id || id) === String(userId));
+
+        if (hasAlreadyGivenFeedback) {
             return res.status(400).json({ message: "You have already provided feedback." });
         }
 
         if (feedback_type === 'verify') incident.verified_by.push(userId);
-        else if (feedback_type === 'inaccurate') incident.reported_inaccurate_by.push(userId);
+        if (feedback_type === 'inaccurate') incident.reported_inaccurate_by.push(userId);
 
         const updatedIncident = await incident.save();
-        res.status(200).json({ message: "Feedback recorded successfully", incident: updatedIncident });
+        res.status(200).json({
+            message: "Feedback recorded successfully",
+            incident: updatedIncident,
+            likes_count: new Set(updatedIncident.verified_by.map((id) => String(id?._id || id))).size,
+            dislikes_count: new Set(updatedIncident.reported_inaccurate_by.map((id) => String(id?._id || id))).size,
+        });
     } catch (err) {
         res.status(500).json({ message: "Error adding feedback", error: err.message });
     }
@@ -94,7 +136,7 @@ exports.addIncidentFeedback = async (req, res) => {
 
 const NEARBY_CLUSTER_RADIUS_METERS = 10 * 1000; // 10 km
 
-// Cluster incidents near the user's live GPS location
+// Cluster incidents near the user's live GPS location (CLS-007)
 exports.getNearbyClusters = async (req, res) => {
     try {
         const latitude = parseFloat(req.query.latitude);
@@ -153,7 +195,6 @@ exports.getAllIncidents = async (req, res) => {
     }
 };
 
-
 // Get incidents assigned to this responder
 exports.getAssignedIncidents = async (req, res) => {
   try {
@@ -166,6 +207,46 @@ exports.getAssignedIncidents = async (req, res) => {
     res.status(500).json({
       message: "Error fetching assigned incidents",
       error: err.message
+    });
+  }
+};
+
+// Responder declines an assigned dispatch
+exports.declineAssignment = async (req, res) => {
+  try {
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    const wasAssigned = incident.assignedAuthorities.some(
+      (id) => id.toString() === req.user.id.toString()
+    );
+
+    if (!wasAssigned) {
+      return res.status(403).json({ message: "You are not assigned to this incident" });
+    }
+
+    incident.assignedAuthorities = incident.assignedAuthorities.filter(
+      (id) => id.toString() !== req.user.id.toString()
+    );
+
+    // If this was the only assigned unit, return the incident to the verified queue
+    if (incident.assignedAuthorities.length === 0 && incident.status === 'Assigned') {
+      incident.status = 'Verified';
+      incident.status_history.push({
+        status: 'Verified',
+        changed_by: req.user.id,
+      });
+    }
+
+    await incident.save();
+    res.status(200).json({ message: "Dispatch declined", incident });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error declining dispatch",
+      error: err.message,
     });
   }
 };
@@ -186,32 +267,22 @@ exports.updateResponseStatus = async (req, res) => {
       return res.status(404).json({ message: "Incident not found" });
     }
 
-    // if (!incident.assignedAuthorities.includes(req.user.id)) {
-    //   if (status === 'Assigned') {
-    //     incident.assignedAuthorities.push(req.user.id);
-    //   } else {
-    //     return res.status(403).json({ message: "Not authorized to update this incident" });
-    //   }
-    // }
+    const isAdmin = req.user.role === "Admin";
 
-    // Check if the current user is an Admin
-const isAdmin = req.user.role === "Admin";
+    const isAssignedResponder = incident.assignedAuthorities.some(
+      (id) => id.toString() === req.user.id.toString()
+    );
 
-// Check if the current user is one of the assigned responders/authorities
-const isAssignedResponder = incident.assignedAuthorities.some(
-  (id) => id.toString() === req.user.id.toString()
-);
+    if (!isAdmin && !isAssignedResponder) {
+      if (status === "Assigned") {
+        incident.assignedAuthorities.push(req.user.id);
+      } else {
+        return res.status(403).json({
+          message: "Not authorized to update this incident"
+        });
+      }
+    }
 
-// Allow Admin OR assigned responder to update the incident
-if (!isAdmin && !isAssignedResponder) {
-  if (status === "Assigned") {
-    incident.assignedAuthorities.push(req.user.id);
-  } else {
-    return res.status(403).json({
-      message: "Not authorized to update this incident"
-    });
-  }
-}
     incident.status = status;
     if (status === 'Assigned' && !incident.assigned_at) {
       incident.assigned_at = new Date();
@@ -265,6 +336,7 @@ exports.getResponseProgress = async (req, res) => {
   }
 };
 
+// Admin verifies incident
 exports.adminVerifyIncident = async (req, res) => {
   try {
     const incident = await Incident.findById(req.params.id);
@@ -301,6 +373,7 @@ exports.adminRejectIncident = async (req, res) => {
     res.status(500).json({ message: "Error rejecting incident", error: err.message });
   }
 };
+
 // Admin assigns responder to an incident
 exports.assignResponder = async (req, res) => {
   try {
@@ -316,26 +389,73 @@ exports.assignResponder = async (req, res) => {
       return res.status(400).json({ message: "Invalid responder" });
     }
 
-    // Add responder to assignedAuthorities if not already there
-    if (!incident.assignedAuthorities.includes(responderId)) {
-      incident.assignedAuthorities.push(responderId);
+    const isAlreadyAssigned = incident.assignedAuthorities.some(
+      (id) => id.toString() === responder._id.toString()
+    );
+
+    if (!isAlreadyAssigned) {
+      incident.assignedAuthorities.push(responder._id);
     }
 
-    // Transition status to Assigned if currently Pending or Verified
     if (incident.status === 'Pending' || incident.status === 'Verified') {
       incident.status = 'Assigned';
     }
 
-    // Log status history
     incident.status_history.push({
       status: incident.status,
       changed_by: req.user.id
     });
 
     await incident.save();
+
+    if (!isAlreadyAssigned) {
+      await notifyAssignment({
+        ...(typeof incident.toObject === 'function' ? incident.toObject() : incident),
+        assignedAuthorities: [responder._id],
+      });
+    }
+
     res.status(200).json({ message: "Responder assigned successfully", incident });
   } catch (err) {
     res.status(500).json({ message: "Error assigning responder", error: err.message });
   }
 };
 
+// ── CLS-008: GET CLUSTER STATISTICS ──────────────────────────────────────────
+exports.getClusterStatistics = async (req, res) => {
+  try {
+    const stats = await Incident.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ["$cluster_id", "$_id"] },
+          type: { $first: "$type" },
+          totalReports: { $sum: 1 },
+          firstReported: { $min: "$timestamp" },
+          lastReported: { $max: "$timestamp" },
+          statuses: { $addToSet: "$status" }
+        }
+      },
+      {
+        $project: {
+          cluster_id: "$_id",
+          type: 1,
+          totalReports: 1,
+          firstReported: 1,
+          lastReported: 1,
+          activeStatuses: "$statuses"
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      totalClusters: stats.length,
+      clusters: stats
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching cluster statistics",
+      error: err.message
+    });
+  }
+};

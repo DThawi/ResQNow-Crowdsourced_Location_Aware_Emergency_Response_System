@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import API from '../../services/api';
+import { formatDateTime } from '../../utils/displayFormatters';
 
 const getStatusColor = (status) => {
   if (status === 'In Progress') return 'bg-blue-100 text-blue-600';
@@ -32,13 +33,7 @@ const getTypeIcon = (type) => {
 
 const formatDetailsTime = (timestamp) => {
   if (!timestamp) return 'Just now';
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTime(timestamp);
 };
 
 const HistoryCard = ({ item, onPress }) => {
@@ -60,7 +55,7 @@ const HistoryCard = ({ item, onPress }) => {
         if (reverseLookup && reverseLookup.length > 0) {
           const place = reverseLookup[0];
           const formatted = [place.name, place.street, place.city].filter(Boolean).join(', ');
-          if (isMounted) setReadableAddress(formatted || `Lat: ${coords[1].toFixed(4)}, Lng: ${coords[0].toFixed(4)}`);
+          if (isMounted) setReadableAddress(formatted || 'Address unavailable');
         }
       } catch (err) {
         if (isMounted) setReadableAddress('Location Coordinates Split Locked');

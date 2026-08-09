@@ -1,3 +1,5 @@
+import { formatDateTime } from "./displayFormatters";
+
 const SEVERITY_FROM_COUNT = (count) => {
   if (count >= 5) return "CRITICAL";
   if (count >= 3) return "HIGH";
@@ -82,9 +84,7 @@ export function formatClusterToZone(cluster) {
       center.description || "Multiple incidents reported in this area.",
     radius: `${radiusMeters} m`,
     affected: `~${count * 50}`,
-    date: center.timestamp
-      ? new Date(center.timestamp).toLocaleDateString()
-      : "N/A",
+    date: formatDateTime(center.timestamp, "N/A"),
     coordinates,
     latitude,
     longitude,

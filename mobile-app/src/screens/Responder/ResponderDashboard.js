@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import API from '../../services/api';
+import { formatDateTime } from '../../utils/displayFormatters';
 
 const getStatusColor = (status) => {
   if (status === 'Assigned') return 'bg-yellow-100 text-yellow-600';
@@ -31,15 +32,6 @@ const getTypeIcon = (type) => {
   if (type === 'Flood') return '🌊';
   if (type === 'Accident') return '🚗';
   return '⚠️';
-};
-
-const getTimeAgo = (timestamp) => {
-  if (!timestamp) return 'Just now';
-  const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
-  if (diff < 1) return 'Just now';
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-  return `${Math.floor(diff / 1440)}d ago`;
 };
 
 const StatusBadge = ({ status, colorClass }) => (
@@ -74,12 +66,12 @@ const IncidentCard = ({ item, onPress }) => {
             place.region
           ].filter(Boolean).join(', ');
           
-          if (isMounted) setReadableAddress(formattedAddress || `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+          if (isMounted) setReadableAddress(formattedAddress || 'Address unavailable');
         } else {
-          if (isMounted) setReadableAddress(`Position - Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+          if (isMounted) setReadableAddress('Address unavailable');
         }
       } catch (err) {
-        if (isMounted) setReadableAddress(`Coordinates Locked: ${item.location?.coordinates?.[1]?.toFixed(4)}, ${item.location?.coordinates?.[0]?.toFixed(4)}`);
+        if (isMounted) setReadableAddress('Address unavailable');
       }
     };
     resolveLocationToLandmark();
@@ -109,17 +101,17 @@ const IncidentCard = ({ item, onPress }) => {
 
       {/* Meta Indicators Sub-Grid */}
       <View className="flex-col gap-1 border-b border-gray-50 pb-2 mb-2">
-        <View className="flex-row items-center pr-2">
-          <Ionicons name="location-outline" size={13} color="#9CA3AF" />
-          <Text className="text-xs text-gray-400 ml-1 flex-1" numberOfLines={1}>
+        <View className="flex-row items-start pr-2">
+          <Ionicons name="location-outline" size={13} color="#9CA3AF" style={{ marginTop: 2 }} />
+          <Text className="text-xs text-gray-400 ml-1 flex-1 leading-[18px]" numberOfLines={2}>
             {readableAddress}
           </Text>
         </View>
         
-        <View className="flex-row items-center">
-          <Ionicons name="time-outline" size={13} color="#9CA3AF" />
-          <Text className="text-xs text-gray-400 ml-1">
-            Ax. Time: {getTimeAgo(item.timestamp)}
+        <View className="flex-row items-start">
+          <Ionicons name="time-outline" size={13} color="#9CA3AF" style={{ marginTop: 2 }} />
+          <Text className="text-xs text-gray-400 ml-1 flex-1 leading-[18px]">
+            Reported: {formatDateTime(item.timestamp)}
           </Text>
         </View>
       </View>
@@ -148,7 +140,7 @@ const IncidentCard = ({ item, onPress }) => {
   );
 };
 
-export default function ResponderDashboard({ navigation }) {
+export default function ResponderDashboard({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const scrollRef = useRef(null);
 
@@ -231,6 +223,12 @@ export default function ResponderDashboard({ navigation }) {
       return () => clearInterval(interval);
     }, [])
   );
+
+  useEffect(() => {
+    if (route?.params?.refreshAssigned) {
+      fetchData();
+    }
+  }, [route?.params?.refreshAssigned]);
 
   const handleDismissAlert = async () => {
     if (newIncident) {

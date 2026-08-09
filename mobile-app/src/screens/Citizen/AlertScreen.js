@@ -7,14 +7,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import GradientHeader from "../../components/layout/header";
 import AlertCard from "../../components/cards/AlertCards";
 import API from "../../services/api";
+import { formatDateTime, useReadableAddress } from "../../utils/displayFormatters";
 
-
-const getTimeAgo = (timestamp) => {
-  if (!timestamp) return "Just now";
-  const diff = Math.floor((new Date() - new Date(timestamp)) / 60000);
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-  return `${Math.floor(diff / 1440)}d ago`;
+const AlertListItem = ({ item, unread, onPress }) => {
+  const address = useReadableAddress(item.location);
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <AlertCard
+        alert={{
+          id: item._id,
+          type: item.type,
+          title: `${item.type} Emergency Alert`,
+          description: item.description,
+          location: address,
+          time: formatDateTime(item.timestamp),
+          unread,
+          raw: item,
+        }}
+      />
+    </TouchableOpacity>
+  );
 };
 
 export default function AlertScreen() {
@@ -59,8 +71,8 @@ export default function AlertScreen() {
       type: item.type,
       title: `${item.type} Emergency Alert`,
       description: item.description,
-      location: item.location?.coordinates ? `Lng: ${item.location.coordinates[0].toFixed(2)}` : "Unknown",
-      time: getTimeAgo(item.timestamp), 
+      location: item.location,
+      time: formatDateTime(item.timestamp),
       unread: !viewedIds.includes(item._id),
       raw: item
     }));
@@ -107,11 +119,7 @@ export default function AlertScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleAlertPress(item.raw)}>
-             <AlertCard alert={item} />
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => <AlertListItem item={item.raw} unread={item.unread} onPress={() => handleAlertPress(item.raw)} />}
         contentContainerStyle={{ padding: 16, paddingBottom: 16 + insets.bottom }}
       />
     </View>

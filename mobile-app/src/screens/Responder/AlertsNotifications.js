@@ -12,6 +12,7 @@ import GradientHeader from '../../components/layout/header';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../../services/api';
+import { formatDateTime } from '../../utils/displayFormatters';
 
 const getNotificationStyle = (type) => {
   if (type === 'alert') return { icon: 'alert-circle-outline', iconColor: '#D62828', borderColor: '#D62828' };
@@ -20,38 +21,60 @@ const getNotificationStyle = (type) => {
   return { icon: 'notifications-outline', iconColor: '#6B7280', borderColor: '#6B7280' };
 };
 
-const getTimeAgo = (timestamp) => {
-  if (!timestamp) return 'Just now';
-  const diff = Math.floor((Date.now() - new Date(timestamp)) / 60000);
-  if (diff < 1) return 'Just now';
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-  return `${Math.floor(diff / 1440)}d ago`;
-};
-
 const filters = ['All', 'Alerts', 'Updates', 'Assignments'];
 
 export default function AlertsNotifications({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchNotifications = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      // Axios automatically prepends /api, hitting -> /api/notifications cleanly
-      const response = await API.get('/notifications', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotifications(response.data || []);
-    } catch (err) {
-      console.log('Error fetching notifications:', err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchNotifications = async () => {
+  //   try {
+  //     const token = await AsyncStorage.getItem('token');
+  //     // Axios automatically prepends /api, hitting -> /api/notifications cleanly
+  //     const response = await API.get('/notifications', {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     setNotifications(response.data || []);
+  //   } catch (err) {
+  //     console.log('Error fetching notifications:', err.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
+  const fetchNotifications = async () => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    const response = await API.get('/notifications', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('🔔 NOTIFICATION API RESPONSE:', response.data);
+    console.log('🔔 IS ARRAY:', Array.isArray(response.data));
+
+    const notificationData = Array.isArray(response.data)
+      ? response.data
+      : response.data?.notifications || [];
+
+    console.log('🔔 NOTIFICATIONS TO DISPLAY:', notificationData);
+
+    setNotifications(notificationData);
+    setFetchError(null);
+  } catch (err) {
+    console.log(
+      '❌ Error fetching notifications:',
+      err.response?.status,
+      err.response?.data || err.message
+    );
+    setFetchError(err.response?.data?.message || err.message || 'Failed to fetch notifications');
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 4000);
@@ -99,6 +122,17 @@ export default function AlertsNotifications({ navigation }) {
     <View className="flex-1 bg-[#F5F5F5]">
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <GradientHeader title="Alerts & Notifications" type="back" />
+
+      {fetchError && (
+        <View className="mx-4 mt-4 bg-yellow-50 rounded-2xl p-3 border border-yellow-100">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-yellow-800 text-sm">{fetchError}</Text>
+            <TouchableOpacity onPress={() => { setLoading(true); fetchNotifications(); }} className="px-3 py-1 rounded-md bg-yellow-200">
+              <Text className="text-yellow-900 text-xs font-semibold">Retry</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
@@ -157,7 +191,7 @@ export default function AlertsNotifications({ navigation }) {
                     <View className="flex-1 pr-1">
                       <Text className={`text-sm text-black mb-0.5 ${!item.is_read ? 'font-bold' : 'font-medium'}`}>{item.title}</Text>
                       <Text className="text-xs text-gray-500 mb-1" numberOfLines={2}>{item.description}</Text>
-                      <Text className="text-slate-400 text-[10px] font-medium">{getTimeAgo(item.timestamp)}</Text>
+                      <Text className="text-slate-400 text-[10px] font-medium">{formatDateTime(item.timestamp)}</Text>
                     </View>
                     <View className="items-center justify-center">
                       {!item.is_read && (
