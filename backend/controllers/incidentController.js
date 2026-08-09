@@ -72,9 +72,6 @@ exports.createIncident = async (req, res) => {
 
         console.log("SAVED INCIDENT:", savedIncident);
 
-        // Attempt automated assignment
-        await autoAssignResponder(savedIncident);
-
         res.status(201).json(savedIncident);
 
     } catch (err) {
@@ -119,10 +116,29 @@ exports.addIncidentFeedback = async (req, res) => {
             return res.status(400).json({ message: "You have already provided feedback." });
         }
 
-        if (feedback_type === 'verify') incident.verified_by.push(userId);
-        if (feedback_type === 'inaccurate') incident.reported_inaccurate_by.push(userId);
+        let statusChangedToVerified = false;
+        if (feedback_type === 'verify') {
+            incident.verified_by.push(userId);
+            if (incident.status === 'Pending' && incident.verified_by.length >= 5) {
+                incident.status = 'Verified';
+                incident.status_history.push({
+                    status: 'Verified',
+                    changed_by: null
+                });
+                statusChangedToVerified = true;
+            }
+        }
+        if (feedback_type === 'inaccurate') {
+            incident.reported_inaccurate_by.push(userId);
+        }
 
         const updatedIncident = await incident.save();
+
+        if (statusChangedToVerified) {
+            await notifyStatusChange(updatedIncident);
+            await autoAssignResponder(updatedIncident);
+        }
+
         res.status(200).json({
             message: "Feedback recorded successfully",
             incident: updatedIncident,

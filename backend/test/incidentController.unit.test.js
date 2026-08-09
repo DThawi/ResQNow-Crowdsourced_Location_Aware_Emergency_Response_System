@@ -30,11 +30,11 @@ describe("Incident controller unit tests", () => {
     jest.clearAllMocks();
   });
 
-  test("createIncident reuses a nearby cluster and triggers auto-assignment", async () => {
+  test("createIncident reuses a nearby cluster and does not trigger auto-assignment", async () => {
     const save = jest.fn().mockResolvedValue();
     const savedIncident = { _id: "incident-1" };
     save.mockResolvedValue(savedIncident);
-    findCluster.mockResolvedValue({ _id: "cluster-1" });
+    findCluster.mockResolvedValue({ clusterId: "cluster-1", isNewCluster: false });
     Incident.mockImplementation(function incidentModel(document) {
       Object.assign(this, document, { save });
     });
@@ -62,7 +62,7 @@ describe("Incident controller unit tests", () => {
       image: "https://cloudinary.example/flood.jpg",
       status: "Pending",
     }));
-    expect(autoAssignResponder).toHaveBeenCalledWith(savedIncident);
+    expect(autoAssignResponder).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(201);
   });
 
@@ -127,6 +127,35 @@ describe("Incident controller unit tests", () => {
       likes_count: 1,
       dislikes_count: 1,
     }));
+  });
+
+  test("addIncidentFeedback transitions status to Verified and calls autoAssignResponder when verifications reach 5", async () => {
+    const save = jest.fn();
+    const incident = {
+      status: "Pending",
+      verified_by: ["c1", "c2", "c3", "c4"],
+      reported_inaccurate_by: [],
+      status_history: [],
+      save,
+    };
+    save.mockImplementation(function() {
+      return Promise.resolve(this);
+    });
+    Incident.findById.mockResolvedValue(incident);
+    const res = mockResponse();
+
+    await incidentController.addIncidentFeedback({
+      params: { id: "incident-1" },
+      user: { id: "citizen-5" },
+      body: { feedback_type: "verify" },
+    }, res);
+
+    expect(incident.verified_by).toEqual(["c1", "c2", "c3", "c4", "citizen-5"]);
+    expect(incident.status).toBe("Verified");
+    expect(incident.status_history).toContainEqual(expect.objectContaining({ status: "Verified" }));
+    expect(autoAssignResponder).toHaveBeenCalledWith(expect.objectContaining({ status: "Verified" }));
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test("updateResponseStatus rejects statuses outside the responder workflow", async () => {
