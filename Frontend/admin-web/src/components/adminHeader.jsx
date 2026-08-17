@@ -220,7 +220,7 @@ const AdminHeader = ({ title }) => {
           </div>
           <div className="flex flex-col text-left">
             <span className="text-sm font-bold text-[#2B2D42] group-hover:text-[#D62828] transition">
-              John Anderson
+              ResQNow_SA003
             </span>
             <span className="text-[11px] text-[#8D99AE] uppercase font-bold tracking-wide">
               Head Dispatcher
