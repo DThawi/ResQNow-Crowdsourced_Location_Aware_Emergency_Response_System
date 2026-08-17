@@ -40,19 +40,31 @@ const ReportCard = ({ item, onPress }) => {
         </View>
 
         {/* Location Row */}
-        <View className="flex-row items-center mb-2.5">
+        <View className="flex-row items-center mb-2.5 flex-1">
           <Feather name="map-pin" size={12} color="#8D99AE" />
-          <Text className="text-[13px] text-[#8D99AE] ml-1.5">{item.location}</Text>
+          <Text 
+            className="text-[13px] text-[#8D99AE] ml-1.5 flex-1"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.location}
+          </Text>
         </View>
 
         {/* Footer Info Row */}
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
+        <View className="gap-2">
+          <View className="flex-row items-center flex-1">
             <Feather name="clock" size={12} color="#8D99AE" />
-            <Text className="text-[13px] text-[#8D99AE] ml-1.5">{item.date}</Text>
+            <Text 
+              className="text-[13px] text-[#8D99AE] ml-1.5 flex-1"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {item.date}
+            </Text>
           </View>
 
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
               <Feather name="thumbs-up" size={14} color="#2ECC71" />
               <Text className="text-[13px] text-[#2ECC71] ml-1">{item.likes}</Text>
