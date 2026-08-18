@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -22,7 +22,11 @@ const HomeHeader = ({ unreadCount = 0 }) => {
     >
       <View className="flex-row justify-between items-center mt-5 mb-6">
         <View className="flex-row items-center gap-2">
-          <View className="w-10 h-10 bg-gray-300 rounded-full" />
+          <Image
+            source={require('../../assets/logo-clean.png')}
+            style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.12)' }}
+            resizeMode="contain"
+          />
           <Text className="text-white text-2xl font-bold">ResQNow</Text>
         </View>
         <View className="flex-row items-center gap-5 pr-2">
