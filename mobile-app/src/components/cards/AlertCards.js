@@ -74,17 +74,25 @@ const AlertCard = ({ alert }) => {
         </Text>
 
         {/* Footer */}
-        <View className="flex-row gap-4">
-          <View className="flex-row items-center gap-1">
+        <View className="gap-2">
+          <View className="flex-row items-center gap-1 flex-1">
             <Feather name="map-pin" size={14} color="#64748B" />
-            <Text className="text-[12px] text-slate-500">
+            <Text 
+              className="text-[12px] text-slate-500 flex-1"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {alert.location}
             </Text>
           </View>
 
-          <View className="flex-row items-center gap-1">
+          <View className="flex-row items-center gap-1 flex-1">
             <Feather name="clock" size={14} color="#64748B" />
-            <Text className="text-[12px] text-slate-500">
+            <Text 
+              className="text-[12px] text-slate-500 flex-1"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {alert.time}
             </Text>
           </View>

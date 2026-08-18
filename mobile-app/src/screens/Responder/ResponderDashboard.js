@@ -7,6 +7,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GradientHeader from '../../components/layout/header';
@@ -325,7 +326,14 @@ export default function ResponderDashboard({ route, navigation }) {
           {/* Identity Card Component */}
           <View className="mx-4 mt-4 bg-[#1a2b3c] rounded-2xl p-4 border border-slate-800 shadow-sm flex-col">
             <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-white text-lg font-bold flex-1">{responder.name}</Text>
+              <View className="flex-row items-center flex-1 gap-2.5">
+                <Image
+                  source={require('../../../assets/logo-clean.png')}
+                  style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.12)' }}
+                  resizeMode="contain"
+                />
+                <Text className="text-white text-lg font-bold flex-1">{responder.name}</Text>
+              </View>
               <TouchableOpacity onPress={() => navigation?.navigate('SettingsScreen')} className="p-1">
                 <Ionicons name="settings-outline" size={22} color="white" />
               </TouchableOpacity>
