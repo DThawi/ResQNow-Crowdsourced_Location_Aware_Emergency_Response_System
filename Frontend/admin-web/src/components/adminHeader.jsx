@@ -27,7 +27,7 @@ const AdminHeader = ({ title }) => {
       };
       
       // Fetch matching mobile pattern endpoint
-      const response = await axios.get("http://localhost:5000/api/incidents", config);
+      const response = await axios.get("https://resqnow-crowdsourced-location-aware.onrender.com/api/incidents", config);
       const fetchedData = Array.isArray(response.data) ? response.data : response.data.incidents || [];
 
       // Retrieve read incident IDs from localStorage

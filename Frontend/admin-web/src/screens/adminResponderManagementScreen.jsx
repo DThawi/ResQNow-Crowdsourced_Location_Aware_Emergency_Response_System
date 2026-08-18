@@ -231,7 +231,7 @@ const AdminResponderManagementScreen = () => {
       alert("No attachment file uploaded for this field context.");
       return;
     }
-    const targetUrl = pathString.startsWith('http') ? pathString : `http://localhost:5000/${pathString}`;
+    const targetUrl = pathString.startsWith('http') ? pathString : `https://resqnow-crowdsourced-location-aware.onrender.com/${pathString}`;
     window.open(targetUrl, '_blank');
   };
 
