@@ -17,7 +17,15 @@ const notificationRoutes = require("./routes/notificationRoutes.js");
 const path = require("path");
 const app = express();
 
-app.use(cors());
+// CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
+  : "*";
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: allowedOrigins !== "*"
+}));
 app.use(express.json());
 
 // 2. Add Morgan Middleware for clean terminal logs
@@ -39,8 +47,9 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
   cors: {
-    origin: "*", 
-    methods: ["GET", "POST", "PUT", "DELETE"]
+    origin: allowedOrigins, 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: allowedOrigins !== "*"
   },
   transports: ["websocket"]
 });
