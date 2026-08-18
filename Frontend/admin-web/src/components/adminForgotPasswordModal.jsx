@@ -5,7 +5,7 @@ import {
 import axios from 'axios';
 
 // Update with your active backend URL (e.g., http://localhost:5000/api/auth)
-const API_BASE_URL = "http://localhost:5000/api/auth";
+const API_BASE_URL = "https://resqnow-crowdsourced-location-aware.onrender.com/api/auth";
 
 const AdminForgotPasswordModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1); // 1: Email & Master Key, 2: OTP, 3: New Password, 4: Success

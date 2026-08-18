@@ -19,7 +19,7 @@ const AdminAlertsHubScreen = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/incidents", {
+      const response = await axios.get("https://resqnow-crowdsourced-location-aware.onrender.com/api/incidents", {
         headers: { Authorization: `Bearer ${token}` }
       });
       
